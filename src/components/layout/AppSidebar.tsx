@@ -13,26 +13,26 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { 
-  bar-chart, 
-  qr-code, 
-  users, 
-  database, 
-  settings, 
-  file-text,
-  folder,
-  user
+  BarChart3, 
+  QrCode, 
+  Users, 
+  Database, 
+  Settings, 
+  FileText,
+  Folder,
+  User
 } from "lucide-react";
 
 const menuItems = [
-  { title: "Dashboard", url: "/", icon: bar-chart },
-  { title: "QR Management", url: "/qr-management", icon: qr-code },
-  { title: "Contributors", url: "/contributors", icon: users },
-  { title: "Fund Types", url: "/fund-types", icon: database },
-  { title: "Departments", url: "/departments", icon: folder },
-  { title: "Money Requests", url: "/money-requests", icon: file-text },
-  { title: "Reports", url: "/reports", icon: bar-chart },
-  { title: "User Management", url: "/user-management", icon: user },
-  { title: "Settings", url: "/settings", icon: settings },
+  { title: "Dashboard", url: "/", icon: BarChart3 },
+  { title: "QR Management", url: "/qr-management", icon: QrCode },
+  { title: "Contributors", url: "/contributors", icon: Users },
+  { title: "Fund Types", url: "/fund-types", icon: Database },
+  { title: "Departments", url: "/departments", icon: Folder },
+  { title: "Money Requests", url: "/money-requests", icon: FileText },
+  { title: "Reports", url: "/reports", icon: BarChart3 },
+  { title: "User Management", url: "/user-management", icon: User },
+  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 export function AppSidebar() {

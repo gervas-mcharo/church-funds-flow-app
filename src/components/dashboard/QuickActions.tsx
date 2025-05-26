@@ -1,13 +1,13 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { qr-code, plus, file-text, users } from "lucide-react";
+import { QrCode, Plus, FileText, Users } from "lucide-react";
 
 const actions = [
-  { label: "Scan QR Code", icon: qr-code, variant: "default" as const },
-  { label: "Add Contributor", icon: users, variant: "outline" as const },
-  { label: "Generate Report", icon: file-text, variant: "outline" as const },
-  { label: "Create Fund", icon: plus, variant: "outline" as const },
+  { label: "Scan QR Code", icon: QrCode, variant: "default" as const },
+  { label: "Add Contributor", icon: Users, variant: "outline" as const },
+  { label: "Generate Report", icon: FileText, variant: "outline" as const },
+  { label: "Create Fund", icon: Plus, variant: "outline" as const },
 ];
 
 export function QuickActions() {

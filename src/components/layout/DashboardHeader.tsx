@@ -1,7 +1,7 @@
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { bell, user } from "lucide-react";
+import { Bell, User } from "lucide-react";
 
 export function DashboardHeader() {
   return (
@@ -12,10 +12,10 @@ export function DashboardHeader() {
       
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
-          <bell className="h-5 w-5" />
+          <Bell className="h-5 w-5" />
         </Button>
         <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
-          <user className="h-5 w-5" />
+          <User className="h-5 w-5" />
         </Button>
       </div>
     </header>

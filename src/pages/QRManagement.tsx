@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { qr-code, plus, export } from "lucide-react";
+import { QrCode, Plus, Download } from "lucide-react";
 
 const QRManagement = () => {
   return (
@@ -20,7 +20,7 @@ const QRManagement = () => {
           <Card className="bg-white shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <qr-code className="h-5 w-5" />
+                <QrCode className="h-5 w-5" />
                 Generate Individual QR Code
               </CardTitle>
             </CardHeader>
@@ -53,7 +53,7 @@ const QRManagement = () => {
                 </Select>
               </div>
               <Button className="w-full">
-                <plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4 mr-2" />
                 Generate QR Code
               </Button>
             </CardContent>
@@ -62,7 +62,7 @@ const QRManagement = () => {
           <Card className="bg-white shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <export className="h-5 w-5" />
+                <Download className="h-5 w-5" />
                 Bulk QR Code Generation
               </CardTitle>
             </CardHeader>
@@ -94,7 +94,7 @@ const QRManagement = () => {
                 </Select>
               </div>
               <Button className="w-full" variant="outline">
-                <export className="h-4 w-4 mr-2" />
+                <Download className="h-4 w-4 mr-2" />
                 Generate Bulk QR Codes
               </Button>
             </CardContent>
@@ -110,7 +110,7 @@ const QRManagement = () => {
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div key={i} className="border border-gray-200 rounded-lg p-4 text-center">
                   <div className="w-24 h-24 bg-gray-100 mx-auto mb-3 rounded-lg flex items-center justify-center">
-                    <qr-code className="h-12 w-12 text-gray-400" />
+                    <QrCode className="h-12 w-12 text-gray-400" />
                   </div>
                   <h4 className="font-medium text-gray-900">Contributor {i}</h4>
                   <p className="text-sm text-gray-500">Tithes & Offerings</p>
