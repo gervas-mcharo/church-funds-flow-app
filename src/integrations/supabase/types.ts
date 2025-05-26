@@ -9,7 +9,178 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      contributions: {
+        Row: {
+          amount: number
+          contribution_date: string
+          contributor_id: string
+          created_at: string
+          fund_type_id: string
+          id: string
+          notes: string | null
+          qr_code_id: string | null
+        }
+        Insert: {
+          amount: number
+          contribution_date?: string
+          contributor_id: string
+          created_at?: string
+          fund_type_id: string
+          id?: string
+          notes?: string | null
+          qr_code_id?: string | null
+        }
+        Update: {
+          amount?: number
+          contribution_date?: string
+          contributor_id?: string
+          created_at?: string
+          fund_type_id?: string
+          id?: string
+          notes?: string | null
+          qr_code_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contributions_contributor_id_fkey"
+            columns: ["contributor_id"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contributions_fund_type_id_fkey"
+            columns: ["fund_type_id"]
+            isOneToOne: false
+            referencedRelation: "fund_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contributions_qr_code_id_fkey"
+            columns: ["qr_code_id"]
+            isOneToOne: false
+            referencedRelation: "qr_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contributors: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      departments: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
+      fund_types: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
+      qr_codes: {
+        Row: {
+          contributor_id: string | null
+          created_at: string
+          fund_type_id: string | null
+          id: string
+          is_active: boolean
+          qr_data: string
+        }
+        Insert: {
+          contributor_id?: string | null
+          created_at?: string
+          fund_type_id?: string | null
+          id?: string
+          is_active?: boolean
+          qr_data: string
+        }
+        Update: {
+          contributor_id?: string | null
+          created_at?: string
+          fund_type_id?: string | null
+          id?: string
+          is_active?: boolean
+          qr_data?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_codes_contributor_id_fkey"
+            columns: ["contributor_id"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qr_codes_fund_type_id_fkey"
+            columns: ["fund_type_id"]
+            isOneToOne: false
+            referencedRelation: "fund_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
