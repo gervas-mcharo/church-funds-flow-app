@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +8,7 @@ import { QrCode, Plus, Download } from "lucide-react";
 import { useContributors } from "@/hooks/useContributors";
 import { useFundTypes } from "@/hooks/useFundTypes";
 import { useQRCodes, useGenerateQRCode } from "@/hooks/useQRCodes";
+import { useBulkQRGeneration } from "@/hooks/useBulkQRCodes";
 import { useToast } from "@/hooks/use-toast";
 import { generateQRCodeImage } from "@/services/qrCodeService";
 
@@ -23,6 +23,7 @@ const QRManagement = () => {
   const { data: fundTypes, isLoading: fundTypesLoading } = useFundTypes();
   const { data: qrCodes, isLoading: qrCodesLoading } = useQRCodes();
   const generateQRCode = useGenerateQRCode();
+  const bulkGenerate = useBulkQRGeneration();
 
   const handleGenerateIndividualQR = async () => {
     if (!selectedContributor || !selectedFundType) {
@@ -52,6 +53,47 @@ const QRManagement = () => {
       toast({
         title: "Generation Failed",
         description: "Failed to generate QR code. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleBulkGeneration = async () => {
+    if (!bulkType || !printFormat) {
+      toast({
+        title: "Missing Information",
+        description: "Please select both generation type and print format.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const result = await bulkGenerate.mutateAsync({
+        type: bulkType as 'all-contributors' | 'fund-type' | 'department',
+        format: printFormat as 'envelope' | 'cards' | 'labels'
+      });
+
+      // Trigger download
+      const link = document.createElement('a');
+      link.href = result.exportUrl;
+      link.download = `bulk-qr-codes-${printFormat}.${printFormat === 'labels' ? 'zip' : 'pdf'}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "Bulk Generation Complete",
+        description: `Successfully generated ${result.count} QR codes.`,
+      });
+
+      // Reset form
+      setBulkType("");
+      setPrintFormat("");
+    } catch (error) {
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate bulk QR codes. Please try again.",
         variant: "destructive"
       });
     }
@@ -182,9 +224,14 @@ const QRManagement = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <Button className="w-full" variant="outline" disabled>
+              <Button 
+                className="w-full" 
+                variant="outline" 
+                onClick={handleBulkGeneration}
+                disabled={bulkGenerate.isPending || !bulkType || !printFormat}
+              >
                 <Download className="h-4 w-4 mr-2" />
-                Generate Bulk QR Codes (Coming Soon)
+                {bulkGenerate.isPending ? "Generating..." : "Generate Bulk QR Codes"}
               </Button>
             </CardContent>
           </Card>
