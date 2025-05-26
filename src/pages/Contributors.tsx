@@ -6,15 +6,46 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Edit, QrCode } from "lucide-react";
-
-const contributors = [
-  { id: 1, name: "John Smith", email: "john@email.com", phone: "(555) 123-4567", defaultFund: "Tithes", totalContributions: 12500, status: "Active" },
-  { id: 2, name: "Mary Johnson", email: "mary@email.com", phone: "(555) 234-5678", defaultFund: "Building Fund", totalContributions: 8900, status: "Active" },
-  { id: 3, name: "David Brown", email: "david@email.com", phone: "(555) 345-6789", defaultFund: "Missions", totalContributions: 5600, status: "Active" },
-  { id: 4, name: "Sarah Wilson", email: "sarah@email.com", phone: "(555) 456-7890", defaultFund: "Youth Ministry", totalContributions: 3200, status: "Inactive" },
-];
+import { useContributors } from "@/hooks/useContributors";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Contributors = () => {
+  const { data: contributors, isLoading } = useContributors();
+  
+  // Fetch contribution totals for each contributor
+  const { data: contributionTotals } = useQuery({
+    queryKey: ['contribution-totals'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contributions')
+        .select(`
+          contributor_id,
+          amount
+        `);
+      
+      if (error) throw error;
+      
+      // Calculate totals by contributor
+      const totals = data.reduce((acc, contribution) => {
+        acc[contribution.contributor_id] = (acc[contribution.contributor_id] || 0) + Number(contribution.amount);
+        return acc;
+      }, {} as Record<string, number>);
+      
+      return totals;
+    }
+  });
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex justify-center items-center h-64">
+          <div className="text-lg">Loading contributors...</div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -50,27 +81,27 @@ const Contributors = () => {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Contact</TableHead>
-                  <TableHead>Default Fund</TableHead>
                   <TableHead>Total Contributions</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {contributors.map((contributor) => (
+                {contributors?.map((contributor) => (
                   <TableRow key={contributor.id}>
                     <TableCell className="font-medium">{contributor.name}</TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        <div>{contributor.email}</div>
-                        <div className="text-gray-500">{contributor.phone}</div>
+                        <div>{contributor.email || 'No email'}</div>
+                        <div className="text-gray-500">{contributor.phone || 'No phone'}</div>
                       </div>
                     </TableCell>
-                    <TableCell>{contributor.defaultFund}</TableCell>
-                    <TableCell>${contributor.totalContributions.toLocaleString()}</TableCell>
                     <TableCell>
-                      <Badge variant={contributor.status === 'Active' ? 'default' : 'secondary'}>
-                        {contributor.status}
+                      ${(contributionTotals?.[contributor.id] || 0).toLocaleString()}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="default">
+                        Active
                       </Badge>
                     </TableCell>
                     <TableCell>
