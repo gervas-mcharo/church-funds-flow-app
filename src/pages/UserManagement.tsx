@@ -1,3 +1,4 @@
+
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,7 +51,7 @@ const UserManagement = () => {
   });
 
   const assignRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+    mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
       const { error } = await supabase
         .from('user_roles')
         .insert({ user_id: userId, role });
@@ -200,7 +201,7 @@ const UserManagement = () => {
                           <TableCell>{userRole.profiles?.email}</TableCell>
                           <TableCell>
                             <Badge className={getRoleBadgeColor(userRole.role)}>
-                              {roleLabels[userRole.role as keyof typeof roleLabels]}
+                              {roleLabels[userRole.role]}
                             </Badge>
                           </TableCell>
                           <TableCell>
