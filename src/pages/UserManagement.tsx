@@ -1,4 +1,3 @@
-
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,10 +11,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import type { Database } from "@/integrations/supabase/types";
+
+type AppRole = Database["public"]["Enums"]["app_role"];
 
 const UserManagement = () => {
   const [selectedUserId, setSelectedUserId] = useState<string>("");
-  const [selectedRole, setSelectedRole] = useState<string>("");
+  const [selectedRole, setSelectedRole] = useState<AppRole | "">("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -86,24 +88,26 @@ const UserManagement = () => {
 
   const handleAssignRole = () => {
     if (selectedUserId && selectedRole) {
-      assignRoleMutation.mutate({ userId: selectedUserId, role: selectedRole });
+      assignRoleMutation.mutate({ userId: selectedUserId, role: selectedRole as AppRole });
     }
   };
 
-  const roleLabels = {
+  const roleLabels: Record<AppRole, string> = {
     administrator: "Administrator",
     data_entry_clerk: "Data Entry Clerk",
     finance_manager: "Finance Manager",
     head_of_department: "Head of Department",
     secretary: "Secretary",
-    treasurer: "Treasurer"
+    treasurer: "Treasurer",
+    department_member: "Department Member"
   };
 
-  const getRoleBadgeColor = (role: string) => {
+  const getRoleBadgeColor = (role: AppRole) => {
     switch (role) {
       case 'administrator': return 'bg-red-100 text-red-800';
       case 'finance_manager': return 'bg-green-100 text-green-800';
       case 'head_of_department': return 'bg-blue-100 text-blue-800';
+      case 'department_member': return 'bg-purple-100 text-purple-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -142,7 +146,7 @@ const UserManagement = () => {
               </div>
               <div>
                 <Label htmlFor="role">Select Role</Label>
-                <Select value={selectedRole} onValueChange={setSelectedRole}>
+                <Select value={selectedRole} onValueChange={(value) => setSelectedRole(value as AppRole)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Choose a role..." />
                   </SelectTrigger>

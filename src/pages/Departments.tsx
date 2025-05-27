@@ -1,4 +1,3 @@
-
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,17 +12,20 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import type { Database } from "@/integrations/supabase/types";
+
+type AppRole = Database["public"]["Enums"]["app_role"];
 
 const Departments = () => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState<string>("");
   const [selectedUser, setSelectedUser] = useState<string>("");
-  const [selectedRole, setSelectedRole] = useState<string>("");
+  const [selectedRole, setSelectedRole] = useState<AppRole | "">("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: departments, isLoading } = useQuery({
+  const { data: departments, isLoading: loadingDepartments } = useQuery({
     queryKey: ['departments'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -36,7 +38,7 @@ const Departments = () => {
     }
   });
 
-  const { data: profiles } = useQuery({
+  const { data: profiles, isLoading: loadingProfiles } = useQuery({
     queryKey: ['profiles'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -49,14 +51,14 @@ const Departments = () => {
     }
   });
 
-  const { data: departmentPersonnel } = useQuery({
+  const { data: departmentPersonnel, isLoading: loadingDepartmentPersonnel } = useQuery({
     queryKey: ['department-personnel'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('department_personnel')
         .select(`
           *,
-          departments(name),
+          departments!inner(name),
           profiles!inner(first_name, last_name, email)
         `);
       
@@ -66,10 +68,10 @@ const Departments = () => {
   });
 
   const createDepartmentMutation = useMutation({
-    mutationFn: async ({ name, description }: { name: string; description: string }) => {
+    mutationFn: async () => {
       const { error } = await supabase
         .from('departments')
-        .insert({ name, description });
+        .insert({ name, description, is_active: true });
       
       if (error) throw error;
     },
@@ -79,13 +81,52 @@ const Departments = () => {
       setName("");
       setDescription("");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({ title: "Error creating department", description: error.message, variant: "destructive" });
     }
   });
 
+  const updateDepartmentMutation = useMutation({
+    mutationFn: async (departmentId: string) => {
+      const { error } = await supabase
+        .from('departments')
+        .update({ name, description })
+        .eq('id', departmentId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Department updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ['departments'] });
+      setSelectedDepartment("");
+      setName("");
+      setDescription("");
+    },
+    onError: (error: any) => {
+      toast({ title: "Error updating department", description: error.message, variant: "destructive" });
+    }
+  });
+
+  const deleteDepartmentMutation = useMutation({
+    mutationFn: async (departmentId: string) => {
+      const { error } = await supabase
+        .from('departments')
+        .delete()
+        .eq('id', departmentId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Department deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ['departments'] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error deleting department", description: error.message, variant: "destructive" });
+    }
+  });
+
   const assignPersonnelMutation = useMutation({
-    mutationFn: async ({ departmentId, userId, role }: { departmentId: string; userId: string; role: string }) => {
+    mutationFn: async ({ departmentId, userId, role }: { departmentId: string; userId: string; role: AppRole }) => {
       const { error } = await supabase
         .from('department_personnel')
         .insert({ department_id: departmentId, user_id: userId, role });
@@ -99,7 +140,7 @@ const Departments = () => {
       setSelectedUser("");
       setSelectedRole("");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({ title: "Error assigning personnel", description: error.message, variant: "destructive" });
     }
   });
@@ -117,56 +158,37 @@ const Departments = () => {
       toast({ title: "Personnel removed successfully" });
       queryClient.invalidateQueries({ queryKey: ['department-personnel'] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({ title: "Error removing personnel", description: error.message, variant: "destructive" });
     }
   });
-
-  const deleteDepartmentMutation = useMutation({
-    mutationFn: async (departmentId: string) => {
-      const { error } = await supabase
-        .from('departments')
-        .delete()
-        .eq('id', departmentId);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({ title: "Department deleted successfully" });
-      queryClient.invalidateQueries({ queryKey: ['departments'] });
-    },
-    onError: (error) => {
-      toast({ title: "Error deleting department", description: error.message, variant: "destructive" });
-    }
-  });
-
-  const handleCreateDepartment = () => {
-    if (name.trim()) {
-      createDepartmentMutation.mutate({ name: name.trim(), description: description.trim() });
-    }
-  };
 
   const handleAssignPersonnel = () => {
     if (selectedDepartment && selectedUser && selectedRole) {
       assignPersonnelMutation.mutate({ 
         departmentId: selectedDepartment, 
         userId: selectedUser, 
-        role: selectedRole 
+        role: selectedRole as AppRole 
       });
     }
   };
 
-  const roleLabels = {
+  const roleLabels: Record<AppRole, string> = {
+    administrator: "Administrator",
+    data_entry_clerk: "Data Entry Clerk", 
+    finance_manager: "Finance Manager",
     head_of_department: "Head of Department",
     secretary: "Secretary",
-    treasurer: "Treasurer"
+    treasurer: "Treasurer",
+    department_member: "Department Member"
   };
 
-  const getRoleBadgeColor = (role: string) => {
+  const getRoleBadgeColor = (role: AppRole) => {
     switch (role) {
       case 'head_of_department': return 'bg-blue-100 text-blue-800';
       case 'secretary': return 'bg-green-100 text-green-800';
       case 'treasurer': return 'bg-yellow-100 text-yellow-800';
+      case 'department_member': return 'bg-purple-100 text-purple-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -183,7 +205,7 @@ const Departments = () => {
           <Card className="bg-white shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Plus className="h-5 w-5" />
+                <Folder className="h-5 w-5" />
                 Add New Department
               </CardTitle>
             </CardHeader>
@@ -192,25 +214,24 @@ const Departments = () => {
                 <Label htmlFor="name">Department Name</Label>
                 <Input 
                   id="name" 
-                  placeholder="e.g., Youth Ministry" 
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)} 
+                  placeholder="Enter department name" 
                 />
               </div>
               <div>
                 <Label htmlFor="description">Description</Label>
-                <Textarea 
-                  id="description" 
-                  placeholder="Brief description of this department..."
-                  rows={3}
+                <Textarea
+                  id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Enter department description"
                 />
               </div>
               <Button 
                 className="w-full" 
-                onClick={handleCreateDepartment}
-                disabled={!name.trim() || createDepartmentMutation.isPending}
+                onClick={() => createDepartmentMutation.mutate()}
+                disabled={createDepartmentMutation.isPending}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Department
@@ -258,16 +279,15 @@ const Departments = () => {
               </div>
               <div>
                 <Label htmlFor="role">Role</Label>
-                <Select value={selectedRole} onValueChange={setSelectedRole}>
+                <Select value={selectedRole} onValueChange={(value) => setSelectedRole(value as AppRole)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Choose role..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(roleLabels).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="head_of_department">Head of Department</SelectItem>
+                    <SelectItem value="secretary">Secretary</SelectItem>
+                    <SelectItem value="treasurer">Treasurer</SelectItem>
+                    <SelectItem value="department_member">Department Member</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -283,76 +303,75 @@ const Departments = () => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="bg-white shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Folder className="h-5 w-5" />
-                Departments
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="text-center py-8">Loading departments...</div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {departments?.map((department) => (
-                      <TableRow key={department.id}>
-                        <TableCell className="font-medium">
-                          <div>
-                            <div>{department.name}</div>
-                            {department.description && (
-                              <div className="text-sm text-gray-500">{department.description}</div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            department.is_active 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {department.is_active ? 'Active' : 'Inactive'}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => deleteDepartmentMutation.mutate(department.id)}
-                            disabled={deleteDepartmentMutation.isPending}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Department Personnel
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+        <Card className="bg-white shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Folder className="h-5 w-5" />
+              Departments
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingDepartments ? (
+              <div className="text-center py-8">Loading departments...</div>
+            ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Person</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {departments?.map((department) => (
+                    <TableRow key={department.id}>
+                      <TableCell className="font-medium">{department.name}</TableCell>
+                      <TableCell>{department.description}</TableCell>
+                      <TableCell>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedDepartment(department.id);
+                            setName(department.name);
+                            setDescription(department.description);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="destructive"
+                          onClick={() => deleteDepartmentMutation.mutate(department.id)}
+                          disabled={deleteDepartmentMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Department Personnel
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingDepartmentPersonnel ? (
+              <div className="text-center py-8">Loading department personnel...</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
                     <TableHead>Department</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Actions</TableHead>
@@ -364,6 +383,7 @@ const Departments = () => {
                       <TableCell className="font-medium">
                         {personnel.profiles?.first_name} {personnel.profiles?.last_name}
                       </TableCell>
+                      <TableCell>{personnel.profiles?.email}</TableCell>
                       <TableCell>{personnel.departments?.name}</TableCell>
                       <TableCell>
                         <Badge className={getRoleBadgeColor(personnel.role)}>
@@ -384,9 +404,9 @@ const Departments = () => {
                   ))}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );
