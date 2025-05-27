@@ -8,12 +8,21 @@ import { ReportTable } from "./ReportTable";
 import { ReportCharts } from "./ReportCharts";
 import { ExportButtons } from "./ExportButtons";
 
-interface ReportResultsProps {
-  filters: ReportFilters;
+interface SearchFilters {
+  searchTerm: string;
+  amountMin?: number;
+  amountMax?: number;
+  fundTypeFilter?: string;
+  contributorFilter?: string;
 }
 
-export function ReportResults({ filters }: ReportResultsProps) {
-  const { data: reportData, isLoading, error } = useReportData(filters);
+interface ReportResultsProps {
+  filters: ReportFilters;
+  searchFilters?: SearchFilters;
+}
+
+export function ReportResults({ filters, searchFilters }: ReportResultsProps) {
+  const { data: reportData, isLoading, error } = useReportData(filters, searchFilters);
 
   if (isLoading) {
     return (
@@ -42,17 +51,36 @@ export function ReportResults({ filters }: ReportResultsProps) {
         <CardContent className="p-8 text-center">
           <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No Data Found</h3>
-          <p className="text-gray-600">No contributions found for the selected criteria.</p>
+          <p className="text-gray-600">
+            {searchFilters?.searchTerm ? 
+              `No contributions found matching "${searchFilters.searchTerm}" for the selected criteria.` :
+              "No contributions found for the selected criteria."
+            }
+          </p>
         </CardContent>
       </Card>
     );
   }
 
+  const resultCount = reportData.length;
+  const hasSearchFilters = searchFilters && (
+    searchFilters.searchTerm || 
+    searchFilters.amountMin !== undefined || 
+    searchFilters.amountMax !== undefined || 
+    searchFilters.fundTypeFilter || 
+    searchFilters.contributorFilter
+  );
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg font-semibold">Report Results</CardTitle>
+          <div>
+            <CardTitle className="text-lg font-semibold">Report Results</CardTitle>
+            <p className="text-sm text-gray-600 mt-1">
+              {hasSearchFilters ? `${resultCount} results found` : `Showing ${resultCount} contributions`}
+            </p>
+          </div>
           <ExportButtons data={reportData} filters={filters} />
         </CardHeader>
         <CardContent>
