@@ -77,7 +77,7 @@ export const useAdvancedAnalytics = (filters: ReportFilters) => {
         if (!acc[month]) {
           acc[month] = { amount: 0, count: 0 };
         }
-        acc[month].amount += parseFloat(contribution.amount);
+        acc[month].amount += parseFloat(contribution.amount.toString());
         acc[month].count += 1;
         return acc;
       }, {} as Record<string, { amount: number; count: number }>);
@@ -109,14 +109,14 @@ export const useAdvancedAnalytics = (filters: ReportFilters) => {
             const date = parseISO(c.contribution_date);
             return date.getFullYear() === currentYear && format(date, 'MM') === monthKey;
           })
-          .reduce((sum, c) => sum + parseFloat(c.amount), 0);
+          .reduce((sum, c) => sum + parseFloat(c.amount.toString()), 0);
 
         const previousYearData = contributions
           .filter(c => {
             const date = parseISO(c.contribution_date);
             return date.getFullYear() === currentYear - 1 && format(date, 'MM') === monthKey;
           })
-          .reduce((sum, c) => sum + parseFloat(c.amount), 0);
+          .reduce((sum, c) => sum + parseFloat(c.amount.toString()), 0);
 
         const growthPercentage = previousYearData > 0 
           ? ((currentYearData - previousYearData) / previousYearData) * 100
@@ -141,7 +141,7 @@ export const useAdvancedAnalytics = (filters: ReportFilters) => {
             lastContribution: contribution.contribution_date
           };
         }
-        acc[contributorId].totalAmount += parseFloat(contribution.amount);
+        acc[contributorId].totalAmount += parseFloat(contribution.amount.toString());
         acc[contributorId].contributionCount += 1;
         if (new Date(contribution.contribution_date) > new Date(acc[contributorId].lastContribution)) {
           acc[contributorId].lastContribution = contribution.contribution_date;
@@ -164,9 +164,10 @@ export const useAdvancedAnalytics = (filters: ReportFilters) => {
         if (!acc[fundType]) {
           acc[fundType] = { totalAmount: 0, contributionCount: 0, amounts: [] };
         }
-        acc[fundType].totalAmount += parseFloat(contribution.amount);
+        const amount = parseFloat(contribution.amount.toString());
+        acc[fundType].totalAmount += amount;
         acc[fundType].contributionCount += 1;
-        acc[fundType].amounts.push(parseFloat(contribution.amount));
+        acc[fundType].amounts.push(amount);
         return acc;
       }, {} as Record<string, any>);
 
@@ -179,7 +180,7 @@ export const useAdvancedAnalytics = (filters: ReportFilters) => {
       }));
 
       // Calculate diversification index (Herfindahl-Hirschman Index)
-      const totalAmount = contributions.reduce((sum, c) => sum + parseFloat(c.amount), 0);
+      const totalAmount = contributions.reduce((sum, c) => sum + parseFloat(c.amount.toString()), 0);
       const diversificationIndex = Object.values(fundTypeStats).reduce((acc: number, stats: any) => {
         const marketShare = stats.totalAmount / totalAmount;
         return acc + (marketShare * marketShare);

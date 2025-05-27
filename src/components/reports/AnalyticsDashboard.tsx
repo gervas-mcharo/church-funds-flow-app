@@ -1,182 +1,202 @@
 
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart3, TrendingUp, Users, Target, Download } from "lucide-react";
-import { ReportFilters } from "@/pages/Reports";
 import { AdvancedAnalytics } from "./AdvancedAnalytics";
-import { ReportCharts } from "./ReportCharts";
+import { AdvancedCharts } from "./AdvancedCharts";
+import { useAdvancedAnalytics } from "@/hooks/useAdvancedAnalytics";
+import { ReportFilters } from "@/pages/Reports";
+import { TrendingUp, Users, DollarSign, Target } from "lucide-react";
+import { useState } from "react";
 
 interface AnalyticsDashboardProps {
   filters: ReportFilters;
   data: any[];
 }
 
-export function AnalyticsDashboard({ filters, data }: AnalyticsDashboardProps) {
-  const [analyticsView, setAnalyticsView] = useState<'overview' | 'detailed' | 'predictive'>('overview');
+type AnalyticsView = "overview" | "detailed" | "predictive";
 
-  const exportAnalytics = () => {
-    // Implementation for exporting analytics data
-    console.log('Exporting analytics data...');
+export function AnalyticsDashboard({ filters, data }: AnalyticsDashboardProps) {
+  const [activeView, setActiveView] = useState<AnalyticsView>("overview");
+  const { data: analytics, isLoading, error } = useAdvancedAnalytics(filters);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6">
+                <div className="h-8 bg-gray-200 rounded mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-red-600">Error loading analytics: {error.message}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!analytics) return null;
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
   };
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-xl font-bold flex items-center gap-2">
-              <BarChart3 className="h-6 w-6 text-blue-600" />
-              Advanced Analytics Dashboard
-            </CardTitle>
-            <p className="text-gray-600 mt-1">
-              Comprehensive insights and predictive analytics for contribution data
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Select value={analyticsView} onValueChange={(value: any) => setAnalyticsView(value)}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="overview">Overview</SelectItem>
-                <SelectItem value="detailed">Detailed</SelectItem>
-                <SelectItem value="predictive">Predictive</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" size="sm" onClick={exportAnalytics}>
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={analyticsView} onValueChange={setAnalyticsView} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="overview" className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4" />
-                Overview
-              </TabsTrigger>
-              <TabsTrigger value="detailed" className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
-                Detailed
-              </TabsTrigger>
-              <TabsTrigger value="predictive" className="flex items-center gap-2">
-                <Target className="h-4 w-4" />
-                Predictive
-              </TabsTrigger>
-            </TabsList>
+      <Tabs value={activeView} onValueChange={(value) => setActiveView(value as AnalyticsView)} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="detailed">Detailed Analysis</TabsTrigger>
+          <TabsTrigger value="predictive">Predictive Insights</TabsTrigger>
+        </TabsList>
 
-            <TabsContent value="overview" className="mt-6">
-              <div className="space-y-6">
-                <ReportCharts data={data} filters={filters} />
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium text-gray-600">
-                        Quick Insights
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Total Contributions:</span>
-                        <span className="font-semibold">{data.length}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Active Fund Types:</span>
-                        <span className="font-semibold">
-                          {new Set(data.map(d => d.fund_types?.name)).size}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Unique Contributors:</span>
-                        <span className="font-semibold">
-                          {new Set(data.map(d => d.contributor_id)).size}
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium text-gray-600">
-                        Performance Metrics
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Avg. Contribution:</span>
-                        <span className="font-semibold">
-                          ${(data.reduce((sum, d) => sum + parseFloat(d.amount), 0) / data.length).toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Largest Contribution:</span>
-                        <span className="font-semibold">
-                          ${Math.max(...data.map(d => parseFloat(d.amount))).toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Growth Trend:</span>
-                        <span className="font-semibold text-green-600">↑ Positive</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium text-gray-600">
-                        Data Quality
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Complete Records:</span>
-                        <span className="font-semibold">
-                          {data.filter(d => d.contributors?.name && d.fund_types?.name).length}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>With Notes:</span>
-                        <span className="font-semibold">
-                          {data.filter(d => d.notes).length}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Data Quality:</span>
-                        <span className="font-semibold text-green-600">Excellent</span>
-                      </div>
-                    </CardContent>
-                  </Card>
+        <TabsContent value="overview" className="space-y-6">
+          {/* Key Metrics Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Projected Monthly</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {formatCurrency(analytics.predictiveInsights.projectedMonthlyTotal)}
                 </div>
-              </div>
-            </TabsContent>
+                <p className="text-xs text-muted-foreground">
+                  {(analytics.predictiveInsights.confidenceLevel * 100).toFixed(0)}% confidence
+                </p>
+              </CardContent>
+            </Card>
 
-            <TabsContent value="detailed" className="mt-6">
-              <AdvancedAnalytics filters={filters} />
-            </TabsContent>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Top Contributors</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {analytics.contributorInsights.topContributors.length}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Active contributors
+                </p>
+              </CardContent>
+            </Card>
 
-            <TabsContent value="predictive" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                    <Target className="h-5 w-5" />
-                    Predictive Analytics
-                  </CardTitle>
-                  <p className="text-sm text-gray-600">
-                    AI-powered insights and forecasting based on historical data patterns
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Fund Diversity</CardTitle>
+                <Target className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {(analytics.fundTypeAnalysis.diversificationIndex * 100).toFixed(1)}%
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Diversification index
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Fund Types</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {analytics.fundTypeAnalysis.performance.length}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Active fund types
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Overview Charts */}
+          <AdvancedCharts analytics={analytics} />
+        </TabsContent>
+
+        <TabsContent value="detailed" className="space-y-6">
+          <AdvancedAnalytics analytics={analytics} />
+        </TabsContent>
+
+        <TabsContent value="predictive" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Predictive Insights</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h4 className="font-semibold">Monthly Projection</h4>
+                  <p className="text-2xl font-bold text-green-600">
+                    {formatCurrency(analytics.predictiveInsights.projectedMonthlyTotal)}
                   </p>
-                </CardHeader>
-                <CardContent>
-                  <AdvancedAnalytics filters={filters} />
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+                  <p className="text-sm text-gray-600">
+                    Based on recent trends
+                  </p>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold">Yearly Projection</h4>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {formatCurrency(analytics.predictiveInsights.projectedYearlyTotal)}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Confidence: {(analytics.predictiveInsights.confidenceLevel * 100).toFixed(0)}%
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Growth Recommendations</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <h5 className="font-medium text-blue-900">Focus on Top Performers</h5>
+                    <p className="text-sm text-blue-700">
+                      Target outreach to your top {Math.min(5, analytics.contributorInsights.topContributors.length)} contributors
+                    </p>
+                  </div>
+                  
+                  <div className="p-3 bg-green-50 rounded-lg">
+                    <h5 className="font-medium text-green-900">Diversify Fund Types</h5>
+                    <p className="text-sm text-green-700">
+                      Current diversification: {(analytics.fundTypeAnalysis.diversificationIndex * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                  
+                  <div className="p-3 bg-purple-50 rounded-lg">
+                    <h5 className="font-medium text-purple-900">Seasonal Planning</h5>
+                    <p className="text-sm text-purple-700">
+                      Plan campaigns based on historical trends
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
