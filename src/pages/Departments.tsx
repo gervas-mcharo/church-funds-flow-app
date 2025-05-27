@@ -22,6 +22,7 @@ const Departments = () => {
   const [selectedDepartment, setSelectedDepartment] = useState<string>("");
   const [selectedUser, setSelectedUser] = useState<string>("");
   const [selectedRole, setSelectedRole] = useState<AppRole | "">("");
+  const [editingDepartment, setEditingDepartment] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -173,14 +174,26 @@ const Departments = () => {
     }
   };
 
+  const handleUpdateDepartment = () => {
+    if (editingDepartment && name.trim()) {
+      updateDepartmentMutation.mutate(editingDepartment);
+    }
+  };
+
   const roleLabels: Record<AppRole, string> = {
+    super_administrator: "Super Administrator",
     administrator: "Administrator",
-    data_entry_clerk: "Data Entry Clerk", 
+    finance_administrator: "Finance Administrator", 
+    pastor: "Pastor",
+    general_secretary: "General Secretary",
+    finance_elder: "Finance Elder",
+    data_entry_clerk: "Data Entry Clerk",
     finance_manager: "Finance Manager",
     head_of_department: "Head of Department",
     secretary: "Secretary",
     treasurer: "Treasurer",
-    department_member: "Department Member"
+    department_member: "Department Member",
+    contributor: "Contributor"
   };
 
   const getRoleBadgeColor = (role: AppRole) => {
@@ -189,8 +202,24 @@ const Departments = () => {
       case 'secretary': return 'bg-green-100 text-green-800';
       case 'treasurer': return 'bg-yellow-100 text-yellow-800';
       case 'department_member': return 'bg-purple-100 text-purple-800';
+      case 'pastor': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'finance_elder': return 'bg-orange-100 text-orange-800';
+      case 'data_entry_clerk': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  // Get department-relevant roles
+  const getDepartmentRoles = () => {
+    return [
+      'head_of_department',
+      'secretary', 
+      'treasurer',
+      'department_member',
+      'pastor',
+      'finance_elder',
+      'data_entry_clerk'
+    ];
   };
 
   return (
@@ -206,7 +235,7 @@ const Departments = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Folder className="h-5 w-5" />
-                Add New Department
+                {editingDepartment ? "Edit Department" : "Add New Department"}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -228,14 +257,28 @@ const Departments = () => {
                   placeholder="Enter department description"
                 />
               </div>
-              <Button 
-                className="w-full" 
-                onClick={() => createDepartmentMutation.mutate()}
-                disabled={createDepartmentMutation.isPending}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Department
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  className="flex-1" 
+                  onClick={editingDepartment ? handleUpdateDepartment : () => createDepartmentMutation.mutate()}
+                  disabled={createDepartmentMutation.isPending || updateDepartmentMutation.isPending}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {editingDepartment ? "Update Department" : "Add Department"}
+                </Button>
+                {editingDepartment && (
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setEditingDepartment("");
+                      setName("");
+                      setDescription("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -284,10 +327,11 @@ const Departments = () => {
                     <SelectValue placeholder="Choose role..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="head_of_department">Head of Department</SelectItem>
-                    <SelectItem value="secretary">Secretary</SelectItem>
-                    <SelectItem value="treasurer">Treasurer</SelectItem>
-                    <SelectItem value="department_member">Department Member</SelectItem>
+                    {getDepartmentRoles().map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {roleLabels[role as AppRole]}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -332,7 +376,7 @@ const Departments = () => {
                           size="sm" 
                           variant="outline"
                           onClick={() => {
-                            setSelectedDepartment(department.id);
+                            setEditingDepartment(department.id);
                             setName(department.name);
                             setDescription(department.description);
                           }}

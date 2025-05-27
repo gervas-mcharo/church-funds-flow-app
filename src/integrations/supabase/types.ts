@@ -301,6 +301,12 @@ export type Database = {
         | "secretary"
         | "treasurer"
         | "department_member"
+        | "super_administrator"
+        | "finance_administrator"
+        | "pastor"
+        | "general_secretary"
+        | "finance_elder"
+        | "contributor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -424,6 +430,12 @@ export const Constants = {
         "secretary",
         "treasurer",
         "department_member",
+        "super_administrator",
+        "finance_administrator",
+        "pastor",
+        "general_secretary",
+        "finance_elder",
+        "contributor",
       ],
     },
   },

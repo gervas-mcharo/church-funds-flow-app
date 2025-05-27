@@ -1,4 +1,3 @@
-
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { User, UserPlus, Edit, Trash2 } from "lucide-react";
+import { User, UserPlus, Edit, Trash2, Shield } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
@@ -19,6 +18,8 @@ type AppRole = Database["public"]["Enums"]["app_role"];
 const UserManagement = () => {
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedRole, setSelectedRole] = useState<AppRole | "">("");
+  const [editingRoleId, setEditingRoleId] = useState<string>("");
+  const [newRole, setNewRole] = useState<AppRole | "">("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -87,31 +88,79 @@ const UserManagement = () => {
     }
   });
 
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ roleId, newRole }: { roleId: string; newRole: AppRole }) => {
+      const { error } = await supabase
+        .from('user_roles')
+        .update({ role: newRole })
+        .eq('id', roleId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Role updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ['user-roles'] });
+      setEditingRoleId("");
+      setNewRole("");
+    },
+    onError: (error) => {
+      toast({ title: "Error updating role", description: error.message, variant: "destructive" });
+    }
+  });
+
   const handleAssignRole = () => {
     if (selectedUserId && selectedRole) {
       assignRoleMutation.mutate({ userId: selectedUserId, role: selectedRole as AppRole });
     }
   };
 
+  const handleUpdateRole = () => {
+    if (editingRoleId && newRole) {
+      updateRoleMutation.mutate({ roleId: editingRoleId, newRole: newRole as AppRole });
+    }
+  };
+
   const roleLabels: Record<AppRole, string> = {
+    super_administrator: "Super Administrator",
     administrator: "Administrator",
+    finance_administrator: "Finance Administrator", 
+    pastor: "Pastor",
+    general_secretary: "General Secretary",
+    finance_elder: "Finance Elder",
     data_entry_clerk: "Data Entry Clerk",
     finance_manager: "Finance Manager",
     head_of_department: "Head of Department",
     secretary: "Secretary",
     treasurer: "Treasurer",
-    department_member: "Department Member"
+    department_member: "Department Member",
+    contributor: "Contributor"
   };
 
   const getRoleBadgeColor = (role: AppRole) => {
     switch (role) {
+      case 'super_administrator': return 'bg-red-100 text-red-800 border-red-200';
       case 'administrator': return 'bg-red-100 text-red-800';
+      case 'finance_administrator': return 'bg-orange-100 text-orange-800';
+      case 'pastor': return 'bg-purple-100 text-purple-800';
+      case 'general_secretary': return 'bg-indigo-100 text-indigo-800';
+      case 'finance_elder': return 'bg-yellow-100 text-yellow-800';
       case 'finance_manager': return 'bg-green-100 text-green-800';
       case 'head_of_department': return 'bg-blue-100 text-blue-800';
       case 'department_member': return 'bg-purple-100 text-purple-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  const getRolesByCategory = () => {
+    return {
+      leadership: ['super_administrator', 'administrator', 'pastor', 'general_secretary'],
+      financial: ['finance_administrator', 'finance_manager', 'finance_elder', 'treasurer'],
+      departmental: ['head_of_department', 'secretary', 'department_member'],
+      operational: ['data_entry_clerk', 'contributor']
+    };
+  };
+
+  const roleCategories = getRolesByCategory();
 
   return (
     <DashboardLayout>
@@ -125,7 +174,7 @@ const UserManagement = () => {
           <Card className="bg-white shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <UserPlus className="h-5 w-5" />
+                <Shield className="h-5 w-5" />
                 Assign Role
               </CardTitle>
             </CardHeader>
@@ -145,6 +194,7 @@ const UserManagement = () => {
                   </SelectContent>
                 </Select>
               </div>
+              
               <div>
                 <Label htmlFor="role">Select Role</Label>
                 <Select value={selectedRole} onValueChange={(value) => setSelectedRole(value as AppRole)}>
@@ -152,14 +202,39 @@ const UserManagement = () => {
                     <SelectValue placeholder="Choose a role..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(roleLabels).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    ))}
+                    <div className="space-y-2">
+                      <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">Leadership</div>
+                      {roleCategories.leadership.map((role) => (
+                        <SelectItem key={role} value={role}>
+                          {roleLabels[role as AppRole]}
+                        </SelectItem>
+                      ))}
+                      
+                      <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">Financial</div>
+                      {roleCategories.financial.map((role) => (
+                        <SelectItem key={role} value={role}>
+                          {roleLabels[role as AppRole]}
+                        </SelectItem>
+                      ))}
+                      
+                      <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">Departmental</div>
+                      {roleCategories.departmental.map((role) => (
+                        <SelectItem key={role} value={role}>
+                          {roleLabels[role as AppRole]}
+                        </SelectItem>
+                      ))}
+                      
+                      <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">Operational</div>
+                      {roleCategories.operational.map((role) => (
+                        <SelectItem key={role} value={role}>
+                          {roleLabels[role as AppRole]}
+                        </SelectItem>
+                      ))}
+                    </div>
                   </SelectContent>
                 </Select>
               </div>
+              
               <Button 
                 className="w-full" 
                 onClick={handleAssignRole}
@@ -200,19 +275,59 @@ const UserManagement = () => {
                           </TableCell>
                           <TableCell>{userRole.profiles?.email}</TableCell>
                           <TableCell>
-                            <Badge className={getRoleBadgeColor(userRole.role)}>
-                              {roleLabels[userRole.role]}
-                            </Badge>
+                            {editingRoleId === userRole.id ? (
+                              <div className="flex items-center gap-2">
+                                <Select value={newRole} onValueChange={(value) => setNewRole(value as AppRole)}>
+                                  <SelectTrigger className="w-48">
+                                    <SelectValue placeholder="Select new role..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {Object.entries(roleLabels).map(([value, label]) => (
+                                      <SelectItem key={value} value={value}>
+                                        {label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <Button size="sm" onClick={handleUpdateRole} disabled={updateRoleMutation.isPending}>
+                                  Save
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => {
+                                  setEditingRoleId("");
+                                  setNewRole("");
+                                }}>
+                                  Cancel
+                                </Button>
+                              </div>
+                            ) : (
+                              <Badge className={getRoleBadgeColor(userRole.role)}>
+                                {roleLabels[userRole.role]}
+                              </Badge>
+                            )}
                           </TableCell>
                           <TableCell>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => removeRoleMutation.mutate(userRole.id)}
-                              disabled={removeRoleMutation.isPending}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              {editingRoleId !== userRole.id && (
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => {
+                                    setEditingRoleId(userRole.id);
+                                    setNewRole(userRole.role);
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              )}
+                              <Button 
+                                size="sm" 
+                                variant="destructive"
+                                onClick={() => removeRoleMutation.mutate(userRole.id)}
+                                disabled={removeRoleMutation.isPending}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
