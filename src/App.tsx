@@ -10,6 +10,9 @@ import Contributors from "./pages/Contributors";
 import FundTypes from "./pages/FundTypes";
 import Departments from "./pages/Departments";
 import Reports from "./pages/Reports";
+import UserManagement from "./pages/UserManagement";
+import MoneyRequests from "./pages/MoneyRequests";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,7 +29,10 @@ const App = () => (
           <Route path="/contributors" element={<Contributors />} />
           <Route path="/fund-types" element={<FundTypes />} />
           <Route path="/departments" element={<Departments />} />
+          <Route path="/money-requests" element={<MoneyRequests />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/user-management" element={<UserManagement />} />
+          <Route path="/settings" element={<Settings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
