@@ -9,6 +9,57 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      approval_chain: {
+        Row: {
+          approval_date: string | null
+          approver_id: string | null
+          approver_role: Database["public"]["Enums"]["app_role"]
+          comments: string | null
+          created_at: string
+          id: string
+          is_approved: boolean | null
+          money_request_id: string
+          step_order: number
+        }
+        Insert: {
+          approval_date?: string | null
+          approver_id?: string | null
+          approver_role: Database["public"]["Enums"]["app_role"]
+          comments?: string | null
+          created_at?: string
+          id?: string
+          is_approved?: boolean | null
+          money_request_id: string
+          step_order: number
+        }
+        Update: {
+          approval_date?: string | null
+          approver_id?: string | null
+          approver_role?: Database["public"]["Enums"]["app_role"]
+          comments?: string | null
+          created_at?: string
+          id?: string
+          is_approved?: boolean | null
+          money_request_id?: string
+          step_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_chain_approver_id_fkey"
+            columns: ["approver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "approval_chain_money_request_id_fkey"
+            columns: ["money_request_id"]
+            isOneToOne: false
+            referencedRelation: "money_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contributions: {
         Row: {
           amount: number
@@ -178,6 +229,66 @@ export type Database = {
         }
         Relationships: []
       }
+      money_requests: {
+        Row: {
+          amount: number
+          associated_project: string | null
+          created_at: string
+          fund_budget_code: string | null
+          id: string
+          purpose: string
+          request_date: string
+          requester_id: string
+          requesting_department_id: string
+          status: Database["public"]["Enums"]["money_request_status"]
+          suggested_vendor: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          associated_project?: string | null
+          created_at?: string
+          fund_budget_code?: string | null
+          id?: string
+          purpose: string
+          request_date?: string
+          requester_id: string
+          requesting_department_id: string
+          status?: Database["public"]["Enums"]["money_request_status"]
+          suggested_vendor?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          associated_project?: string | null
+          created_at?: string
+          fund_budget_code?: string | null
+          id?: string
+          purpose?: string
+          request_date?: string
+          requester_id?: string
+          requesting_department_id?: string
+          status?: Database["public"]["Enums"]["money_request_status"]
+          suggested_vendor?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "money_requests_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "money_requests_requesting_department_id_fkey"
+            columns: ["requesting_department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -250,6 +361,54 @@ export type Database = {
           },
         ]
       }
+      request_attachments: {
+        Row: {
+          content_type: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          money_request_id: string
+          uploaded_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          content_type?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          money_request_id: string
+          uploaded_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          content_type?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          money_request_id?: string
+          uploaded_at?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_attachments_money_request_id_fkey"
+            columns: ["money_request_id"]
+            isOneToOne: false
+            referencedRelation: "money_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "request_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -284,6 +443,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_approval_chain: {
+        Args: { request_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _user_id: string
@@ -307,6 +470,15 @@ export type Database = {
         | "general_secretary"
         | "finance_elder"
         | "contributor"
+      money_request_status:
+        | "submitted"
+        | "pending_hod_approval"
+        | "pending_finance_elder_approval"
+        | "pending_general_secretary_approval"
+        | "pending_pastor_approval"
+        | "approved"
+        | "rejected"
+        | "paid"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -436,6 +608,16 @@ export const Constants = {
         "general_secretary",
         "finance_elder",
         "contributor",
+      ],
+      money_request_status: [
+        "submitted",
+        "pending_hod_approval",
+        "pending_finance_elder_approval",
+        "pending_general_secretary_approval",
+        "pending_pastor_approval",
+        "approved",
+        "rejected",
+        "paid",
       ],
     },
   },

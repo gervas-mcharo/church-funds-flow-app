@@ -1,7 +1,10 @@
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileText, Plus, List } from "lucide-react";
+import { MoneyRequestForm } from "@/components/money-requests/MoneyRequestForm";
+import { MoneyRequestsList } from "@/components/money-requests/MoneyRequestsList";
 
 const MoneyRequests = () => {
   return (
@@ -12,23 +15,26 @@ const MoneyRequests = () => {
           <p className="text-gray-600 mt-1">Manage financial requests and approvals</p>
         </div>
 
-        <Card className="bg-white shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Money Requests System
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-12">
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Coming Soon</h3>
-              <p className="text-gray-600">
-                Money requests functionality will be implemented here to manage financial requests and approvals.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="list" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="list" className="flex items-center gap-2">
+              <List className="h-4 w-4" />
+              View Requests
+            </TabsTrigger>
+            <TabsTrigger value="create" className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              New Request
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="list" className="space-y-6">
+            <MoneyRequestsList />
+          </TabsContent>
+
+          <TabsContent value="create" className="space-y-6">
+            <MoneyRequestForm />
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
