@@ -16,15 +16,23 @@ import { useCurrencySettings } from "@/hooks/useCurrencySettings";
 const Pledges = () => {
   const [filters, setFilters] = useState({
     search: "",
-    status: "",
-    contributor_id: "",
-    fund_type_id: ""
+    status: "all",
+    contributor_id: "all",
+    fund_type_id: "all"
   });
   const [selectedPledge, setSelectedPledge] = useState<Pledge | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'pledges' | 'reports'>('pledges');
 
-  const { data: pledges = [], isLoading } = usePledges(filters);
+  // Convert "all" values to empty strings for the API
+  const apiFilters = {
+    search: filters.search,
+    status: filters.status === "all" ? "" : filters.status,
+    contributor_id: filters.contributor_id === "all" ? "" : filters.contributor_id,
+    fund_type_id: filters.fund_type_id === "all" ? "" : filters.fund_type_id
+  };
+
+  const { data: pledges = [], isLoading } = usePledges(apiFilters);
   const { data: stats } = usePledgeStats();
   const { formatAmount } = useCurrencySettings();
 
@@ -162,7 +170,7 @@ const Pledges = () => {
                 <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No pledges found</h3>
                 <p className="text-gray-600 mb-4">
-                  {filters.search || filters.status || filters.contributor_id || filters.fund_type_id
+                  {filters.search || filters.status !== "all" || filters.contributor_id !== "all" || filters.fund_type_id !== "all"
                     ? "Try adjusting your filters to see more results."
                     : "Get started by creating your first pledge."}
                 </p>

@@ -38,7 +38,7 @@ export function PledgeFilters({ filters, onFiltersChange }: PledgeFiltersProps) 
           <SelectValue placeholder="All Statuses" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Statuses</SelectItem>
+          <SelectItem value="all">All Statuses</SelectItem>
           <SelectItem value="active">Active</SelectItem>
           <SelectItem value="upcoming">Upcoming</SelectItem>
           <SelectItem value="partially_fulfilled">Partially Fulfilled</SelectItem>
@@ -53,7 +53,7 @@ export function PledgeFilters({ filters, onFiltersChange }: PledgeFiltersProps) 
           <SelectValue placeholder="All Contributors" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Contributors</SelectItem>
+          <SelectItem value="all">All Contributors</SelectItem>
           {contributors.map((contributor) => (
             <SelectItem key={contributor.id} value={contributor.id}>
               {contributor.name}
@@ -67,7 +67,7 @@ export function PledgeFilters({ filters, onFiltersChange }: PledgeFiltersProps) 
           <SelectValue placeholder="All Fund Types" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Fund Types</SelectItem>
+          <SelectItem value="all">All Fund Types</SelectItem>
           {fundTypes.map((fund) => (
             <SelectItem key={fund.id} value={fund.id}>
               {fund.name}
