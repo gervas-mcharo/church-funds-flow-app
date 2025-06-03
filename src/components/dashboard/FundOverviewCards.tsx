@@ -1,5 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCurrencySettings } from "@/hooks/useCurrencySettings";
 
 const fundData = [
   { name: "Tithes & Offerings", amount: 15750, change: "+12%", color: "text-green-600" },
@@ -9,6 +10,8 @@ const fundData = [
 ];
 
 export function FundOverviewCards() {
+  const { formatAmount } = useCurrencySettings();
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {fundData.map((fund) => (
@@ -19,7 +22,7 @@ export function FundOverviewCards() {
           <CardContent>
             <div className="flex items-baseline justify-between">
               <span className="text-2xl font-bold text-gray-900">
-                ${fund.amount.toLocaleString()}
+                {formatAmount(fund.amount)}
               </span>
               <span className={`text-sm font-medium ${fund.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
                 {fund.change}

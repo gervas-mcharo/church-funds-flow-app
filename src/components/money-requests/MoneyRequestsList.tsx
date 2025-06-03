@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Clock, DollarSign } from "lucide-react";
 import { useMoneyRequests } from "@/hooks/useMoneyRequests";
+import { useCurrencySettings } from "@/hooks/useCurrencySettings";
 import { MoneyRequestDetails } from "./MoneyRequestDetails";
 import { useState } from "react";
 import type { Database } from "@/integrations/supabase/types";
@@ -37,6 +38,7 @@ const statusLabels = {
 
 export function MoneyRequestsList() {
   const { data: requests, isLoading } = useMoneyRequests();
+  const { formatAmount } = useCurrencySettings();
   const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
 
   if (isLoading) {
@@ -100,7 +102,7 @@ export function MoneyRequestsList() {
                     }
                   </TableCell>
                   <TableCell>
-                    ${parseFloat(request.amount.toString()).toFixed(2)}
+                    {formatAmount(parseFloat(request.amount.toString()))}
                   </TableCell>
                   <TableCell className="max-w-xs truncate">
                     {request.purpose}
