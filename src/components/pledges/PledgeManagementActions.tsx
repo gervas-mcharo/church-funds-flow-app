@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Calendar, DollarSign, FileText, AlertTriangle } from "lucide-react";
@@ -24,7 +23,7 @@ interface UpdatePledgeForm {
   start_date: string;
   end_date?: string;
   next_payment_date?: string;
-  status: string;
+  status: 'active' | 'upcoming' | 'partially_fulfilled' | 'fulfilled' | 'overdue' | 'cancelled';
   purpose?: string;
   notes?: string;
 }
@@ -57,7 +56,7 @@ export function PledgeManagementActions({ pledge }: PledgeManagementActionsProps
     { value: 'fulfilled', label: 'Fulfilled', color: 'bg-green-500' },
     { value: 'overdue', label: 'Overdue', color: 'bg-red-500' },
     { value: 'cancelled', label: 'Cancelled', color: 'bg-gray-400' }
-  ];
+  ] as const;
   
   const onSubmit = async (data: UpdatePledgeForm) => {
     await updatePledge.mutateAsync({
@@ -72,10 +71,11 @@ export function PledgeManagementActions({ pledge }: PledgeManagementActionsProps
   };
   
   const handleStatusChange = async (newStatus: string) => {
+    const validStatus = newStatus as 'active' | 'upcoming' | 'partially_fulfilled' | 'fulfilled' | 'overdue' | 'cancelled';
     await updatePledge.mutateAsync({
       id: pledge.id,
       updates: {
-        status: newStatus as any,
+        status: validStatus,
         notes: statusChangeReason ? `${pledge.notes || ''}\n\nStatus changed to ${newStatus}: ${statusChangeReason}` : pledge.notes
       }
     });
