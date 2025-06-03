@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, DollarSign, User, Target, Clock, FileText } from "lucide-react";
 import { Pledge, usePledgeContributions } from "@/hooks/usePledges";
 import { useCurrencySettings } from "@/hooks/useCurrencySettings";
+import { PledgeManagementActions } from "./PledgeManagementActions";
 
 interface PledgeDetailsDialogProps {
   pledge: Pledge | null;
@@ -50,6 +51,11 @@ export function PledgeDetailsDialog({ pledge, open, onOpenChange }: PledgeDetail
             <Badge className={`${statusColors[pledge.status]} text-white`}>
               {statusLabels[pledge.status]}
             </Badge>
+          </div>
+          
+          {/* Management Actions */}
+          <div className="pt-4">
+            <PledgeManagementActions pledge={pledge} />
           </div>
         </DialogHeader>
 
