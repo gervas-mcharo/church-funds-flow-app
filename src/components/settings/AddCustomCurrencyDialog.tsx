@@ -13,10 +13,10 @@ export function AddCustomCurrencyDialog() {
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
-  const { addCustomCurrency, availableCurrencies } = useCurrencySettings();
+  const { addCustomCurrency, availableCurrencies, isLoading } = useCurrencySettings();
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const trimmedCode = code.trim().toUpperCase();
@@ -52,27 +52,36 @@ export function AddCustomCurrencyDialog() {
 
     console.log('Adding custom currency:', { code: trimmedCode, name: trimmedName, symbol: trimmedSymbol });
 
-    addCustomCurrency(trimmedCode, {
-      name: trimmedName,
-      symbol: trimmedSymbol
-    });
+    try {
+      await addCustomCurrency(trimmedCode, {
+        name: trimmedName,
+        symbol: trimmedSymbol
+      });
 
-    toast({
-      title: "Success",
-      description: `Custom currency ${trimmedCode} added successfully`
-    });
+      toast({
+        title: "Success",
+        description: `Custom currency ${trimmedCode} added successfully`
+      });
 
-    // Reset form and close dialog
-    setCode("");
-    setName("");
-    setSymbol("");
-    setOpen(false);
+      // Reset form and close dialog
+      setCode("");
+      setName("");
+      setSymbol("");
+      setOpen(false);
+    } catch (error) {
+      console.error('Error adding custom currency:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add custom currency",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2">
+        <Button variant="outline" className="flex items-center gap-2" disabled={isLoading}>
           <Plus className="h-4 w-4" />
           Add Custom Currency
         </Button>
@@ -117,7 +126,9 @@ export function AddCustomCurrencyDialog() {
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit">Add Currency</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Adding..." : "Add Currency"}
+            </Button>
           </div>
         </form>
       </DialogContent>

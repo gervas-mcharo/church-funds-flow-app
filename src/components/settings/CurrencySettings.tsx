@@ -14,7 +14,8 @@ export function CurrencySettings() {
     formatAmount, 
     availableCurrencies, 
     customCurrencies, 
-    removeCustomCurrency 
+    removeCustomCurrency,
+    isLoading
   } = useCurrencySettings();
   const { toast } = useToast();
 
@@ -22,20 +23,28 @@ export function CurrencySettings() {
     setCurrency(newCurrency);
     toast({
       title: "Currency Updated",
-      description: `Organization currency changed to ${availableCurrencies[newCurrency].name}`
+      description: `Organization currency changed to ${availableCurrencies[newCurrency]?.name || newCurrency}`
     });
   };
 
-  const handleRemoveCustomCurrency = (code: string) => {
-    removeCustomCurrency(code);
-    toast({
-      title: "Currency Removed",
-      description: `Custom currency ${code} has been removed`
-    });
+  const handleRemoveCustomCurrency = async (code: string) => {
+    try {
+      await removeCustomCurrency(code);
+      toast({
+        title: "Currency Removed",
+        description: `Custom currency ${code} has been removed`
+      });
+    } catch (error) {
+      console.error('Error removing currency:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove custom currency",
+        variant: "destructive"
+      });
+    }
   };
 
   // Get all available currencies (default + custom)
-  const allCurrencyEntries = Object.entries(availableCurrencies);
   const defaultCurrencyEntries = Object.entries(CURRENCIES);
   const customCurrencyEntries = Object.entries(customCurrencies);
 
@@ -56,7 +65,7 @@ export function CurrencySettings() {
           <label className="text-sm font-medium text-gray-700 mb-2 block">
             Organization Currency
           </label>
-          <Select value={currency} onValueChange={handleCurrencyChange}>
+          <Select value={currency} onValueChange={handleCurrencyChange} disabled={isLoading}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select currency">
                 {availableCurrencies[currency] ? (
@@ -122,6 +131,7 @@ export function CurrencySettings() {
                     size="sm"
                     onClick={() => handleRemoveCustomCurrency(code)}
                     className="text-red-600 hover:text-red-700"
+                    disabled={isLoading}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

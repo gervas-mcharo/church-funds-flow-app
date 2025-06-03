@@ -142,6 +142,36 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_currencies: {
+        Row: {
+          created_at: string
+          currency_code: string
+          currency_name: string
+          currency_symbol: string
+          id: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency_code: string
+          currency_name: string
+          currency_symbol: string
+          id?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency_code?: string
+          currency_name?: string
+          currency_symbol?: string
+          id?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       department_personnel: {
         Row: {
           assigned_at: string
@@ -288,6 +318,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      organization_settings: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
