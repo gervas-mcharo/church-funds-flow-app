@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -62,16 +61,16 @@ export const usePledges = (filters?: {
         `)
         .order('created_at', { ascending: false });
 
-      if (filters?.status) {
+      if (filters?.status && filters.status !== '') {
         query = query.eq('status', filters.status);
       }
-      if (filters?.contributor_id) {
+      if (filters?.contributor_id && filters.contributor_id !== '') {
         query = query.eq('contributor_id', filters.contributor_id);
       }
-      if (filters?.fund_type_id) {
+      if (filters?.fund_type_id && filters.fund_type_id !== '') {
         query = query.eq('fund_type_id', filters.fund_type_id);
       }
-      if (filters?.search) {
+      if (filters?.search && filters.search !== '') {
         query = query.or(`contributors.name.ilike.%${filters.search}%,purpose.ilike.%${filters.search}%`);
       }
 
