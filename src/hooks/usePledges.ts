@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -43,6 +44,9 @@ export interface CreatePledgeData {
   notes?: string;
 }
 
+const validStatuses = ['active', 'upcoming', 'partially_fulfilled', 'fulfilled', 'overdue', 'cancelled'] as const;
+type PledgeStatus = typeof validStatuses[number];
+
 export const usePledges = (filters?: {
   status?: string;
   contributor_id?: string;
@@ -61,8 +65,8 @@ export const usePledges = (filters?: {
         `)
         .order('created_at', { ascending: false });
 
-      if (filters?.status && filters.status !== '') {
-        query = query.eq('status', filters.status);
+      if (filters?.status && filters.status !== '' && validStatuses.includes(filters.status as PledgeStatus)) {
+        query = query.eq('status', filters.status as PledgeStatus);
       }
       if (filters?.contributor_id && filters.contributor_id !== '') {
         query = query.eq('contributor_id', filters.contributor_id);
