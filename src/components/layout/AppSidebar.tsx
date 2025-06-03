@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -19,7 +18,8 @@ import {
   Settings, 
   FileText,
   Folder,
-  User
+  User,
+  HandHeart
 } from "lucide-react";
 
 const menuItems = [
@@ -28,6 +28,7 @@ const menuItems = [
   { title: "Contributors", url: "/contributors", icon: Users },
   { title: "Fund Types", url: "/fund-types", icon: Database },
   { title: "Departments", url: "/departments", icon: Folder },
+  { title: "Pledges", url: "/pledges", icon: HandHeart },
   { title: "Money Requests", url: "/money-requests", icon: FileText },
   { title: "Reports", url: "/reports", icon: BarChart3 },
   { title: "User Management", url: "/user-management", icon: User },
