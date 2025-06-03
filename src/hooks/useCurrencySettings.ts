@@ -20,14 +20,25 @@ export const CURRENCIES = {
   GHS: { symbol: '₵', name: 'Ghanaian Cedi' }
 } as const;
 
-export type CurrencyCode = keyof typeof CURRENCIES;
+export type CurrencyCode = keyof typeof CURRENCIES | string;
+
+export interface CustomCurrency {
+  symbol: string;
+  name: string;
+}
 
 const CURRENCY_STORAGE_KEY = 'church-finance-currency';
+const CUSTOM_CURRENCIES_STORAGE_KEY = 'church-finance-custom-currencies';
 
 export function useCurrencySettings() {
   const [currency, setCurrencyState] = useState<CurrencyCode>(() => {
     const stored = localStorage.getItem(CURRENCY_STORAGE_KEY);
-    return (stored as CurrencyCode) || 'USD';
+    return stored || 'USD';
+  });
+
+  const [customCurrencies, setCustomCurrencies] = useState<Record<string, CustomCurrency>>(() => {
+    const stored = localStorage.getItem(CUSTOM_CURRENCIES_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : {};
   });
 
   const setCurrency = (newCurrency: CurrencyCode) => {
@@ -35,20 +46,52 @@ export function useCurrencySettings() {
     localStorage.setItem(CURRENCY_STORAGE_KEY, newCurrency);
   };
 
+  const addCustomCurrency = (code: string, currency: CustomCurrency) => {
+    const updatedCustomCurrencies = { ...customCurrencies, [code]: currency };
+    setCustomCurrencies(updatedCustomCurrencies);
+    localStorage.setItem(CUSTOM_CURRENCIES_STORAGE_KEY, JSON.stringify(updatedCustomCurrencies));
+  };
+
+  const removeCustomCurrency = (code: string) => {
+    const updatedCustomCurrencies = { ...customCurrencies };
+    delete updatedCustomCurrencies[code];
+    setCustomCurrencies(updatedCustomCurrencies);
+    localStorage.setItem(CUSTOM_CURRENCIES_STORAGE_KEY, JSON.stringify(updatedCustomCurrencies));
+    
+    // If the current currency is being removed, switch to USD
+    if (currency === code) {
+      setCurrency('USD');
+    }
+  };
+
   const formatAmount = (amount: number) => {
-    const currencyInfo = CURRENCIES[currency];
+    const allCurrencies = { ...CURRENCIES, ...customCurrencies };
+    const currencyInfo = allCurrencies[currency];
+    
+    if (!currencyInfo) {
+      return `$${amount.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}`;
+    }
+
     return `${currencyInfo.symbol}${amount.toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })}`;
   };
 
+  const allCurrencies = { ...CURRENCIES, ...customCurrencies };
+
   return {
     currency,
     setCurrency,
     formatAmount,
-    currencySymbol: CURRENCIES[currency].symbol,
-    currencyName: CURRENCIES[currency].name,
-    availableCurrencies: CURRENCIES
+    currencySymbol: allCurrencies[currency]?.symbol || '$',
+    currencyName: allCurrencies[currency]?.name || 'Unknown Currency',
+    availableCurrencies: allCurrencies,
+    customCurrencies,
+    addCustomCurrency,
+    removeCustomCurrency
   };
 }
