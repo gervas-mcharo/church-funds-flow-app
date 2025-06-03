@@ -346,6 +346,173 @@ export type Database = {
         }
         Relationships: []
       }
+      pledge_audit_log: {
+        Row: {
+          action: string
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+          pledge_id: string
+          reason: string | null
+        }
+        Insert: {
+          action: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          pledge_id: string
+          reason?: string | null
+        }
+        Update: {
+          action?: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          pledge_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pledge_audit_log_pledge_id_fkey"
+            columns: ["pledge_id"]
+            isOneToOne: false
+            referencedRelation: "pledges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pledge_contributions: {
+        Row: {
+          amount_applied: number
+          applied_at: string
+          applied_by: string | null
+          contribution_id: string
+          id: string
+          notes: string | null
+          pledge_id: string
+        }
+        Insert: {
+          amount_applied: number
+          applied_at?: string
+          applied_by?: string | null
+          contribution_id: string
+          id?: string
+          notes?: string | null
+          pledge_id: string
+        }
+        Update: {
+          amount_applied?: number
+          applied_at?: string
+          applied_by?: string | null
+          contribution_id?: string
+          id?: string
+          notes?: string | null
+          pledge_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pledge_contributions_contribution_id_fkey"
+            columns: ["contribution_id"]
+            isOneToOne: false
+            referencedRelation: "contributions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pledge_contributions_pledge_id_fkey"
+            columns: ["pledge_id"]
+            isOneToOne: false
+            referencedRelation: "pledges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pledges: {
+        Row: {
+          contributor_id: string
+          created_at: string
+          created_by: string | null
+          end_date: string | null
+          frequency: Database["public"]["Enums"]["pledge_frequency"]
+          fund_type_id: string
+          id: string
+          installment_amount: number | null
+          last_payment_date: string | null
+          next_payment_date: string | null
+          notes: string | null
+          number_of_installments: number | null
+          pledge_amount: number
+          purpose: string | null
+          remaining_balance: number | null
+          start_date: string
+          status: Database["public"]["Enums"]["pledge_status"]
+          total_paid: number
+          updated_at: string
+        }
+        Insert: {
+          contributor_id: string
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          frequency?: Database["public"]["Enums"]["pledge_frequency"]
+          fund_type_id: string
+          id?: string
+          installment_amount?: number | null
+          last_payment_date?: string | null
+          next_payment_date?: string | null
+          notes?: string | null
+          number_of_installments?: number | null
+          pledge_amount: number
+          purpose?: string | null
+          remaining_balance?: number | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["pledge_status"]
+          total_paid?: number
+          updated_at?: string
+        }
+        Update: {
+          contributor_id?: string
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          frequency?: Database["public"]["Enums"]["pledge_frequency"]
+          fund_type_id?: string
+          id?: string
+          installment_amount?: number | null
+          last_payment_date?: string | null
+          next_payment_date?: string | null
+          notes?: string | null
+          number_of_installments?: number | null
+          pledge_amount?: number
+          purpose?: string | null
+          remaining_balance?: number | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["pledge_status"]
+          total_paid?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_pledges_contributor"
+            columns: ["contributor_id"]
+            isOneToOne: false
+            referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_pledges_fund_type"
+            columns: ["fund_type_id"]
+            isOneToOne: false
+            referencedRelation: "fund_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -511,6 +678,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      update_pledge_status: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       app_role:
@@ -536,6 +707,19 @@ export type Database = {
         | "approved"
         | "rejected"
         | "paid"
+      pledge_frequency:
+        | "one_time"
+        | "weekly"
+        | "monthly"
+        | "quarterly"
+        | "annually"
+      pledge_status:
+        | "active"
+        | "upcoming"
+        | "partially_fulfilled"
+        | "fulfilled"
+        | "overdue"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -675,6 +859,21 @@ export const Constants = {
         "approved",
         "rejected",
         "paid",
+      ],
+      pledge_frequency: [
+        "one_time",
+        "weekly",
+        "monthly",
+        "quarterly",
+        "annually",
+      ],
+      pledge_status: [
+        "active",
+        "upcoming",
+        "partially_fulfilled",
+        "fulfilled",
+        "overdue",
+        "cancelled",
       ],
     },
   },

@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -51,7 +50,7 @@ export function useCurrencySettings() {
         return 'USD';
       }
 
-      return data?.setting_value ? JSON.parse(data.setting_value) : 'USD';
+      return data?.setting_value ? String(data.setting_value).replace(/"/g, '') : 'USD';
     }
   });
 

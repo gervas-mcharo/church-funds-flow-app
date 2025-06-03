@@ -1,36 +1,82 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DollarSign, TrendingUp, Users, Target } from "lucide-react";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { usePledgeStats } from "@/hooks/usePledges";
 import { useCurrencySettings } from "@/hooks/useCurrencySettings";
 
-const fundData = [
-  { name: "Tithes & Offerings", amount: 15750, change: "+12%", color: "text-green-600" },
-  { name: "Building Fund", amount: 8420, change: "+5%", color: "text-blue-600" },
-  { name: "Missions", amount: 3280, change: "+18%", color: "text-purple-600" },
-  { name: "Youth Ministry", amount: 1950, change: "-3%", color: "text-orange-600" },
-];
-
 export function FundOverviewCards() {
+  const { data: stats, isLoading } = useDashboardStats();
+  const { data: pledgeStats } = usePledgeStats();
   const { formatAmount } = useCurrencySettings();
 
+  if (isLoading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+          <Card key={i}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Loading...</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">--</div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {fundData.map((fund) => (
-        <Card key={fund.name} className="bg-white shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">{fund.name}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-baseline justify-between">
-              <span className="text-2xl font-bold text-gray-900">
-                {formatAmount(fund.amount)}
-              </span>
-              <span className={`text-sm font-medium ${fund.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
-                {fund.change}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Contributions</CardTitle>
+          <DollarSign className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{formatAmount(stats?.totalAmount || 0)}</div>
+          <p className="text-xs text-muted-foreground">
+            All time contributions
+          </p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Contributors</CardTitle>
+          <Users className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats?.contributorCount || 0}</div>
+          <p className="text-xs text-muted-foreground">
+            Registered contributors
+          </p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Contributions</CardTitle>
+          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats?.contributionCount || 0}</div>
+          <p className="text-xs text-muted-foreground">
+            Number of transactions
+          </p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Active Pledges</CardTitle>
+          <Target className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{pledgeStats?.totalActivePledges || 0}</div>
+          <p className="text-xs text-muted-foreground">
+            Current commitments
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

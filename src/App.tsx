@@ -16,6 +16,7 @@ import Reports from "./pages/Reports";
 import UserManagement from "./pages/UserManagement";
 import MoneyRequests from "./pages/MoneyRequests";
 import Settings from "./pages/Settings";
+import Pledges from "./pages/Pledges";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,11 @@ const App = () => (
             <Route path="/departments" element={
               <ProtectedRoute>
                 <Departments />
+              </ProtectedRoute>
+            } />
+            <Route path="/pledges" element={
+              <ProtectedRoute>
+                <Pledges />
               </ProtectedRoute>
             } />
             <Route path="/money-requests" element={
