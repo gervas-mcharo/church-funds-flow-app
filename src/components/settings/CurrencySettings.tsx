@@ -34,6 +34,15 @@ export function CurrencySettings() {
     });
   };
 
+  // Get all available currencies (default + custom)
+  const allCurrencyEntries = Object.entries(availableCurrencies);
+  const defaultCurrencyEntries = Object.entries(CURRENCIES);
+  const customCurrencyEntries = Object.entries(customCurrencies);
+
+  console.log('Current currency:', currency);
+  console.log('Available currencies:', availableCurrencies);
+  console.log('Custom currencies:', customCurrencies);
+
   return (
     <Card className="bg-white shadow-sm">
       <CardHeader>
@@ -49,10 +58,20 @@ export function CurrencySettings() {
           </label>
           <Select value={currency} onValueChange={handleCurrencyChange}>
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select currency" />
+              <SelectValue placeholder="Select currency">
+                {availableCurrencies[currency] ? (
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-sm">{availableCurrencies[currency].symbol}</span>
+                    <span>{availableCurrencies[currency].name}</span>
+                    <span className="text-gray-500">({currency})</span>
+                  </div>
+                ) : (
+                  "Select currency"
+                )}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {Object.entries(CURRENCIES).map(([code, info]) => (
+              {defaultCurrencyEntries.map(([code, info]) => (
                 <SelectItem key={code} value={code}>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-sm">{info.symbol}</span>
@@ -61,13 +80,13 @@ export function CurrencySettings() {
                   </div>
                 </SelectItem>
               ))}
-              {Object.keys(customCurrencies).length > 0 && (
+              {customCurrencyEntries.length > 0 && (
                 <>
                   <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 border-t">
                     Custom Currencies
                   </div>
-                  {Object.entries(customCurrencies).map(([code, info]) => (
-                    <SelectItem key={code} value={code}>
+                  {customCurrencyEntries.map(([code, info]) => (
+                    <SelectItem key={`custom-${code}`} value={code}>
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-sm">{info.symbol}</span>
                         <span>{info.name}</span>
@@ -85,11 +104,11 @@ export function CurrencySettings() {
           <AddCustomCurrencyDialog />
         </div>
 
-        {Object.keys(customCurrencies).length > 0 && (
+        {customCurrencyEntries.length > 0 && (
           <div>
             <h4 className="text-sm font-medium text-gray-700 mb-3">Custom Currencies</h4>
             <div className="space-y-2">
-              {Object.entries(customCurrencies).map(([code, info]) => (
+              {customCurrencyEntries.map(([code, info]) => (
                 <div key={code} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
                   <div className="flex items-center gap-3">
                     <span className="font-mono text-sm font-medium">{info.symbol}</span>

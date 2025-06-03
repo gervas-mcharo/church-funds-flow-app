@@ -50,6 +50,8 @@ export function AddCustomCurrencyDialog() {
       return;
     }
 
+    console.log('Adding custom currency:', { code: trimmedCode, name: trimmedName, symbol: trimmedSymbol });
+
     addCustomCurrency(trimmedCode, {
       name: trimmedName,
       symbol: trimmedSymbol
@@ -60,6 +62,7 @@ export function AddCustomCurrencyDialog() {
       description: `Custom currency ${trimmedCode} added successfully`
     });
 
+    // Reset form and close dialog
     setCode("");
     setName("");
     setSymbol("");
