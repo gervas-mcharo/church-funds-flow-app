@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -42,6 +41,10 @@ export interface CreatePledgeData {
   end_date?: string;
   purpose?: string;
   notes?: string;
+}
+
+export interface UpdatePledgeData extends Partial<CreatePledgeData> {
+  status?: 'active' | 'upcoming' | 'partially_fulfilled' | 'fulfilled' | 'overdue' | 'cancelled';
 }
 
 const validStatuses = ['active', 'upcoming', 'partially_fulfilled', 'fulfilled', 'overdue', 'cancelled'] as const;
@@ -144,7 +147,7 @@ export const useUpdatePledge = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<CreatePledgeData> }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: UpdatePledgeData }) => {
       const { data, error } = await supabase
         .from('pledges')
         .update({ ...updates, updated_at: new Date().toISOString() })
