@@ -11,6 +11,7 @@ import { useCreateFundType } from "@/hooks/useCreateFundType";
 export const CreateFundTypeDialog = () => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [openingBalance, setOpeningBalance] = useState("");
   const [open, setOpen] = useState(false);
   const createFundType = useCreateFundType();
 
@@ -21,10 +22,12 @@ export const CreateFundTypeDialog = () => {
     createFundType.mutate({
       name: name.trim(),
       description: description.trim() || undefined,
+      opening_balance: openingBalance ? parseFloat(openingBalance) : 0,
     }, {
       onSuccess: () => {
         setName("");
         setDescription("");
+        setOpeningBalance("");
         setOpen(false);
       }
     });
@@ -61,6 +64,18 @@ export const CreateFundTypeDialog = () => {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Brief description of this fund type..."
               rows={3}
+            />
+          </div>
+          <div>
+            <Label htmlFor="opening-balance">Opening Balance</Label>
+            <Input
+              id="opening-balance"
+              type="number"
+              value={openingBalance}
+              onChange={(e) => setOpeningBalance(e.target.value)}
+              placeholder="0.00"
+              min="0"
+              step="0.01"
             />
           </div>
           <div className="flex gap-2 justify-end">

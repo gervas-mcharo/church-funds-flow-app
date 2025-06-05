@@ -16,12 +16,14 @@ interface EditFundTypeDialogProps {
 export const EditFundTypeDialog = ({ fundType, open, onOpenChange }: EditFundTypeDialogProps) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [openingBalance, setOpeningBalance] = useState("");
   const updateFundType = useUpdateFundType();
 
   useEffect(() => {
     if (fundType) {
       setName(fundType.name || "");
       setDescription(fundType.description || "");
+      setOpeningBalance(fundType.opening_balance ? fundType.opening_balance.toString() : "0");
     }
   }, [fundType]);
 
@@ -33,6 +35,7 @@ export const EditFundTypeDialog = ({ fundType, open, onOpenChange }: EditFundTyp
       id: fundType.id,
       name: name.trim(),
       description: description.trim() || undefined,
+      opening_balance: openingBalance ? parseFloat(openingBalance) : 0,
     }, {
       onSuccess: () => {
         onOpenChange(false);
@@ -65,6 +68,18 @@ export const EditFundTypeDialog = ({ fundType, open, onOpenChange }: EditFundTyp
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Brief description of this fund type..."
               rows={3}
+            />
+          </div>
+          <div>
+            <Label htmlFor="edit-opening-balance">Opening Balance</Label>
+            <Input
+              id="edit-opening-balance"
+              type="number"
+              value={openingBalance}
+              onChange={(e) => setOpeningBalance(e.target.value)}
+              placeholder="0.00"
+              min="0"
+              step="0.01"
             />
           </div>
           <div className="flex gap-2 justify-end">
