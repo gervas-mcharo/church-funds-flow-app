@@ -8,12 +8,14 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Database, Edit, Trash2 } from "lucide-react";
 import { useFundTypes } from "@/hooks/useFundTypes";
 import { useDeleteFundType } from "@/hooks/useDeleteFundType";
+import { useCurrencySettings } from "@/hooks/useCurrencySettings";
 import { EditFundTypeDialog } from "@/components/fund-types/EditFundTypeDialog";
 import { CreateFundTypeDialog } from "@/components/fund-types/CreateFundTypeDialog";
 
 const FundTypes = () => {
   const { data: fundTypes, isLoading } = useFundTypes();
   const deleteFundType = useDeleteFundType();
+  const { formatAmount } = useCurrencySettings();
 
   const [editingFundType, setEditingFundType] = useState<any>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -64,7 +66,7 @@ const FundTypes = () => {
                     <TableRow key={fundType.id}>
                       <TableCell className="font-medium">{fundType.name}</TableCell>
                       <TableCell>{fundType.description}</TableCell>
-                      <TableCell>${(fundType.opening_balance || 0).toFixed(2)}</TableCell>
+                      <TableCell>{formatAmount(fundType.opening_balance || 0)}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-xs ${
                           fundType.is_active 
