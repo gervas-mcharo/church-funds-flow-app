@@ -1,17 +1,22 @@
 
+import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Edit, QrCode } from "lucide-react";
+import { Search, Edit, QrCode } from "lucide-react";
 import { useContributors } from "@/hooks/useContributors";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { CreateContributorDialog } from "@/components/contributors/CreateContributorDialog";
+import { EditContributorDialog } from "@/components/contributors/EditContributorDialog";
 
 const Contributors = () => {
   const { data: contributors, isLoading } = useContributors();
+  const [editingContributor, setEditingContributor] = useState<any>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   
   // Fetch contribution totals for each contributor
   const { data: contributionTotals } = useQuery({
@@ -36,6 +41,11 @@ const Contributors = () => {
     }
   });
 
+  const handleEditContributor = (contributor: any) => {
+    setEditingContributor(contributor);
+    setEditDialogOpen(true);
+  };
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -54,10 +64,7 @@ const Contributors = () => {
             <h1 className="text-3xl font-bold text-gray-900">Contributors</h1>
             <p className="text-gray-600 mt-1">Manage church contributor information and history</p>
           </div>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Contributor
-          </Button>
+          <CreateContributorDialog />
         </div>
 
         <Card className="bg-white shadow-sm">
@@ -106,7 +113,11 @@ const Contributors = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Button size="sm" variant="outline">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleEditContributor(contributor)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button size="sm" variant="outline">
@@ -120,6 +131,19 @@ const Contributors = () => {
             </Table>
           </CardContent>
         </Card>
+
+        {editingContributor && (
+          <EditContributorDialog
+            contributor={editingContributor}
+            open={editDialogOpen}
+            onOpenChange={(open) => {
+              setEditDialogOpen(open);
+              if (!open) {
+                setEditingContributor(null);
+              }
+            }}
+          />
+        )}
       </div>
     </DashboardLayout>
   );

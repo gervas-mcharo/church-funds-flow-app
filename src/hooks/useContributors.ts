@@ -36,3 +36,25 @@ export const useCreateContributor = () => {
     }
   });
 };
+
+export const useUpdateContributor = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (contributor: { id: string; name: string; email?: string; phone?: string }) => {
+      const { id, ...updateData } = contributor;
+      const { data, error } = await supabase
+        .from('contributors')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contributors'] });
+    }
+  });
+};
