@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,11 +7,46 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Database, Plus, Edit, Trash2 } from "lucide-react";
 import { useFundTypes } from "@/hooks/useFundTypes";
+import { useCreateFundType } from "@/hooks/useCreateFundType";
+import { useDeleteFundType } from "@/hooks/useDeleteFundType";
+import { EditFundTypeDialog } from "@/components/fund-types/EditFundTypeDialog";
 
 const FundTypes = () => {
   const { data: fundTypes, isLoading } = useFundTypes();
+  const createFundType = useCreateFundType();
+  const deleteFundType = useDeleteFundType();
+
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [editingFundType, setEditingFundType] = useState<any>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+
+    createFundType.mutate({
+      name: name.trim(),
+      description: description.trim() || undefined,
+    }, {
+      onSuccess: () => {
+        setName("");
+        setDescription("");
+      }
+    });
+  };
+
+  const handleEdit = (fundType: any) => {
+    setEditingFundType(fundType);
+    setEditDialogOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    deleteFundType.mutate(id);
+  };
 
   return (
     <DashboardLayout>
@@ -28,23 +64,33 @@ const FundTypes = () => {
                 Add New Fund Type
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="name">Fund Type Name</Label>
-                <Input id="name" placeholder="e.g., Building Fund" />
-              </div>
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea 
-                  id="description" 
-                  placeholder="Brief description of this fund type..."
-                  rows={3}
-                />
-              </div>
-              <Button className="w-full">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Fund Type
-              </Button>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Fund Type Name</Label>
+                  <Input 
+                    id="name" 
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g., Building Fund"
+                    required 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea 
+                    id="description" 
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Brief description of this fund type..."
+                    rows={3}
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={createFundType.isPending}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  {createFundType.isPending ? "Adding..." : "Add Fund Type"}
+                </Button>
+              </form>
             </CardContent>
           </Card>
 
@@ -85,12 +131,37 @@ const FundTypes = () => {
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
-                              <Button size="sm" variant="outline">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleEdit(fundType)}
+                              >
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              <Button size="sm" variant="outline">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button size="sm" variant="outline">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Fund Type</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete "{fundType.name}"? This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction 
+                                      onClick={() => handleDelete(fundType.id)}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -102,6 +173,19 @@ const FundTypes = () => {
             </Card>
           </div>
         </div>
+
+        {editingFundType && (
+          <EditFundTypeDialog
+            fundType={editingFundType}
+            open={editDialogOpen}
+            onOpenChange={(open) => {
+              setEditDialogOpen(open);
+              if (!open) {
+                setEditingFundType(null);
+              }
+            }}
+          />
+        )}
       </div>
     </DashboardLayout>
   );
