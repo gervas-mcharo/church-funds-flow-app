@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreateContributorDialog } from "@/components/contributors/CreateContributorDialog";
 import { EditContributorDialog } from "@/components/contributors/EditContributorDialog";
+import { ContributorCSVDialog } from "@/components/contributors/ContributorCSVDialog";
 
 const Contributors = () => {
   const { data: contributors, isLoading } = useContributors();
@@ -64,7 +64,10 @@ const Contributors = () => {
             <h1 className="text-3xl font-bold text-gray-900">Contributors</h1>
             <p className="text-gray-600 mt-1">Manage church contributor information and history</p>
           </div>
-          <CreateContributorDialog />
+          <div className="flex items-center gap-3">
+            <ContributorCSVDialog contributors={contributors || []} />
+            <CreateContributorDialog />
+          </div>
         </div>
 
         <Card className="bg-white shadow-sm">
