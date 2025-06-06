@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, CheckCircle, XCircle, Clock } from "lucide-react";
 import { useMoneyRequests, useApprovalChain, useUpdateApproval } from "@/hooks/useMoneyRequests";
 import { useFundTypes } from "@/hooks/useFundTypes";
+import { useCurrencySettings } from "@/hooks/useCurrencySettings";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import type { Database } from "@/integrations/supabase/types";
@@ -23,6 +24,7 @@ export function MoneyRequestDetails({ requestId, onClose }: MoneyRequestDetailsP
   const { data: fundTypes } = useFundTypes();
   const { data: approvalChain } = useApprovalChain(requestId);
   const updateApprovalMutation = useUpdateApproval();
+  const { formatAmount } = useCurrencySettings();
 
   const request = requests?.find(r => r.id === requestId);
   const fundType = fundTypes?.find(ft => ft.id === request?.fund_type_id);
@@ -129,7 +131,7 @@ export function MoneyRequestDetails({ requestId, onClose }: MoneyRequestDetailsP
                 </div>
                 <div>
                   <Label className="font-medium">Amount</Label>
-                  <p className="text-lg font-semibold">${parseFloat(request.amount.toString()).toFixed(2)}</p>
+                  <p className="text-lg font-semibold">{formatAmount(parseFloat(request.amount.toString()))}</p>
                 </div>
               </div>
               

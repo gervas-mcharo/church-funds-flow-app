@@ -252,23 +252,6 @@ export function MoneyRequestForm() {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="fund_budget_code"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Fund/Budget Code (Optional)</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Budget code..."
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <div className="space-y-2">
               <Label>Supporting Documents (Optional)</Label>
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
