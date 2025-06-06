@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,7 +15,7 @@ import { useCurrencySettings } from "@/hooks/useCurrencySettings";
 
 export function PledgeReports() {
   const [reportType, setReportType] = useState<'fulfillment' | 'aging' | 'fund-summary'>('fulfillment');
-  const [selectedFund, setSelectedFund] = useState<string>('');
+  const [selectedFund, setSelectedFund] = useState<string>('all');
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   
@@ -27,7 +26,7 @@ export function PledgeReports() {
   const { formatAmount } = useCurrencySettings();
   
   const filteredPledges = pledges.filter(pledge => {
-    if (selectedFund && pledge.fund_type_id !== selectedFund) return false;
+    if (selectedFund && selectedFund !== 'all' && pledge.fund_type_id !== selectedFund) return false;
     if (startDate && new Date(pledge.created_at) < startDate) return false;
     if (endDate && new Date(pledge.created_at) > endDate) return false;
     return true;
@@ -88,7 +87,7 @@ export function PledgeReports() {
                 <SelectValue placeholder="All Fund Types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Fund Types</SelectItem>
+                <SelectItem value="all">All Fund Types</SelectItem>
                 {fundTypes.map(fund => (
                   <SelectItem key={fund.id} value={fund.id}>
                     {fund.name}
@@ -110,7 +109,7 @@ export function PledgeReports() {
             />
             
             <Button variant="outline" onClick={() => {
-              setSelectedFund('');
+              setSelectedFund('all');
               setStartDate(undefined);
               setEndDate(undefined);
             }}>
