@@ -5,12 +5,14 @@ import { ReportFilters } from "@/components/reports/ReportFilters";
 import { ReportResults } from "@/components/reports/ReportResults";
 import { ReportSearchFilters } from "@/components/reports/ReportSearchFilters";
 import { AnalyticsDashboard } from "@/components/reports/AnalyticsDashboard";
+import { FundBalanceSummary } from "@/components/reports/FundBalanceSummary";
+import { FundBalanceTrends } from "@/components/reports/FundBalanceTrends";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { useContributors } from "@/hooks/useContributors";
 import { useFundTypes } from "@/hooks/useFundTypes";
 import { useReportData } from "@/hooks/useReportData";
-import { FileText, BarChart3 } from "lucide-react";
+import { FileText, BarChart3, Wallet, TrendingUp } from "lucide-react";
 
 export interface ReportFilters {
   reportType: 'individual' | 'fund-type' | 'summary';
@@ -39,7 +41,7 @@ const Reports = () => {
     searchTerm: ""
   });
 
-  const [activeTab, setActiveTab] = useState<'reports' | 'analytics'>('reports');
+  const [activeTab, setActiveTab] = useState<'reports' | 'analytics' | 'balances' | 'trends'>('reports');
 
   const { data: contributors = [] } = useContributors();
   const { data: fundTypes = [] } = useFundTypes();
@@ -51,14 +53,22 @@ const Reports = () => {
         <ReportsHeader />
         
         <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="reports" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              Standard Reports
+              Contribution Reports
             </TabsTrigger>
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Advanced Analytics
+            </TabsTrigger>
+            <TabsTrigger value="balances" className="flex items-center gap-2">
+              <Wallet className="h-4 w-4" />
+              Fund Balances
+            </TabsTrigger>
+            <TabsTrigger value="trends" className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Balance Trends
             </TabsTrigger>
           </TabsList>
 
@@ -75,6 +85,14 @@ const Reports = () => {
           <TabsContent value="analytics" className="space-y-6">
             <ReportFilters filters={filters} onFiltersChange={setFilters} />
             <AnalyticsDashboard filters={filters} data={reportData} />
+          </TabsContent>
+
+          <TabsContent value="balances" className="space-y-6">
+            <FundBalanceSummary />
+          </TabsContent>
+
+          <TabsContent value="trends" className="space-y-6">
+            <FundBalanceTrends />
           </TabsContent>
         </Tabs>
       </div>
