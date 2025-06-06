@@ -19,12 +19,21 @@ export function CurrencySettings() {
   } = useCurrencySettings();
   const { toast } = useToast();
 
-  const handleCurrencyChange = (newCurrency: CurrencyCode) => {
-    setCurrency(newCurrency);
-    toast({
-      title: "Currency Updated",
-      description: `Organization currency changed to ${availableCurrencies[newCurrency]?.name || newCurrency}`
-    });
+  const handleCurrencyChange = async (newCurrency: CurrencyCode) => {
+    try {
+      await setCurrency(newCurrency);
+      toast({
+        title: "Currency Updated",
+        description: `Organization currency changed to ${availableCurrencies[newCurrency]?.name || newCurrency}`
+      });
+    } catch (error) {
+      console.error('Error updating currency:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update currency",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleRemoveCustomCurrency = async (code: string) => {
