@@ -57,6 +57,7 @@ const FundTypes = () => {
                     <TableHead>Name</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Opening Balance</TableHead>
+                    <TableHead>Current Balance</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -67,6 +68,7 @@ const FundTypes = () => {
                       <TableCell className="font-medium">{fundType.name}</TableCell>
                       <TableCell>{fundType.description}</TableCell>
                       <TableCell>{formatAmount(fundType.opening_balance || 0)}</TableCell>
+                      <TableCell>{formatAmount(fundType.current_balance || 0)}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-xs ${
                           fundType.is_active 

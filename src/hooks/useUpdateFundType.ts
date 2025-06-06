@@ -8,7 +8,14 @@ export const useUpdateFundType = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (data: { id: string; name: string; description?: string; is_active?: boolean; opening_balance?: number }) => {
+    mutationFn: async (data: { 
+      id: string; 
+      name: string; 
+      description?: string; 
+      is_active?: boolean; 
+      opening_balance?: number;
+      current_balance?: number;
+    }) => {
       const { data: result, error } = await supabase
         .from('fund_types')
         .update({
@@ -16,6 +23,7 @@ export const useUpdateFundType = () => {
           description: data.description,
           is_active: data.is_active,
           opening_balance: data.opening_balance,
+          current_balance: data.current_balance,
         })
         .eq('id', data.id)
         .select()

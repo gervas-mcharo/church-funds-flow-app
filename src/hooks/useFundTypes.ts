@@ -9,7 +9,6 @@ export const useFundTypes = () => {
       const { data, error } = await supabase
         .from('fund_types')
         .select('*')
-        .eq('is_active', true)
         .order('name');
       
       if (error) throw error;

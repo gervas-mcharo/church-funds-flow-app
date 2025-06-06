@@ -11,6 +11,7 @@ import { FileText, Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useCreateMoneyRequest } from "@/hooks/useMoneyRequests";
 import { useDepartments } from "@/hooks/useDepartments";
+import { useFundTypes } from "@/hooks/useFundTypes";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -22,12 +23,13 @@ interface MoneyRequestFormData {
   purpose: string;
   suggested_vendor?: string;
   associated_project?: string;
-  fund_budget_code?: string;
+  fund_type_id: string;
 }
 
 export function MoneyRequestForm() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const { data: departments, isLoading: departmentsLoading } = useDepartments();
+  const { data: fundTypes, isLoading: fundTypesLoading } = useFundTypes();
   const createRequestMutation = useCreateMoneyRequest();
 
   const form = useForm<MoneyRequestFormData>({
@@ -37,7 +39,7 @@ export function MoneyRequestForm() {
       purpose: "",
       suggested_vendor: "",
       associated_project: "",
-      fund_budget_code: ""
+      fund_type_id: ""
     }
   });
 
@@ -92,7 +94,7 @@ export function MoneyRequestForm() {
         purpose: data.purpose,
         suggested_vendor: data.suggested_vendor || null,
         associated_project: data.associated_project || null,
-        fund_budget_code: data.fund_budget_code || null
+        fund_type_id: data.fund_type_id
       };
 
       const request = await createRequestMutation.mutateAsync(requestData);
@@ -136,6 +138,32 @@ export function MoneyRequestForm() {
                       {departments?.map((dept) => (
                         <SelectItem key={dept.id} value={dept.id}>
                           {dept.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="fund_type_id"
+              rules={{ required: "Fund type is required" }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Fund Type</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select fund type..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {fundTypes?.map((fundType) => (
+                        <SelectItem key={fundType.id} value={fundType.id}>
+                          {fundType.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -284,7 +312,7 @@ export function MoneyRequestForm() {
             <Button
               type="submit"
               className="w-full"
-              disabled={createRequestMutation.isPending || departmentsLoading}
+              disabled={createRequestMutation.isPending || departmentsLoading || fundTypesLoading}
             >
               {createRequestMutation.isPending ? "Submitting..." : "Submit Request"}
             </Button>

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, CheckCircle, XCircle, Clock } from "lucide-react";
 import { useMoneyRequests, useApprovalChain, useUpdateApproval } from "@/hooks/useMoneyRequests";
+import { useFundTypes } from "@/hooks/useFundTypes";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import type { Database } from "@/integrations/supabase/types";
@@ -20,10 +20,12 @@ interface MoneyRequestDetailsProps {
 export function MoneyRequestDetails({ requestId, onClose }: MoneyRequestDetailsProps) {
   const [comments, setComments] = useState("");
   const { data: requests } = useMoneyRequests();
+  const { data: fundTypes } = useFundTypes();
   const { data: approvalChain } = useApprovalChain(requestId);
   const updateApprovalMutation = useUpdateApproval();
 
   const request = requests?.find(r => r.id === requestId);
+  const fundType = fundTypes?.find(ft => ft.id === request?.fund_type_id);
 
   const { data: attachments } = useQuery({
     queryKey: ['request-attachments', requestId],
@@ -150,10 +152,10 @@ export function MoneyRequestDetails({ requestId, onClose }: MoneyRequestDetailsP
                 </div>
               )}
 
-              {request.fund_budget_code && (
+              {fundType && (
                 <div>
-                  <Label className="font-medium">Fund/Budget Code</Label>
-                  <p>{request.fund_budget_code}</p>
+                  <Label className="font-medium">Fund Type</Label>
+                  <p>{fundType.name}</p>
                 </div>
               )}
 

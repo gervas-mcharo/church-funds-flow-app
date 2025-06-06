@@ -19,10 +19,13 @@ export const CreateFundTypeDialog = () => {
     e.preventDefault();
     if (!name.trim()) return;
 
+    const balance = openingBalance ? parseFloat(openingBalance) : 0;
+
     createFundType.mutate({
       name: name.trim(),
       description: description.trim() || undefined,
-      opening_balance: openingBalance ? parseFloat(openingBalance) : 0,
+      opening_balance: balance,
+      current_balance: balance, // Initialize current balance with opening balance
     }, {
       onSuccess: () => {
         setName("");

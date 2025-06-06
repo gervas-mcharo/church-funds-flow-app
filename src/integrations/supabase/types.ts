@@ -238,6 +238,7 @@ export type Database = {
       fund_types: {
         Row: {
           created_at: string
+          current_balance: number | null
           description: string | null
           id: string
           is_active: boolean
@@ -246,6 +247,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          current_balance?: number | null
           description?: string | null
           id?: string
           is_active?: boolean
@@ -254,6 +256,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          current_balance?: number | null
           description?: string | null
           id?: string
           is_active?: boolean
@@ -267,7 +270,7 @@ export type Database = {
           amount: number
           associated_project: string | null
           created_at: string
-          fund_budget_code: string | null
+          fund_type_id: string
           id: string
           purpose: string
           request_date: string
@@ -281,7 +284,7 @@ export type Database = {
           amount: number
           associated_project?: string | null
           created_at?: string
-          fund_budget_code?: string | null
+          fund_type_id: string
           id?: string
           purpose: string
           request_date?: string
@@ -295,7 +298,7 @@ export type Database = {
           amount?: number
           associated_project?: string | null
           created_at?: string
-          fund_budget_code?: string | null
+          fund_type_id?: string
           id?: string
           purpose?: string
           request_date?: string
@@ -306,6 +309,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "money_requests_fund_type_id_fkey"
+            columns: ["fund_type_id"]
+            isOneToOne: false
+            referencedRelation: "fund_types"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "money_requests_requester_id_fkey"
             columns: ["requester_id"]
