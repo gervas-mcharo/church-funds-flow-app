@@ -17,13 +17,13 @@ interface AssignPersonnelDialogProps {
   onClose: () => void;
 }
 
-const departmentRoles: AppRole[] = ['head_of_department', 'secretary', 'treasurer', 'member'];
+const departmentRoles: AppRole[] = ['head_of_department', 'secretary', 'treasurer', 'department_member'];
 
 const roleLabels = {
   head_of_department: "Head of Department",
   secretary: "Secretary",
   treasurer: "Treasurer", 
-  member: "Member"
+  department_member: "Department Member"
 };
 
 export function AssignPersonnelDialog({ departmentId, departmentName, onClose }: AssignPersonnelDialogProps) {

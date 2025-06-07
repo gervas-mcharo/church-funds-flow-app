@@ -19,7 +19,7 @@ const roleLabels = {
   head_of_department: "Head of Department",
   secretary: "Secretary", 
   treasurer: "Treasurer",
-  member: "Member",
+  department_member: "Department Member",
   pastor: "Pastor",
   general_secretary: "General Secretary",
   finance_elder: "Finance Elder",
@@ -34,14 +34,20 @@ const roleLabels = {
   security: "Security",
   media_team: "Media Team",
   maintenance: "Maintenance",
-  visitor: "Visitor"
+  visitor: "Visitor",
+  administrator: "Administrator",
+  data_entry_clerk: "Data Entry Clerk",
+  finance_manager: "Finance Manager",
+  super_administrator: "Super Administrator",
+  finance_administrator: "Finance Administrator",
+  contributor: "Contributor"
 };
 
 const roleColors = {
   head_of_department: "bg-purple-100 text-purple-800",
   secretary: "bg-blue-100 text-blue-800",
   treasurer: "bg-green-100 text-green-800",
-  member: "bg-gray-100 text-gray-800",
+  department_member: "bg-gray-100 text-gray-800",
   pastor: "bg-red-100 text-red-800",
   general_secretary: "bg-indigo-100 text-indigo-800",
   finance_elder: "bg-yellow-100 text-yellow-800",
@@ -56,7 +62,13 @@ const roleColors = {
   security: "bg-slate-100 text-slate-800",
   media_team: "bg-sky-100 text-sky-800",
   maintenance: "bg-stone-100 text-stone-800",
-  visitor: "bg-neutral-100 text-neutral-800"
+  visitor: "bg-neutral-100 text-neutral-800",
+  administrator: "bg-red-100 text-red-800",
+  data_entry_clerk: "bg-blue-100 text-blue-800",
+  finance_manager: "bg-green-100 text-green-800",
+  super_administrator: "bg-purple-100 text-purple-800",
+  finance_administrator: "bg-yellow-100 text-yellow-800",
+  contributor: "bg-gray-100 text-gray-800"
 };
 
 export function DepartmentPersonnelCard({ departmentId, departmentName }: DepartmentPersonnelCardProps) {
@@ -114,7 +126,7 @@ export function DepartmentPersonnelCard({ departmentId, departmentName }: Depart
                     {roleLabels[role as AppRole]}
                   </h4>
                   <div className="space-y-2">
-                    {people.map((person) => (
+                    {people?.map((person) => (
                       <div key={person.id} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="flex items-center space-x-3">
                           <div>
