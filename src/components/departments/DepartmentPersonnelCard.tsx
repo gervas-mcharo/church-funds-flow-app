@@ -10,6 +10,14 @@ import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
+type DepartmentPersonnel = Database["public"]["Tables"]["department_personnel"]["Row"] & {
+  user: {
+    first_name: string | null;
+    last_name: string | null;
+    email: string | null;
+  } | null;
+};
+
 interface DepartmentPersonnelCardProps {
   departmentId: string;
   departmentName: string;
@@ -88,7 +96,7 @@ export function DepartmentPersonnelCard({ departmentId, departmentName }: Depart
     }
     acc[person.role].push(person);
     return acc;
-  }, {} as Record<AppRole, typeof personnel>) || {};
+  }, {} as Record<AppRole, DepartmentPersonnel[]>) || {};
 
   if (isLoading) {
     return <div>Loading personnel...</div>;
@@ -126,7 +134,7 @@ export function DepartmentPersonnelCard({ departmentId, departmentName }: Depart
                     {roleLabels[role as AppRole]}
                   </h4>
                   <div className="space-y-2">
-                    {people?.map((person) => (
+                    {people.map((person) => (
                       <div key={person.id} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="flex items-center space-x-3">
                           <div>
