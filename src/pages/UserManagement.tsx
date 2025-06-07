@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { User, Edit, Trash2, Shield } from "lucide-react";
+import { User, Edit, Trash2, Shield, UserPlus } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
@@ -18,15 +18,20 @@ type AppRole = Database["public"]["Enums"]["app_role"];
 const UserManagement = () => {
   const [editingRoleId, setEditingRoleId] = useState<string>("");
   const [newRole, setNewRole] = useState<AppRole | "">("");
+  const [assigningRoleToUserId, setAssigningRoleToUserId] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: profiles, isLoading: loadingProfiles } = useQuery({
-    queryKey: ['profiles'],
+  // Get all users with their roles (if any)
+  const { data: usersWithRoles, isLoading: loadingUsers } = useQuery({
+    queryKey: ['users-with-roles'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          *,
+          user_roles(id, role)
+        `)
         .order('first_name');
       
       if (error) throw error;
@@ -61,6 +66,7 @@ const UserManagement = () => {
     onSuccess: () => {
       toast({ title: "Role removed successfully" });
       queryClient.invalidateQueries({ queryKey: ['user-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
     },
     onError: (error) => {
       toast({ title: "Error removing role", description: error.message, variant: "destructive" });
@@ -79,6 +85,7 @@ const UserManagement = () => {
     onSuccess: () => {
       toast({ title: "Role updated successfully" });
       queryClient.invalidateQueries({ queryKey: ['user-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
       setEditingRoleId("");
       setNewRole("");
     },
@@ -87,9 +94,35 @@ const UserManagement = () => {
     }
   });
 
+  const assignRoleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
+      const { error } = await supabase
+        .from('user_roles')
+        .insert({ user_id: userId, role });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Role assigned successfully" });
+      queryClient.invalidateQueries({ queryKey: ['user-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
+      setAssigningRoleToUserId("");
+      setNewRole("");
+    },
+    onError: (error) => {
+      toast({ title: "Error assigning role", description: error.message, variant: "destructive" });
+    }
+  });
+
   const handleUpdateRole = () => {
     if (editingRoleId && newRole) {
       updateRoleMutation.mutate({ roleId: editingRoleId, newRole: newRole as AppRole });
+    }
+  };
+
+  const handleAssignRole = () => {
+    if (assigningRoleToUserId && newRole) {
+      assignRoleMutation.mutate({ userId: assigningRoleToUserId, role: newRole as AppRole });
     }
   };
 
@@ -157,7 +190,7 @@ const UserManagement = () => {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Total Users:</span>
-                  <span className="font-semibold">{profiles?.length || 0}</span>
+                  <span className="font-semibold">{usersWithRoles?.length || 0}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Users with Roles:</span>
@@ -165,7 +198,7 @@ const UserManagement = () => {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Users without Roles:</span>
-                  <span className="font-semibold">{(profiles?.length || 0) - (userRoles?.length || 0)}</span>
+                  <span className="font-semibold">{(usersWithRoles?.length || 0) - (userRoles?.length || 0)}</span>
                 </div>
               </div>
             </CardContent>
@@ -176,12 +209,12 @@ const UserManagement = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
-              User Roles
+              All Users & Their Roles
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {loadingRoles ? (
-              <div className="text-center py-8">Loading user roles...</div>
+            {loadingUsers ? (
+              <div className="text-center py-8">Loading users...</div>
             ) : (
               <Table>
                 <TableHeader>
@@ -193,69 +226,118 @@ const UserManagement = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {userRoles?.map((userRole) => (
-                    <TableRow key={userRole.id}>
-                      <TableCell className="font-medium">
-                        {userRole.profiles?.first_name} {userRole.profiles?.last_name}
-                      </TableCell>
-                      <TableCell>{userRole.profiles?.email}</TableCell>
-                      <TableCell>
-                        {editingRoleId === userRole.id ? (
-                          <div className="flex items-center gap-2">
-                            <Select value={newRole} onValueChange={(value) => setNewRole(value as AppRole)}>
-                              <SelectTrigger className="w-48">
-                                <SelectValue placeholder="Select new role..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Object.entries(roleLabels).map(([value, label]) => (
-                                  <SelectItem key={value} value={value}>
-                                    {label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <Button size="sm" onClick={handleUpdateRole} disabled={updateRoleMutation.isPending}>
-                              Save
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => {
-                              setEditingRoleId("");
-                              setNewRole("");
-                            }}>
-                              Cancel
-                            </Button>
-                          </div>
-                        ) : (
-                          <Badge className={getRoleBadgeColor(userRole.role)}>
-                            {roleLabels[userRole.role]}
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {editingRoleId !== userRole.id && (
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => {
-                                setEditingRoleId(userRole.id);
-                                setNewRole(userRole.role);
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
+                  {usersWithRoles?.map((user) => {
+                    const userRole = user.user_roles?.[0]; // Get the first role if any
+                    
+                    return (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">
+                          {user.first_name} {user.last_name}
+                        </TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>
+                          {editingRoleId === userRole?.id ? (
+                            <div className="flex items-center gap-2">
+                              <Select value={newRole} onValueChange={(value) => setNewRole(value as AppRole)}>
+                                <SelectTrigger className="w-48">
+                                  <SelectValue placeholder="Select new role..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Object.entries(roleLabels).map(([value, label]) => (
+                                    <SelectItem key={value} value={value}>
+                                      {label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Button size="sm" onClick={handleUpdateRole} disabled={updateRoleMutation.isPending}>
+                                Save
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => {
+                                setEditingRoleId("");
+                                setNewRole("");
+                              }}>
+                                Cancel
+                              </Button>
+                            </div>
+                          ) : assigningRoleToUserId === user.id ? (
+                            <div className="flex items-center gap-2">
+                              <Select value={newRole} onValueChange={(value) => setNewRole(value as AppRole)}>
+                                <SelectTrigger className="w-48">
+                                  <SelectValue placeholder="Select role..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Object.entries(roleLabels).map(([value, label]) => (
+                                    <SelectItem key={value} value={value}>
+                                      {label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Button size="sm" onClick={handleAssignRole} disabled={assignRoleMutation.isPending}>
+                                Assign
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => {
+                                setAssigningRoleToUserId("");
+                                setNewRole("");
+                              }}>
+                                Cancel
+                              </Button>
+                            </div>
+                          ) : userRole ? (
+                            <Badge className={getRoleBadgeColor(userRole.role)}>
+                              {roleLabels[userRole.role]}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-gray-500">
+                              No Role
+                            </Badge>
                           )}
-                          <Button 
-                            size="sm" 
-                            variant="destructive"
-                            onClick={() => removeRoleMutation.mutate(userRole.id)}
-                            disabled={removeRoleMutation.isPending}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {userRole ? (
+                              <>
+                                {editingRoleId !== userRole.id && (
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => {
+                                      setEditingRoleId(userRole.id);
+                                      setNewRole(userRole.role);
+                                    }}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                <Button 
+                                  size="sm" 
+                                  variant="destructive"
+                                  onClick={() => removeRoleMutation.mutate(userRole.id)}
+                                  disabled={removeRoleMutation.isPending}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setAssigningRoleToUserId(user.id);
+                                  setNewRole("");
+                                }}
+                                disabled={assigningRoleToUserId === user.id}
+                              >
+                                <UserPlus className="h-4 w-4 mr-1" />
+                                Assign Role
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             )}
