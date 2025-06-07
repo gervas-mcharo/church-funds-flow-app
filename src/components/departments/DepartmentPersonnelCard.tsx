@@ -90,7 +90,7 @@ export function DepartmentPersonnelCard({ departmentId, departmentName }: Depart
     }
   };
 
-  const groupedPersonnel = personnel?.reduce((acc, person) => {
+  const groupedPersonnel: Record<AppRole, DepartmentPersonnel[]> = personnel?.reduce((acc, person) => {
     if (!acc[person.role]) {
       acc[person.role] = [];
     }
@@ -134,7 +134,7 @@ export function DepartmentPersonnelCard({ departmentId, departmentName }: Depart
                     {roleLabels[role as AppRole]}
                   </h4>
                   <div className="space-y-2">
-                    {people.map((person) => (
+                    {(people as DepartmentPersonnel[]).map((person) => (
                       <div key={person.id} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="flex items-center space-x-3">
                           <div>
