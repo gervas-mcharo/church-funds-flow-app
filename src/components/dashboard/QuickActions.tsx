@@ -7,13 +7,10 @@ import { QRScanner } from "@/components/QRScanner";
 import { useQRScanner } from "@/hooks/useQRScanner";
 import { CreateContributorDialog } from "@/components/contributors/CreateContributorDialog";
 import { CreateFundTypeDialog } from "@/components/fund-types/CreateFundTypeDialog";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export function QuickActions() {
   const { isOpen, openScanner, closeScanner, handleScan } = useQRScanner();
-  const [showContributorDialog, setShowContributorDialog] = useState(false);
-  const [showFundTypeDialog, setShowFundTypeDialog] = useState(false);
   const navigate = useNavigate();
 
   const handleGenerateReport = () => {
@@ -36,14 +33,9 @@ export function QuickActions() {
             Scan QR Code
           </Button>
           
-          <Button
-            variant="outline"
-            className="w-full justify-start gap-3 h-12"
-            onClick={() => setShowContributorDialog(true)}
-          >
-            <Users className="h-5 w-5" />
-            Add Contributor
-          </Button>
+          <div className="w-full">
+            <CreateContributorDialog />
+          </div>
           
           <Button
             variant="outline"
@@ -54,14 +46,9 @@ export function QuickActions() {
             Generate Report
           </Button>
           
-          <Button
-            variant="outline"
-            className="w-full justify-start gap-3 h-12"
-            onClick={() => setShowFundTypeDialog(true)}
-          >
-            <Plus className="h-5 w-5" />
-            Create Fund
-          </Button>
+          <div className="w-full">
+            <CreateFundTypeDialog />
+          </div>
         </CardContent>
       </Card>
 
@@ -70,16 +57,6 @@ export function QuickActions() {
           <QRScanner onScan={handleScan} onClose={closeScanner} />
         </SheetContent>
       </Sheet>
-
-      <CreateContributorDialog 
-        open={showContributorDialog} 
-        onOpenChange={setShowContributorDialog} 
-      />
-      
-      <CreateFundTypeDialog 
-        open={showFundTypeDialog} 
-        onOpenChange={setShowFundTypeDialog} 
-      />
     </>
   );
 }

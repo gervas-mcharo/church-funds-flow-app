@@ -12,12 +12,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Users } from "lucide-react";
 import { useCreateContributor } from "@/hooks/useContributors";
 import { useToast } from "@/hooks/use-toast";
 
-export function CreateContributorDialog() {
-  const [open, setOpen] = useState(false);
+interface CreateContributorDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function CreateContributorDialog({ open, onOpenChange }: CreateContributorDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -26,6 +31,10 @@ export function CreateContributorDialog() {
 
   const { mutate: createContributor, isPending } = useCreateContributor();
   const { toast } = useToast();
+
+  const isControlled = open !== undefined;
+  const isOpen = isControlled ? open : internalOpen;
+  const setIsOpen = isControlled ? (onOpenChange || (() => {})) : setInternalOpen;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +61,7 @@ export function CreateContributorDialog() {
             description: "Contributor created successfully",
           });
           setFormData({ name: "", email: "", phone: "" });
-          setOpen(false);
+          setIsOpen(false);
         },
         onError: (error) => {
           toast({
@@ -67,10 +76,10 @@ export function CreateContributorDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
+        <Button variant="outline" className="w-full justify-start gap-3 h-12">
+          <Users className="h-4 w-4" />
           Add Contributor
         </Button>
       </DialogTrigger>
@@ -114,7 +123,7 @@ export function CreateContributorDialog() {
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={isPending}>

@@ -8,12 +8,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
 import { useCreateFundType } from "@/hooks/useCreateFundType";
 
-export const CreateFundTypeDialog = () => {
+interface CreateFundTypeDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export const CreateFundTypeDialog = ({ open, onOpenChange }: CreateFundTypeDialogProps) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [openingBalance, setOpeningBalance] = useState("");
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const createFundType = useCreateFundType();
+
+  const isControlled = open !== undefined;
+  const isOpen = isControlled ? open : internalOpen;
+  const setIsOpen = isControlled ? (onOpenChange || (() => {})) : setInternalOpen;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,17 +40,17 @@ export const CreateFundTypeDialog = () => {
         setName("");
         setDescription("");
         setOpeningBalance("");
-        setOpen(false);
+        setIsOpen(false);
       }
     });
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Fund Type
+        <Button variant="outline" className="w-full justify-start gap-3 h-12">
+          <Plus className="h-4 w-4" />
+          Create Fund
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -82,7 +91,7 @@ export const CreateFundTypeDialog = () => {
             />
           </div>
           <div className="flex gap-2 justify-end">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={createFundType.isPending}>
