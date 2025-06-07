@@ -53,9 +53,12 @@ export function AddCustomCurrencyDialog() {
     console.log('Adding custom currency:', { code: trimmedCode, name: trimmedName, symbol: trimmedSymbol });
 
     try {
-      await addCustomCurrency(trimmedCode, {
-        name: trimmedName,
-        symbol: trimmedSymbol
+      await addCustomCurrency({
+        code: trimmedCode,
+        info: {
+          name: trimmedName,
+          symbol: trimmedSymbol
+        }
       });
 
       toast({

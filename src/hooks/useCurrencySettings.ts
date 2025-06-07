@@ -78,7 +78,7 @@ export const useCurrencySettings = () => {
       }
 
       try {
-        return data.setting_value as CurrencySettings;
+        return data.setting_value as unknown as CurrencySettings;
       } catch {
         return {
           currency_code: 'USD',
@@ -138,7 +138,7 @@ export const useCurrencySettings = () => {
         .from('organization_settings')
         .upsert({
           setting_key: 'currency',
-          setting_value: newSettings
+          setting_value: newSettings as any
         });
 
       if (error) throw error;
