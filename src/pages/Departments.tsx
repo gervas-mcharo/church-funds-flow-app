@@ -1,32 +1,39 @@
+
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Folder, Plus, Edit, Trash2, Users } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { Switch } from "@/components/ui/switch";
+import { Building2, Plus, Users, Edit2, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import type { Database } from "@/integrations/supabase/types";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DepartmentPersonnelCard } from "@/components/departments/DepartmentPersonnelCard";
 
-type AppRole = Database["public"]["Enums"]["app_role"];
+interface Department {
+  id: string;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+}
 
 const Departments = () => {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [selectedDepartment, setSelectedDepartment] = useState<string>("");
-  const [selectedUser, setSelectedUser] = useState<string>("");
-  const [selectedRole, setSelectedRole] = useState<AppRole | "">("");
-  const [editingDepartment, setEditingDepartment] = useState<string>("");
+  const [newDepartment, setNewDepartment] = useState({ name: "", description: "" });
+  const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: departments, isLoading: loadingDepartments } = useQuery({
+  const { data: departments, isLoading } = useQuery({
     queryKey: ['departments'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -35,422 +42,293 @@ const Departments = () => {
         .order('name');
       
       if (error) throw error;
-      return data;
-    }
-  });
-
-  const { data: profiles, isLoading: loadingProfiles } = useQuery({
-    queryKey: ['profiles'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('first_name');
-      
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  const { data: departmentPersonnel, isLoading: loadingDepartmentPersonnel } = useQuery({
-    queryKey: ['department-personnel'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('department_personnel')
-        .select(`
-          *,
-          departments!inner(name),
-          profiles!inner(first_name, last_name, email)
-        `);
-      
-      if (error) throw error;
-      return data;
+      return data as Department[];
     }
   });
 
   const createDepartmentMutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase
+    mutationFn: async (department: { name: string; description: string }) => {
+      const { data, error } = await supabase
         .from('departments')
-        .insert({ name, description, is_active: true });
-      
+        .insert({
+          name: department.name,
+          description: department.description || null,
+          is_active: true
+        })
+        .select()
+        .single();
+
       if (error) throw error;
+      return data;
     },
     onSuccess: () => {
-      toast({ title: "Department created successfully" });
       queryClient.invalidateQueries({ queryKey: ['departments'] });
-      setName("");
-      setDescription("");
+      setNewDepartment({ name: "", description: "" });
+      setShowCreateDialog(false);
+      toast({ title: "Department created successfully" });
     },
-    onError: (error: any) => {
-      toast({ title: "Error creating department", description: error.message, variant: "destructive" });
+    onError: (error) => {
+      toast({ 
+        title: "Error creating department", 
+        description: error.message, 
+        variant: "destructive" 
+      });
     }
   });
 
   const updateDepartmentMutation = useMutation({
-    mutationFn: async (departmentId: string) => {
-      const { error } = await supabase
+    mutationFn: async (department: Department) => {
+      const { data, error } = await supabase
         .from('departments')
-        .update({ name, description })
-        .eq('id', departmentId);
-      
+        .update({
+          name: department.name,
+          description: department.description,
+          is_active: department.is_active
+        })
+        .eq('id', department.id)
+        .select()
+        .single();
+
       if (error) throw error;
+      return data;
     },
     onSuccess: () => {
-      toast({ title: "Department updated successfully" });
       queryClient.invalidateQueries({ queryKey: ['departments'] });
-      setSelectedDepartment("");
-      setName("");
-      setDescription("");
+      setEditingDepartment(null);
+      setShowEditDialog(false);
+      toast({ title: "Department updated successfully" });
     },
-    onError: (error: any) => {
-      toast({ title: "Error updating department", description: error.message, variant: "destructive" });
+    onError: (error) => {
+      toast({ 
+        title: "Error updating department", 
+        description: error.message, 
+        variant: "destructive" 
+      });
     }
   });
 
   const deleteDepartmentMutation = useMutation({
-    mutationFn: async (departmentId: string) => {
+    mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('departments')
         .delete()
-        .eq('id', departmentId);
-      
+        .eq('id', id);
+
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Department deleted successfully" });
       queryClient.invalidateQueries({ queryKey: ['departments'] });
+      toast({ title: "Department deleted successfully" });
     },
-    onError: (error: any) => {
-      toast({ title: "Error deleting department", description: error.message, variant: "destructive" });
-    }
-  });
-
-  const assignPersonnelMutation = useMutation({
-    mutationFn: async ({ departmentId, userId, role }: { departmentId: string; userId: string; role: AppRole }) => {
-      const { error } = await supabase
-        .from('department_personnel')
-        .insert({ department_id: departmentId, user_id: userId, role });
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({ title: "Personnel assigned successfully" });
-      queryClient.invalidateQueries({ queryKey: ['department-personnel'] });
-      setSelectedDepartment("");
-      setSelectedUser("");
-      setSelectedRole("");
-    },
-    onError: (error: any) => {
-      toast({ title: "Error assigning personnel", description: error.message, variant: "destructive" });
-    }
-  });
-
-  const removePersonnelMutation = useMutation({
-    mutationFn: async (personnelId: string) => {
-      const { error } = await supabase
-        .from('department_personnel')
-        .delete()
-        .eq('id', personnelId);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({ title: "Personnel removed successfully" });
-      queryClient.invalidateQueries({ queryKey: ['department-personnel'] });
-    },
-    onError: (error: any) => {
-      toast({ title: "Error removing personnel", description: error.message, variant: "destructive" });
-    }
-  });
-
-  const handleAssignPersonnel = () => {
-    if (selectedDepartment && selectedUser && selectedRole) {
-      assignPersonnelMutation.mutate({ 
-        departmentId: selectedDepartment, 
-        userId: selectedUser, 
-        role: selectedRole as AppRole 
+    onError: (error) => {
+      toast({ 
+        title: "Error deleting department", 
+        description: error.message, 
+        variant: "destructive" 
       });
+    }
+  });
+
+  const handleCreateDepartment = () => {
+    if (newDepartment.name.trim()) {
+      createDepartmentMutation.mutate(newDepartment);
     }
   };
 
   const handleUpdateDepartment = () => {
-    if (editingDepartment && name.trim()) {
+    if (editingDepartment) {
       updateDepartmentMutation.mutate(editingDepartment);
     }
   };
 
-  const roleLabels: Record<AppRole, string> = {
-    super_administrator: "Super Administrator",
-    administrator: "Administrator",
-    finance_administrator: "Finance Administrator", 
-    pastor: "Pastor",
-    general_secretary: "General Secretary",
-    finance_elder: "Finance Elder",
-    data_entry_clerk: "Data Entry Clerk",
-    finance_manager: "Finance Manager",
-    head_of_department: "Head of Department",
-    secretary: "Secretary",
-    treasurer: "Treasurer",
-    department_member: "Department Member",
-    contributor: "Contributor"
-  };
-
-  const getRoleBadgeColor = (role: AppRole) => {
-    switch (role) {
-      case 'head_of_department': return 'bg-blue-100 text-blue-800';
-      case 'secretary': return 'bg-green-100 text-green-800';
-      case 'treasurer': return 'bg-yellow-100 text-yellow-800';
-      case 'department_member': return 'bg-purple-100 text-purple-800';
-      case 'pastor': return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'finance_elder': return 'bg-orange-100 text-orange-800';
-      case 'data_entry_clerk': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const handleDeleteDepartment = (id: string, name: string) => {
+    if (confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
+      deleteDepartmentMutation.mutate(id);
     }
   };
 
-  // Get department-relevant roles
-  const getDepartmentRoles = () => {
-    return [
-      'head_of_department',
-      'secretary', 
-      'treasurer',
-      'department_member',
-      'pastor',
-      'finance_elder',
-      'data_entry_clerk'
-    ];
-  };
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div>Loading departments...</div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Departments Management</h1>
-          <p className="text-gray-600 mt-1">Manage church departments and ministries</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Departments</h1>
+            <p className="text-gray-600 mt-1">Manage organizational departments and personnel</p>
+          </div>
+
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Department
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Department</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Department Name</Label>
+                  <Input
+                    id="name"
+                    value={newDepartment.name}
+                    onChange={(e) => setNewDepartment(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Enter department name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={newDepartment.description}
+                    onChange={(e) => setNewDepartment(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Enter department description"
+                    rows={3}
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleCreateDepartment}
+                    disabled={!newDepartment.name.trim() || createDepartmentMutation.isPending}
+                  >
+                    {createDepartmentMutation.isPending ? "Creating..." : "Create Department"}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="bg-white shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Folder className="h-5 w-5" />
-                {editingDepartment ? "Edit Department" : "Add New Department"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="name">Department Name</Label>
-                <Input 
-                  id="name" 
-                  value={name} 
-                  onChange={(e) => setName(e.target.value)} 
-                  placeholder="Enter department name" 
-                />
-              </div>
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Enter department description"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  className="flex-1" 
-                  onClick={editingDepartment ? handleUpdateDepartment : () => createDepartmentMutation.mutate()}
-                  disabled={createDepartmentMutation.isPending || updateDepartmentMutation.isPending}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {editingDepartment ? "Update Department" : "Add Department"}
-                </Button>
-                {editingDepartment && (
-                  <Button 
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">All Departments</h2>
+            {departments?.map((department) => (
+              <Card key={department.id} className="bg-white shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-5 w-5" />
+                      {department.name}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={department.is_active ? "default" : "secondary"}>
+                        {department.is_active ? "Active" : "Inactive"}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditingDepartment(department);
+                          setShowEditDialog(true);
+                        }}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteDepartment(department.id, department.name)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {department.description && (
+                    <p className="text-gray-600 mb-4">{department.description}</p>
+                  )}
+                  <Button
                     variant="outline"
-                    onClick={() => {
-                      setEditingDepartment("");
-                      setName("");
-                      setDescription("");
-                    }}
+                    size="sm"
+                    onClick={() => setSelectedDepartmentId(
+                      selectedDepartmentId === department.id ? null : department.id
+                    )}
                   >
-                    Cancel
+                    <Users className="h-4 w-4 mr-2" />
+                    {selectedDepartmentId === department.id ? "Hide Personnel" : "Manage Personnel"}
                   </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
 
-          <Card className="bg-white shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Assign Personnel
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="department">Department</Label>
-                <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose department..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departments?.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.id}>
-                        {dept.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="user">User</Label>
-                <Select value={selectedUser} onValueChange={setSelectedUser}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose user..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {profiles?.map((profile) => (
-                      <SelectItem key={profile.id} value={profile.id}>
-                        {profile.first_name} {profile.last_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="role">Role</Label>
-                <Select value={selectedRole} onValueChange={(value) => setSelectedRole(value as AppRole)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose role..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getDepartmentRoles().map((role) => (
-                      <SelectItem key={role} value={role}>
-                        {roleLabels[role as AppRole]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button 
-                className="w-full" 
-                onClick={handleAssignPersonnel}
-                disabled={!selectedDepartment || !selectedUser || !selectedRole || assignPersonnelMutation.isPending}
-              >
-                <Users className="h-4 w-4 mr-2" />
-                Assign Personnel
-              </Button>
-            </CardContent>
-          </Card>
+          <div>
+            {selectedDepartmentId && (
+              <DepartmentPersonnelCard 
+                departmentId={selectedDepartmentId}
+                departmentName={departments?.find(d => d.id === selectedDepartmentId)?.name || ""}
+              />
+            )}
+          </div>
         </div>
 
-        <Card className="bg-white shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Folder className="h-5 w-5" />
-              Departments
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingDepartments ? (
-              <div className="text-center py-8">Loading departments...</div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {departments?.map((department) => (
-                    <TableRow key={department.id}>
-                      <TableCell className="font-medium">{department.name}</TableCell>
-                      <TableCell>{department.description}</TableCell>
-                      <TableCell>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => {
-                            setEditingDepartment(department.id);
-                            setName(department.name);
-                            setDescription(department.description);
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="destructive"
-                          onClick={() => deleteDepartmentMutation.mutate(department.id)}
-                          disabled={deleteDepartmentMutation.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+        {/* Edit Department Dialog */}
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Department</DialogTitle>
+            </DialogHeader>
+            {editingDepartment && (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="edit-name">Department Name</Label>
+                  <Input
+                    id="edit-name"
+                    value={editingDepartment.name}
+                    onChange={(e) => setEditingDepartment(prev => 
+                      prev ? { ...prev, name: e.target.value } : null
+                    )}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-description">Description</Label>
+                  <Textarea
+                    id="edit-description"
+                    value={editingDepartment.description || ""}
+                    onChange={(e) => setEditingDepartment(prev => 
+                      prev ? { ...prev, description: e.target.value } : null
+                    )}
+                    rows={3}
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="is-active"
+                    checked={editingDepartment.is_active}
+                    onCheckedChange={(checked) => setEditingDepartment(prev => 
+                      prev ? { ...prev, is_active: checked } : null
+                    )}
+                  />
+                  <Label htmlFor="is-active">Active</Label>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleUpdateDepartment}
+                    disabled={updateDepartmentMutation.isPending}
+                  >
+                    {updateDepartmentMutation.isPending ? "Updating..." : "Update Department"}
+                  </Button>
+                </div>
+              </div>
             )}
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Department Personnel
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingDepartmentPersonnel ? (
-              <div className="text-center py-8">Loading department personnel...</div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Department</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {departmentPersonnel?.map((personnel) => (
-                    <TableRow key={personnel.id}>
-                      <TableCell className="font-medium">
-                        {personnel.profiles?.first_name} {personnel.profiles?.last_name}
-                      </TableCell>
-                      <TableCell>{personnel.profiles?.email}</TableCell>
-                      <TableCell>{personnel.departments?.name}</TableCell>
-                      <TableCell>
-                        <Badge className={getRoleBadgeColor(personnel.role)}>
-                          {roleLabels[personnel.role as keyof typeof roleLabels]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => removePersonnelMutation.mutate(personnel.id)}
-                          disabled={removePersonnelMutation.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

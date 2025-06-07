@@ -680,9 +680,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_department: {
+        Args: { user_id: string; dept_id: string }
+        Returns: boolean
+      }
       create_approval_chain: {
         Args: { request_id: string }
         Returns: undefined
+      }
+      get_user_departments: {
+        Args: { user_id: string }
+        Returns: {
+          department_id: string
+          role: Database["public"]["Enums"]["app_role"]
+        }[]
+      }
+      has_department_role: {
+        Args: {
+          user_id: string
+          dept_id: string
+          required_role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
       }
       has_role: {
         Args: {

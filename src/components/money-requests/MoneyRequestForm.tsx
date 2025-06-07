@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { FileText, Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useCreateMoneyRequest } from "@/hooks/useMoneyRequests";
-import { useDepartments } from "@/hooks/useDepartments";
+import { useCurrentUserDepartments } from "@/hooks/useDepartmentPersonnel";
 import { useFundTypes } from "@/hooks/useFundTypes";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -28,7 +28,7 @@ interface MoneyRequestFormData {
 
 export function MoneyRequestForm() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const { data: departments, isLoading: departmentsLoading } = useDepartments();
+  const { data: userDepartments, isLoading: departmentsLoading } = useCurrentUserDepartments();
   const { data: fundTypes, isLoading: fundTypesLoading } = useFundTypes();
   const createRequestMutation = useCreateMoneyRequest();
 
@@ -110,6 +110,30 @@ export function MoneyRequestForm() {
     }
   };
 
+  if (departmentsLoading) {
+    return <div>Loading your departments...</div>;
+  }
+
+  if (!userDepartments || userDepartments.length === 0) {
+    return (
+      <Card className="bg-white shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Submit Money Request
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">You are not assigned to any departments.</p>
+            <p className="text-gray-500 text-sm mt-2">Please contact an administrator to be assigned to a department before submitting money requests.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="bg-white shadow-sm">
       <CardHeader>
@@ -135,9 +159,9 @@ export function MoneyRequestForm() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {departments?.map((dept) => (
-                        <SelectItem key={dept.id} value={dept.id}>
-                          {dept.name}
+                      {userDepartments?.map((userDept) => (
+                        <SelectItem key={userDept.department.id} value={userDept.department.id}>
+                          {userDept.department.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

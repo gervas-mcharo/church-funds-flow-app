@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { FileText, CheckCircle, XCircle, Clock } from "lucide-react";
 import { useMoneyRequests, useApprovalChain, useUpdateApproval } from "@/hooks/useMoneyRequests";
 import { useFundTypes } from "@/hooks/useFundTypes";
 import { useCurrencySettings } from "@/hooks/useCurrencySettings";
+import { useCurrentUserDepartments } from "@/hooks/useDepartmentPersonnel";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import type { Database } from "@/integrations/supabase/types";
@@ -23,6 +25,7 @@ export function MoneyRequestDetails({ requestId, onClose }: MoneyRequestDetailsP
   const { data: requests } = useMoneyRequests();
   const { data: fundTypes } = useFundTypes();
   const { data: approvalChain } = useApprovalChain(requestId);
+  const { data: userDepartments } = useCurrentUserDepartments();
   const updateApprovalMutation = useUpdateApproval();
   const { formatAmount } = useCurrencySettings();
 
@@ -61,10 +64,25 @@ export function MoneyRequestDetails({ requestId, onClose }: MoneyRequestDetailsP
   if (!request) return null;
 
   const canApprove = (stepOrder: number, approverRole: string) => {
-    if (!currentUser?.roles) return false;
+    if (!currentUser || !userDepartments) return false;
     
-    // Check if user has the required role for this step
-    const hasRole = currentUser.roles.includes(approverRole as any);
+    // Check if user has access to this department
+    const hasAccessToRequestDepartment = userDepartments.some(
+      userDept => userDept.department.id === request.requesting_department_id
+    );
+    
+    if (!hasAccessToRequestDepartment) return false;
+
+    // Check if user has the required role for this step in this department
+    const hasDepartmentRole = userDepartments.some(
+      userDept => userDept.department.id === request.requesting_department_id && 
+      userDept.role === approverRole
+    );
+    
+    // Also check if user has the global role (for higher-level approvals)
+    const hasGlobalRole = currentUser.roles.includes(approverRole as any);
+    
+    if (!hasDepartmentRole && !hasGlobalRole) return false;
     
     // Check if this is the current step in the approval chain
     const previousSteps = approvalChain?.filter(step => step.step_order < stepOrder) || [];
@@ -74,7 +92,7 @@ export function MoneyRequestDetails({ requestId, onClose }: MoneyRequestDetailsP
     const currentStep = approvalChain?.find(step => step.step_order === stepOrder);
     const isStepPending = currentStep?.is_approved === null;
 
-    return hasRole && allPreviousApproved && isStepPending;
+    return allPreviousApproved && isStepPending;
   };
 
   const handleApproval = async (approvalId: string, isApproved: boolean) => {
