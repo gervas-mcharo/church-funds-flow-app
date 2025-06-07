@@ -40,29 +40,34 @@ export function CreateUserForm({ roleLabels, roleCategories }: CreateUserFormPro
       password: string;
       role: AppRole;
     }) => {
-      // Create the user account
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email,
-        password,
-        user_metadata: {
-          first_name: firstName,
-          last_name: lastName,
-        },
-        email_confirm: true, // Auto-confirm email
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: {
+          firstName,
+          lastName,
+          email,
+          password,
+          role
+        }
       });
 
-      if (authError) throw authError;
-
-      // Assign the role
-      if (authData.user && role) {
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({ user_id: authData.user.id, role });
-        
-        if (roleError) throw roleError;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Failed to create user');
       }
 
-      return authData;
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      if (data?.warning) {
+        toast({
+          title: "User created with warning",
+          description: data.warning,
+          variant: "default"
+        });
+      }
+
+      return data;
     },
     onSuccess: () => {
       toast({ title: "User created successfully" });
@@ -76,6 +81,7 @@ export function CreateUserForm({ roleLabels, roleCategories }: CreateUserFormPro
       setSelectedRole("");
     },
     onError: (error) => {
+      console.error('Create user error:', error);
       toast({ 
         title: "Error creating user", 
         description: error.message, 
