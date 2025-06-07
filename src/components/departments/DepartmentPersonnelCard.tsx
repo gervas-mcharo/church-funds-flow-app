@@ -90,13 +90,13 @@ export function DepartmentPersonnelCard({ departmentId, departmentName }: Depart
     }
   };
 
-  const groupedPersonnel: Record<AppRole, DepartmentPersonnel[]> = personnel?.reduce((acc, person) => {
+  const groupedPersonnel: Partial<Record<AppRole, DepartmentPersonnel[]>> = personnel?.reduce((acc, person) => {
     if (!acc[person.role]) {
       acc[person.role] = [];
     }
     acc[person.role].push(person);
     return acc;
-  }, {} as Record<AppRole, DepartmentPersonnel[]>) || {};
+  }, {} as Partial<Record<AppRole, DepartmentPersonnel[]>>) || {};
 
   if (isLoading) {
     return <div>Loading personnel...</div>;
@@ -134,7 +134,7 @@ export function DepartmentPersonnelCard({ departmentId, departmentName }: Depart
                     {roleLabels[role as AppRole]}
                   </h4>
                   <div className="space-y-2">
-                    {(people as DepartmentPersonnel[]).map((person) => (
+                    {people?.map((person) => (
                       <div key={person.id} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="flex items-center space-x-3">
                           <div>
