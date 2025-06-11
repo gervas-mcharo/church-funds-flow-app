@@ -1,7 +1,8 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useDepartmentAudit } from "./useDepartmentAudit";
+import { useRLSErrorHandler } from "./useRLSErrorHandler";
 import type { Database } from "@/integrations/supabase/types";
 
 type DepartmentPersonnel = Database["public"]["Tables"]["department_personnel"]["Row"] & {
@@ -42,6 +43,8 @@ export function useDepartmentPersonnel(departmentId?: string) {
 export function useAssignPersonnel() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { logPersonnelAssigned } = useDepartmentAudit();
+  const { handleRLSError } = useRLSErrorHandler();
 
   return useMutation({
     mutationFn: async ({ 
@@ -66,19 +69,30 @@ export function useAssignPersonnel() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['department-personnel'] });
+      
+      // Get department name for audit log
+      const { data: dept } = await supabase
+        .from('departments')
+        .select('name')
+        .eq('id', variables.departmentId)
+        .single();
+      
+      logPersonnelAssigned(
+        variables.departmentId, 
+        dept?.name || 'Unknown Department', 
+        variables.userId, 
+        variables.role
+      );
+      
       toast({
         title: "Personnel assigned successfully",
         description: "The user has been assigned to the department."
       });
     },
     onError: (error) => {
-      toast({
-        title: "Error assigning personnel",
-        description: error.message,
-        variant: "destructive"
-      });
+      handleRLSError(error, "assign personnel");
     }
   });
 }
@@ -86,29 +100,49 @@ export function useAssignPersonnel() {
 export function useRemovePersonnel() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { logPersonnelRemoved } = useDepartmentAudit();
+  const { handleRLSError } = useRLSErrorHandler();
 
   return useMutation({
     mutationFn: async (personnelId: string) => {
+      // Get personnel info before deletion for audit log
+      const { data: personnel } = await supabase
+        .from('department_personnel')
+        .select(`
+          *,
+          department:departments(name),
+          user:profiles(first_name, last_name)
+        `)
+        .eq('id', personnelId)
+        .single();
+
       const { error } = await supabase
         .from('department_personnel')
         .delete()
         .eq('id', personnelId);
 
       if (error) throw error;
+      return personnel;
     },
-    onSuccess: () => {
+    onSuccess: (personnel) => {
       queryClient.invalidateQueries({ queryKey: ['department-personnel'] });
+      
+      if (personnel) {
+        logPersonnelRemoved(
+          personnel.department_id,
+          personnel.department?.name || 'Unknown Department',
+          personnel.user_id,
+          personnel.role
+        );
+      }
+      
       toast({
         title: "Personnel removed successfully",
         description: "The user has been removed from the department."
       });
     },
     onError: (error) => {
-      toast({
-        title: "Error removing personnel",
-        description: error.message,
-        variant: "destructive"
-      });
+      handleRLSError(error, "remove personnel");
     }
   });
 }

@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { useDepartmentPersonnel, useRemovePersonnel } from "@/hooks/useDepartmen
 import { AssignPersonnelDialog } from "./AssignPersonnelDialog";
 import { useState } from "react";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useDepartmentOwnership } from "@/hooks/useDepartmentOwnership";
 import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
@@ -84,7 +84,11 @@ export function DepartmentPersonnelCard({ departmentId, departmentName }: Depart
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const { data: personnel, isLoading } = useDepartmentPersonnel(departmentId);
   const removePersonnelMutation = useRemovePersonnel();
-  const { canManagePersonnel } = useUserRole();
+  const { userRole, canManagePersonnel } = useUserRole();
+  const { canManageThisDepartment } = useDepartmentOwnership(departmentId);
+
+  // Enhanced permission check that includes department ownership
+  const canManageThisDepartmentPersonnel = canManagePersonnel() && canManageThisDepartment(userRole);
 
   const handleRemovePersonnel = (personnelId: string) => {
     if (confirm("Are you sure you want to remove this person from the department?")) {
@@ -113,7 +117,7 @@ export function DepartmentPersonnelCard({ departmentId, departmentName }: Depart
               <Users className="h-5 w-5" />
               {departmentName} Personnel
             </div>
-            {canManagePersonnel() && (
+            {canManageThisDepartmentPersonnel && (
               <Button
                 size="sm"
                 onClick={() => setShowAssignDialog(true)}
@@ -151,7 +155,7 @@ export function DepartmentPersonnelCard({ departmentId, departmentName }: Depart
                             {roleLabels[person.role as AppRole]}
                           </Badge>
                         </div>
-                        {canManagePersonnel() && (
+                        {canManageThisDepartmentPersonnel && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -171,7 +175,7 @@ export function DepartmentPersonnelCard({ departmentId, departmentName }: Depart
         </CardContent>
       </Card>
 
-      {showAssignDialog && canManagePersonnel() && (
+      {showAssignDialog && canManageThisDepartmentPersonnel && (
         <AssignPersonnelDialog
           departmentId={departmentId}
           departmentName={departmentName}
