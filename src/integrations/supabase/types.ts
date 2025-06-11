@@ -688,6 +688,10 @@ export type Database = {
         Args: { request_id: string }
         Returns: undefined
       }
+      current_user_has_admin_role: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       get_user_departments: {
         Args: { user_id: string }
         Returns: {
