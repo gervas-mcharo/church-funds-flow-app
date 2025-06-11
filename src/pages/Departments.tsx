@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DepartmentPersonnelCard } from "@/components/departments/DepartmentPersonnelCard";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface Department {
   id: string;
@@ -33,6 +34,7 @@ const Departments = () => {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { canManageDepartments } = useUserRole();
 
   const { data: departments, isLoading } = useQuery({
     queryKey: ['departments'],
@@ -169,51 +171,53 @@ const Departments = () => {
             <p className="text-gray-600 mt-1">Manage organizational departments and personnel</p>
           </div>
 
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Department
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Department</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Department Name</Label>
-                  <Input
-                    id="name"
-                    value={newDepartment.name}
-                    onChange={(e) => setNewDepartment(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Enter department name"
-                  />
+          {canManageDepartments() && (
+            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Department
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Department</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="name">Department Name</Label>
+                    <Input
+                      id="name"
+                      value={newDepartment.name}
+                      onChange={(e) => setNewDepartment(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Enter department name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={newDepartment.description}
+                      onChange={(e) => setNewDepartment(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Enter department description"
+                      rows={3}
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleCreateDepartment}
+                      disabled={!newDepartment.name.trim() || createDepartmentMutation.isPending}
+                    >
+                      {createDepartmentMutation.isPending ? "Creating..." : "Create Department"}
+                    </Button>
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={newDepartment.description}
-                    onChange={(e) => setNewDepartment(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Enter department description"
-                    rows={3}
-                  />
-                </div>
-                <div className="flex justify-end space-x-2">
-                  <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={handleCreateDepartment}
-                    disabled={!newDepartment.name.trim() || createDepartmentMutation.isPending}
-                  >
-                    {createDepartmentMutation.isPending ? "Creating..." : "Create Department"}
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
 
         {/* Single Column Layout */}
@@ -233,23 +237,27 @@ const Departments = () => {
                         <Badge variant={department.is_active ? "default" : "secondary"}>
                           {department.is_active ? "Active" : "Inactive"}
                         </Badge>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setEditingDepartment(department);
-                            setShowEditDialog(true);
-                          }}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteDepartment(department.id, department.name)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {canManageDepartments() && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setEditingDepartment(department);
+                                setShowEditDialog(true);
+                              }}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteDepartment(department.id, department.name)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </CardTitle>
                   </CardHeader>
@@ -293,59 +301,61 @@ const Departments = () => {
         </div>
 
         {/* Edit Department Dialog */}
-        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Department</DialogTitle>
-            </DialogHeader>
-            {editingDepartment && (
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="edit-name">Department Name</Label>
-                  <Input
-                    id="edit-name"
-                    value={editingDepartment.name}
-                    onChange={(e) => setEditingDepartment(prev => 
-                      prev ? { ...prev, name: e.target.value } : null
-                    )}
-                  />
+        {canManageDepartments() && (
+          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Department</DialogTitle>
+              </DialogHeader>
+              {editingDepartment && (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="edit-name">Department Name</Label>
+                    <Input
+                      id="edit-name"
+                      value={editingDepartment.name}
+                      onChange={(e) => setEditingDepartment(prev => 
+                        prev ? { ...prev, name: e.target.value } : null
+                      )}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-description">Description</Label>
+                    <Textarea
+                      id="edit-description"
+                      value={editingDepartment.description || ""}
+                      onChange={(e) => setEditingDepartment(prev => 
+                        prev ? { ...prev, description: e.target.value } : null
+                      )}
+                      rows={3}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="is-active"
+                      checked={editingDepartment.is_active}
+                      onCheckedChange={(checked) => setEditingDepartment(prev => 
+                        prev ? { ...prev, is_active: checked } : null
+                      )}
+                    />
+                    <Label htmlFor="is-active">Active</Label>
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleUpdateDepartment}
+                      disabled={updateDepartmentMutation.isPending}
+                    >
+                      {updateDepartmentMutation.isPending ? "Updating..." : "Update Department"}
+                    </Button>
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="edit-description">Description</Label>
-                  <Textarea
-                    id="edit-description"
-                    value={editingDepartment.description || ""}
-                    onChange={(e) => setEditingDepartment(prev => 
-                      prev ? { ...prev, description: e.target.value } : null
-                    )}
-                    rows={3}
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="is-active"
-                    checked={editingDepartment.is_active}
-                    onCheckedChange={(checked) => setEditingDepartment(prev => 
-                      prev ? { ...prev, is_active: checked } : null
-                    )}
-                  />
-                  <Label htmlFor="is-active">Active</Label>
-                </div>
-                <div className="flex justify-end space-x-2">
-                  <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={handleUpdateDepartment}
-                    disabled={updateDepartmentMutation.isPending}
-                  >
-                    {updateDepartmentMutation.isPending ? "Updating..." : "Update Department"}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+              )}
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </DashboardLayout>
   );

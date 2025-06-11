@@ -42,11 +42,27 @@ export const useUserRole = () => {
     return userRole === 'administrator';
   };
 
+  const canManageDepartments = () => {
+    return userRole === 'super_administrator' || 
+           userRole === 'administrator' || 
+           userRole === 'general_secretary' || 
+           userRole === 'pastor';
+  };
+
+  const canManagePersonnel = () => {
+    return userRole === 'super_administrator' || 
+           userRole === 'administrator' || 
+           userRole === 'general_secretary' || 
+           userRole === 'pastor';
+  };
+
   return {
     userRole,
     isLoading,
     canManageUsers,
     isSuperAdmin,
     isAdmin,
+    canManageDepartments,
+    canManagePersonnel,
   };
 };

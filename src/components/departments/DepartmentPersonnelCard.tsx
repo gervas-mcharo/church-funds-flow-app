@@ -6,6 +6,7 @@ import { Users, UserPlus, UserMinus } from "lucide-react";
 import { useDepartmentPersonnel, useRemovePersonnel } from "@/hooks/useDepartmentPersonnel";
 import { AssignPersonnelDialog } from "./AssignPersonnelDialog";
 import { useState } from "react";
+import { useUserRole } from "@/hooks/useUserRole";
 import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
@@ -83,6 +84,7 @@ export function DepartmentPersonnelCard({ departmentId, departmentName }: Depart
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const { data: personnel, isLoading } = useDepartmentPersonnel(departmentId);
   const removePersonnelMutation = useRemovePersonnel();
+  const { canManagePersonnel } = useUserRole();
 
   const handleRemovePersonnel = (personnelId: string) => {
     if (confirm("Are you sure you want to remove this person from the department?")) {
@@ -111,13 +113,15 @@ export function DepartmentPersonnelCard({ departmentId, departmentName }: Depart
               <Users className="h-5 w-5" />
               {departmentName} Personnel
             </div>
-            <Button
-              size="sm"
-              onClick={() => setShowAssignDialog(true)}
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              Assign Personnel
-            </Button>
+            {canManagePersonnel() && (
+              <Button
+                size="sm"
+                onClick={() => setShowAssignDialog(true)}
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Assign Personnel
+              </Button>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -147,14 +151,16 @@ export function DepartmentPersonnelCard({ departmentId, departmentName }: Depart
                             {roleLabels[person.role as AppRole]}
                           </Badge>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemovePersonnel(person.id)}
-                          disabled={removePersonnelMutation.isPending}
-                        >
-                          <UserMinus className="h-4 w-4" />
-                        </Button>
+                        {canManagePersonnel() && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemovePersonnel(person.id)}
+                            disabled={removePersonnelMutation.isPending}
+                          >
+                            <UserMinus className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -165,7 +171,7 @@ export function DepartmentPersonnelCard({ departmentId, departmentName }: Depart
         </CardContent>
       </Card>
 
-      {showAssignDialog && (
+      {showAssignDialog && canManagePersonnel() && (
         <AssignPersonnelDialog
           departmentId={departmentId}
           departmentName={departmentName}
