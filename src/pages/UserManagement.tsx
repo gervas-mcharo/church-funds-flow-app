@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { User, Edit, Trash2, Shield, UserPlus } from "lucide-react";
+import { User, Edit, Trash2, Shield, UserPlus, Lock } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
 import { CreateUserForm } from "@/components/user-management/CreateUserForm";
+import { useUserRole } from "@/hooks/useUserRole";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -20,6 +21,7 @@ const UserManagement = () => {
   const [assigningRoleToUserId, setAssigningRoleToUserId] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { userRole, isLoading: roleLoading, canManageUsers } = useUserRole();
 
   // Get all users with their roles (if any)
   const { data: usersWithRoles, isLoading: loadingUsers } = useQuery({
@@ -55,6 +57,10 @@ const UserManagement = () => {
 
   const removeRoleMutation = useMutation({
     mutationFn: async (roleId: string) => {
+      if (!canManageUsers()) {
+        throw new Error("You don't have permission to remove roles");
+      }
+      
       const { error } = await supabase
         .from('user_roles')
         .delete()
@@ -74,6 +80,10 @@ const UserManagement = () => {
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ roleId, newRole }: { roleId: string; newRole: AppRole }) => {
+      if (!canManageUsers()) {
+        throw new Error("You don't have permission to update roles");
+      }
+      
       const { error } = await supabase
         .from('user_roles')
         .update({ role: newRole })
@@ -95,6 +105,10 @@ const UserManagement = () => {
 
   const assignRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
+      if (!canManageUsers()) {
+        throw new Error("You don't have permission to assign roles");
+      }
+      
       const { error } = await supabase
         .from('user_roles')
         .insert({ user_id: userId, role });
@@ -114,12 +128,30 @@ const UserManagement = () => {
   });
 
   const handleUpdateRole = () => {
+    if (!canManageUsers()) {
+      toast({ 
+        title: "Access Denied", 
+        description: "You don't have permission to update roles", 
+        variant: "destructive" 
+      });
+      return;
+    }
+    
     if (editingRoleId && newRole) {
       updateRoleMutation.mutate({ roleId: editingRoleId, newRole: newRole as AppRole });
     }
   };
 
   const handleAssignRole = () => {
+    if (!canManageUsers()) {
+      toast({ 
+        title: "Access Denied", 
+        description: "You don't have permission to assign roles", 
+        variant: "destructive" 
+      });
+      return;
+    }
+    
     if (assigningRoleToUserId && newRole) {
       assignRoleMutation.mutate({ userId: assigningRoleToUserId, role: newRole as AppRole });
     }
@@ -167,16 +199,56 @@ const UserManagement = () => {
 
   const roleCategories = getRolesByCategory();
 
+  if (roleLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">Loading your permissions...</div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
           <p className="text-gray-600 mt-1">Manage user accounts and role assignments</p>
+          {!canManageUsers() && (
+            <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-md flex items-center gap-2">
+              <Lock className="h-4 w-4 text-amber-600" />
+              <span className="text-sm text-amber-700">
+                You have read-only access. Only Super Administrators and Administrators can manage user roles.
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <CreateUserForm roleLabels={roleLabels} roleCategories={roleCategories} />
+          {canManageUsers() ? (
+            <CreateUserForm roleLabels={roleLabels} roleCategories={roleCategories} />
+          ) : (
+            <Card className="bg-gray-50 shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-gray-500">
+                  <Lock className="h-5 w-5" />
+                  Create New User
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <Lock className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                  <p className="text-sm">
+                    Only Super Administrators and Administrators can create new users.
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Your current role: {userRole ? roleLabels[userRole] : 'No Role'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="bg-white shadow-sm">
             <CardHeader>
@@ -235,7 +307,7 @@ const UserManagement = () => {
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>
-                          {editingRoleId === userRole?.id ? (
+                          {canManageUsers() && editingRoleId === userRole?.id ? (
                             <div className="flex items-center gap-2">
                               <Select value={newRole} onValueChange={(value) => setNewRole(value as AppRole)}>
                                 <SelectTrigger className="w-48">
@@ -259,7 +331,7 @@ const UserManagement = () => {
                                 Cancel
                               </Button>
                             </div>
-                          ) : assigningRoleToUserId === user.id ? (
+                          ) : canManageUsers() && assigningRoleToUserId === user.id ? (
                             <div className="flex items-center gap-2">
                               <Select value={newRole} onValueChange={(value) => setNewRole(value as AppRole)}>
                                 <SelectTrigger className="w-48">
@@ -295,42 +367,49 @@ const UserManagement = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            {userRole ? (
-                              <>
-                                {editingRoleId !== userRole.id && (
+                            {canManageUsers() ? (
+                              userRole ? (
+                                <>
+                                  {editingRoleId !== userRole.id && (
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline"
+                                      onClick={() => {
+                                        setEditingRoleId(userRole.id);
+                                        setNewRole(userRole.role);
+                                      }}
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                  )}
                                   <Button 
                                     size="sm" 
-                                    variant="outline"
-                                    onClick={() => {
-                                      setEditingRoleId(userRole.id);
-                                      setNewRole(userRole.role);
-                                    }}
+                                    variant="destructive"
+                                    onClick={() => removeRoleMutation.mutate(userRole.id)}
+                                    disabled={removeRoleMutation.isPending}
                                   >
-                                    <Edit className="h-4 w-4" />
+                                    <Trash2 className="h-4 w-4" />
                                   </Button>
-                                )}
-                                <Button 
-                                  size="sm" 
-                                  variant="destructive"
-                                  onClick={() => removeRoleMutation.mutate(userRole.id)}
-                                  disabled={removeRoleMutation.isPending}
+                                </>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setAssigningRoleToUserId(user.id);
+                                    setNewRole("");
+                                  }}
+                                  disabled={assigningRoleToUserId === user.id}
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <UserPlus className="h-4 w-4 mr-1" />
+                                  Assign Role
                                 </Button>
-                              </>
+                              )
                             ) : (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setAssigningRoleToUserId(user.id);
-                                  setNewRole("");
-                                }}
-                                disabled={assigningRoleToUserId === user.id}
-                              >
-                                <UserPlus className="h-4 w-4 mr-1" />
-                                Assign Role
-                              </Button>
+                              <div className="flex items-center gap-1 text-gray-400">
+                                <Lock className="h-3 w-3" />
+                                <span className="text-xs">View Only</span>
+                              </div>
                             )}
                           </div>
                         </TableCell>
