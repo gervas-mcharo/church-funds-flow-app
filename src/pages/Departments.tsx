@@ -7,13 +7,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Building2, Plus, Users, Edit2, Trash2 } from "lucide-react";
+import { Building2, Plus, Users, Edit2, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DepartmentPersonnelCard } from "@/components/departments/DepartmentPersonnelCard";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Department {
   id: string;
@@ -147,6 +148,10 @@ const Departments = () => {
     }
   };
 
+  const togglePersonnelPanel = (departmentId: string) => {
+    setSelectedDepartmentId(selectedDepartmentId === departmentId ? null : departmentId);
+  };
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -211,67 +216,79 @@ const Departments = () => {
           </Dialog>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Single Column Layout */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">All Departments</h2>
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold">All Departments</h2>
             {departments?.map((department) => (
-              <Card key={department.id} className="bg-white shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-5 w-5" />
-                      {department.name}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={department.is_active ? "default" : "secondary"}>
-                        {department.is_active ? "Active" : "Inactive"}
-                      </Badge>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setEditingDepartment(department);
-                          setShowEditDialog(true);
-                        }}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteDepartment(department.id, department.name)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {department.description && (
-                    <p className="text-gray-600 mb-4">{department.description}</p>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedDepartmentId(
-                      selectedDepartmentId === department.id ? null : department.id
+              <div key={department.id} className="space-y-0">
+                <Card className="bg-white shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-5 w-5" />
+                        {department.name}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={department.is_active ? "default" : "secondary"}>
+                          {department.is_active ? "Active" : "Inactive"}
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditingDepartment(department);
+                            setShowEditDialog(true);
+                          }}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteDepartment(department.id, department.name)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {department.description && (
+                      <p className="text-gray-600 mb-4">{department.description}</p>
                     )}
-                  >
-                    <Users className="h-4 w-4 mr-2" />
-                    {selectedDepartmentId === department.id ? "Hide Personnel" : "Manage Personnel"}
-                  </Button>
-                </CardContent>
-              </Card>
+                    <Collapsible 
+                      open={selectedDepartmentId === department.id}
+                      onOpenChange={() => togglePersonnelPanel(department.id)}
+                    >
+                      <CollapsibleTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-between"
+                        >
+                          <div className="flex items-center">
+                            <Users className="h-4 w-4 mr-2" />
+                            Manage Personnel
+                          </div>
+                          {selectedDepartmentId === department.id ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mt-4">
+                        <DepartmentPersonnelCard 
+                          departmentId={department.id}
+                          departmentName={department.name}
+                        />
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </CardContent>
+                </Card>
+              </div>
             ))}
-          </div>
-
-          <div>
-            {selectedDepartmentId && (
-              <DepartmentPersonnelCard 
-                departmentId={selectedDepartmentId}
-                departmentName={departments?.find(d => d.id === selectedDepartmentId)?.name || ""}
-              />
-            )}
           </div>
         </div>
 
