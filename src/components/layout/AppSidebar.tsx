@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -26,7 +27,7 @@ const menuItems = [
   { title: "Dashboard", url: "/", icon: BarChart3 },
   { title: "QR Management", url: "/qr-management", icon: QrCode },
   { title: "Contributors", url: "/contributors", icon: Users },
-  { title: "Fund Types", url: "/fund-types", icon: Database },
+  { title: "Funds", url: "/fund-types", icon: Database },
   { title: "Departments", url: "/departments", icon: Folder },
   { title: "Pledges", url: "/pledges", icon: HandHeart },
   { title: "Money Requests", url: "/money-requests", icon: FileText },
