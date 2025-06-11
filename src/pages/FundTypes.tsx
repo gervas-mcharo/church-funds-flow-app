@@ -34,7 +34,7 @@ const FundTypes = () => {
       <div className="space-y-6">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Fund Types Management</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Funds Management</h1>
             <p className="text-gray-600 mt-1">Manage different types of funds and offerings</p>
           </div>
           <CreateFundTypeDialog />
@@ -44,7 +44,7 @@ const FundTypes = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Database className="h-5 w-5" />
-              Fund Types
+              Funds
             </CardTitle>
           </CardHeader>
           <CardContent>
