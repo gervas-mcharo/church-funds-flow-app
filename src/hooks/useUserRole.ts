@@ -56,6 +56,46 @@ export const useUserRole = () => {
            userRole === 'pastor';
   };
 
+  // Fund management permissions
+  const canManageFunds = () => {
+    return userRole === 'super_administrator' || 
+           userRole === 'administrator' || 
+           userRole === 'finance_administrator' || 
+           userRole === 'finance_manager' || 
+           userRole === 'finance_elder' || 
+           userRole === 'treasurer' ||
+           userRole === 'general_secretary' ||
+           userRole === 'pastor';
+  };
+
+  const canCreateFunds = () => {
+    return userRole === 'super_administrator' || 
+           userRole === 'administrator' || 
+           userRole === 'finance_administrator' ||
+           userRole === 'general_secretary' ||
+           userRole === 'pastor';
+  };
+
+  const canDeleteFunds = () => {
+    return userRole === 'super_administrator' || 
+           userRole === 'administrator' || 
+           userRole === 'finance_administrator' ||
+           userRole === 'general_secretary' ||
+           userRole === 'pastor';
+  };
+
+  const canViewFunds = () => {
+    // All authenticated users can view funds, but with different access levels
+    return !!userRole;
+  };
+
+  const getFundAccessLevel = () => {
+    if (canCreateFunds()) return 'full';
+    if (canManageFunds()) return 'manage';
+    if (canViewFunds()) return 'view';
+    return 'none';
+  };
+
   return {
     userRole,
     isLoading,
@@ -64,5 +104,10 @@ export const useUserRole = () => {
     isAdmin,
     canManageDepartments,
     canManagePersonnel,
+    canManageFunds,
+    canCreateFunds,
+    canDeleteFunds,
+    canViewFunds,
+    getFundAccessLevel,
   };
 };
