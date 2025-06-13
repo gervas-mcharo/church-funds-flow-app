@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -7,41 +6,41 @@ import { Calendar, DollarSign, User, Target, Clock, FileText } from "lucide-reac
 import { Pledge, usePledgeContributions } from "@/hooks/usePledges";
 import { useCurrencySettings } from "@/hooks/useCurrencySettings";
 import { PledgeManagementActions } from "./PledgeManagementActions";
-
 interface PledgeDetailsDialogProps {
   pledge: Pledge | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
-
-export function PledgeDetailsDialog({ pledge, open, onOpenChange }: PledgeDetailsDialogProps) {
-  const { formatAmount } = useCurrencySettings();
-  const { data: contributions = [] } = usePledgeContributions(pledge?.id || '');
-  
+export function PledgeDetailsDialog({
+  pledge,
+  open,
+  onOpenChange
+}: PledgeDetailsDialogProps) {
+  const {
+    formatAmount
+  } = useCurrencySettings();
+  const {
+    data: contributions = []
+  } = usePledgeContributions(pledge?.id || '');
   if (!pledge) return null;
-  
-  const progressPercentage = (pledge.total_paid / pledge.pledge_amount) * 100;
-  
+  const progressPercentage = pledge.total_paid / pledge.pledge_amount * 100;
   const statusColors = {
     active: "bg-blue-500",
-    upcoming: "bg-gray-500", 
+    upcoming: "bg-gray-500",
     partially_fulfilled: "bg-yellow-500",
     fulfilled: "bg-green-500",
     overdue: "bg-red-500",
     cancelled: "bg-gray-400"
   };
-
   const statusLabels = {
     active: "Active",
     upcoming: "Upcoming",
-    partially_fulfilled: "Partially Fulfilled", 
+    partially_fulfilled: "Partially Fulfilled",
     fulfilled: "Fulfilled",
     overdue: "Overdue",
     cancelled: "Cancelled"
   };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+  return <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
@@ -97,20 +96,16 @@ export function PledgeDetailsDialog({ pledge, open, onOpenChange }: PledgeDetail
                 </div>
               </div>
 
-              {pledge.installment_amount && (
-                <div className="grid grid-cols-2 gap-4">
+              {pledge.installment_amount && <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600">Installment Amount</p>
                     <p className="font-medium">{formatAmount(pledge.installment_amount)}</p>
                   </div>
-                  {pledge.number_of_installments && (
-                    <div>
+                  {pledge.number_of_installments && <div>
                       <p className="text-sm text-gray-600">Number of Installments</p>
                       <p className="font-medium">{pledge.number_of_installments}</p>
-                    </div>
-                  )}
-                </div>
-              )}
+                    </div>}
+                </div>}
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center">
@@ -120,33 +115,27 @@ export function PledgeDetailsDialog({ pledge, open, onOpenChange }: PledgeDetail
                     <p className="font-medium">{new Date(pledge.start_date).toLocaleDateString()}</p>
                   </div>
                 </div>
-                {pledge.end_date && (
-                  <div className="flex items-center">
+                {pledge.end_date && <div className="flex items-center">
                     <Calendar className="h-4 w-4 mr-2 text-red-600" />
                     <div>
                       <p className="text-sm text-gray-600">End Date</p>
                       <p className="font-medium">{new Date(pledge.end_date).toLocaleDateString()}</p>
                     </div>
-                  </div>
-                )}
+                  </div>}
               </div>
 
-              {pledge.next_payment_date && (
-                <div className="flex items-center">
+              {pledge.next_payment_date && <div className="flex items-center">
                   <Clock className="h-4 w-4 mr-2 text-purple-600" />
                   <div>
                     <p className="text-sm text-gray-600">Next Payment Due</p>
                     <p className="font-medium">{new Date(pledge.next_payment_date).toLocaleDateString()}</p>
                   </div>
-                </div>
-              )}
+                </div>}
 
-              {pledge.notes && (
-                <div>
+              {pledge.notes && <div>
                   <p className="text-sm text-gray-600">Notes</p>
                   <p className="text-sm bg-gray-50 p-2 rounded">{pledge.notes}</p>
-                </div>
-              )}
+                </div>}
             </CardContent>
           </Card>
 
@@ -163,15 +152,15 @@ export function PledgeDetailsDialog({ pledge, open, onOpenChange }: PledgeDetail
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
-                    <p className="text-2xl font-bold text-blue-600">{formatAmount(pledge.pledge_amount)}</p>
+                    <p className="font-bold text-blue-600 text-base">{formatAmount(pledge.pledge_amount)}</p>
                     <p className="text-sm text-gray-600">Total Pledged</p>
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-green-600">{formatAmount(pledge.total_paid)}</p>
+                    <p className="font-bold text-green-600 text-base">{formatAmount(pledge.total_paid)}</p>
                     <p className="text-sm text-gray-600">Total Paid</p>
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-orange-600">{formatAmount(pledge.remaining_balance)}</p>
+                    <p className="font-bold text-orange-600 text-base">{formatAmount(pledge.remaining_balance)}</p>
                     <p className="text-sm text-gray-600">Remaining</p>
                   </div>
                 </div>
@@ -192,35 +181,26 @@ export function PledgeDetailsDialog({ pledge, open, onOpenChange }: PledgeDetail
                 <CardTitle>Contribution History</CardTitle>
               </CardHeader>
               <CardContent>
-                {contributions.length > 0 ? (
-                  <div className="space-y-3">
-                    {contributions.map((contrib) => (
-                      <div key={contrib.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                {contributions.length > 0 ? <div className="space-y-3">
+                    {contributions.map(contrib => <div key={contrib.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
                         <div>
                           <p className="font-medium">{formatAmount(contrib.amount_applied)}</p>
                           <p className="text-sm text-gray-600">
                             {new Date(contrib.applied_at).toLocaleDateString()}
                           </p>
-                          {contrib.notes && (
-                            <p className="text-xs text-gray-500">{contrib.notes}</p>
-                          )}
+                          {contrib.notes && <p className="text-xs text-gray-500">{contrib.notes}</p>}
                         </div>
                         <div className="text-right">
                           <p className="text-sm text-gray-600">
                             Original: {formatAmount(contrib.contributions?.amount || 0)}
                           </p>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-500 text-center py-4">No contributions applied yet</p>
-                )}
+                      </div>)}
+                  </div> : <p className="text-gray-500 text-center py-4">No contributions applied yet</p>}
               </CardContent>
             </Card>
           </div>
         </div>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 }
