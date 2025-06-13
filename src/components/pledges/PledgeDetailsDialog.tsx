@@ -150,18 +150,18 @@ export function PledgeDetailsDialog({
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <p className="font-bold text-blue-600 text-base">{formatAmount(pledge.pledge_amount)}</p>
-                    <p className="text-sm text-gray-600">Total Pledged</p>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                    <span className="text-sm text-gray-600">Total Pledged</span>
+                    <span className="font-bold text-blue-600 text-base">{formatAmount(pledge.pledge_amount)}</span>
                   </div>
-                  <div>
-                    <p className="font-bold text-green-600 text-base">{formatAmount(pledge.total_paid)}</p>
-                    <p className="text-sm text-gray-600">Total Paid</p>
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                    <span className="text-sm text-gray-600">Total Paid</span>
+                    <span className="font-bold text-green-600 text-base">{formatAmount(pledge.total_paid)}</span>
                   </div>
-                  <div>
-                    <p className="font-bold text-orange-600 text-base">{formatAmount(pledge.remaining_balance)}</p>
-                    <p className="text-sm text-gray-600">Remaining</p>
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                    <span className="text-sm text-gray-600">Remaining</span>
+                    <span className="font-bold text-orange-600 text-base">{formatAmount(pledge.remaining_balance)}</span>
                   </div>
                 </div>
 
