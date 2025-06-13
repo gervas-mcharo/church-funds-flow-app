@@ -151,15 +151,15 @@ export function PledgeDetailsDialog({
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded py-0">
                     <span className="text-sm text-gray-600">Total Pledged</span>
                     <span className="font-bold text-blue-600 text-base">{formatAmount(pledge.pledge_amount)}</span>
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded py-0">
                     <span className="text-sm text-gray-600">Total Paid</span>
                     <span className="font-bold text-green-600 text-base">{formatAmount(pledge.total_paid)}</span>
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded py-0">
                     <span className="text-sm text-gray-600">Remaining</span>
                     <span className="font-bold text-orange-600 text-base">{formatAmount(pledge.remaining_balance)}</span>
                   </div>
