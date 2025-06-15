@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { QrCode, Plus, FileText, Users } from "lucide-react";
 import { QRScanner } from "@/components/QRScanner";
 import { useQRScanner } from "@/hooks/useQRScanner";
@@ -54,7 +54,12 @@ export function QuickActions() {
 
       <Sheet open={isOpen} onOpenChange={closeScanner}>
         <SheetContent side="bottom" className="h-[80vh]">
-          <QRScanner onScan={handleScan} onClose={closeScanner} />
+          <SheetHeader>
+            <SheetTitle>QR Code Scanner</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4">
+            <QRScanner onScan={handleScan} onClose={closeScanner} />
+          </div>
         </SheetContent>
       </Sheet>
     </>
