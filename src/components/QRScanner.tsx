@@ -12,6 +12,7 @@ interface QRScannerProps {
 
 export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
   const [isScanning, setIsScanning] = useState(false);
+  const [isRequestingCamera, setIsRequestingCamera] = useState(false);
   const [scanError, setScanError] = useState<string>('');
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -20,7 +21,10 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
 
   const startScanning = async () => {
     try {
+      console.log('Starting camera access request...');
+      setIsRequestingCamera(true);
       setScanError('');
+      
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
           facingMode: 'environment',
@@ -29,18 +33,23 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
         } 
       });
       
+      console.log('Camera access granted, stream received:', stream);
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
-        setIsScanning(true);
         
         // Start QR code detection once video is playing
         videoRef.current.onloadedmetadata = () => {
+          console.log('Video metadata loaded, setting isScanning to true');
+          setIsScanning(true);
+          setIsRequestingCamera(false);
           scanForQRCode();
         };
       }
     } catch (error) {
       console.error('Error accessing camera:', error);
+      setIsRequestingCamera(false);
       setScanError('Unable to access camera. Please ensure camera permissions are granted.');
     }
   };
@@ -81,6 +90,7 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
   };
 
   const stopScanning = () => {
+    console.log('Stopping camera access');
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
@@ -89,6 +99,7 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
       cancelAnimationFrame(animationRef.current);
     }
     setIsScanning(false);
+    setIsRequestingCamera(false);
     setScanError('');
   };
 
@@ -110,6 +121,12 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
         <CardTitle className="flex items-center gap-2">
           <Camera className="h-5 w-5" />
           QR Code Scanner
+          {isRequestingCamera && (
+            <div className="flex items-center gap-2 ml-2">
+              <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
+              <span className="text-sm text-orange-500 font-normal">Requesting Camera...</span>
+            </div>
+          )}
           {isScanning && (
             <div className="flex items-center gap-2 ml-2">
               <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
@@ -122,7 +139,7 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
         </Button>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!isScanning ? (
+        {!isScanning && !isRequestingCamera ? (
           <div className="text-center space-y-4">
             <div className="w-48 h-48 bg-gray-100 mx-auto rounded-lg flex items-center justify-center">
               <Camera className="h-16 w-16 text-gray-400" />
@@ -132,6 +149,18 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
             )}
             <Button onClick={startScanning} className="w-full">
               Start Camera
+            </Button>
+          </div>
+        ) : isRequestingCamera ? (
+          <div className="text-center space-y-4">
+            <div className="w-48 h-48 bg-gray-100 mx-auto rounded-lg flex items-center justify-center">
+              <div className="flex flex-col items-center gap-2">
+                <Camera className="h-16 w-16 text-orange-500 animate-pulse" />
+                <span className="text-sm text-orange-500">Requesting camera access...</span>
+              </div>
+            </div>
+            <Button onClick={stopScanning} variant="outline" className="w-full">
+              Cancel
             </Button>
           </div>
         ) : (
