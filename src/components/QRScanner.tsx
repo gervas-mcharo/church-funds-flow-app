@@ -39,13 +39,26 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
         
-        // Start QR code detection once video is playing
-        videoRef.current.onloadedmetadata = () => {
-          console.log('Video metadata loaded, setting isScanning to true');
+        // Multiple event listeners to ensure we catch when video is ready
+        const handleVideoReady = () => {
+          console.log('Video is ready, setting isScanning to true');
           setIsScanning(true);
           setIsRequestingCamera(false);
           scanForQRCode();
         };
+
+        // Try multiple events to ensure we catch when video is ready
+        videoRef.current.onloadedmetadata = handleVideoReady;
+        videoRef.current.oncanplay = handleVideoReady;
+        videoRef.current.onplaying = handleVideoReady;
+        
+        // Fallback timeout in case events don't fire
+        setTimeout(() => {
+          if (videoRef.current && videoRef.current.readyState >= 2) {
+            console.log('Fallback: Video ready via timeout check');
+            handleVideoReady();
+          }
+        }, 1000);
       }
     } catch (error) {
       console.error('Error accessing camera:', error);
