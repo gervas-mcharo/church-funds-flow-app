@@ -110,6 +110,12 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
         <CardTitle className="flex items-center gap-2">
           <Camera className="h-5 w-5" />
           QR Code Scanner
+          {isScanning && (
+            <div className="flex items-center gap-2 ml-2">
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+              <span className="text-sm text-red-500 font-normal">Camera Active</span>
+            </div>
+          )}
         </CardTitle>
         <Button variant="ghost" size="sm" onClick={handleClose}>
           <X className="h-4 w-4" />
@@ -146,6 +152,11 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
                 <div className="absolute top-4 right-4 w-6 h-6 border-r-4 border-t-4 border-blue-500"></div>
                 <div className="absolute bottom-4 left-4 w-6 h-6 border-l-4 border-b-4 border-blue-500"></div>
                 <div className="absolute bottom-4 right-4 w-6 h-6 border-r-4 border-b-4 border-blue-500"></div>
+              </div>
+              {/* Camera access indicator overlay */}
+              <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/70 text-white px-2 py-1 rounded-full text-xs">
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                <span>LIVE</span>
               </div>
             </div>
             <div className="flex gap-2">
