@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Search, Edit, QrCode } from "lucide-react";
 import { useContributors } from "@/hooks/useContributors";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreateContributorDialog } from "@/components/contributors/CreateContributorDialog";
@@ -15,9 +17,15 @@ import { ContributorCSVDialog } from "@/components/contributors/ContributorCSVDi
 
 const Contributors = () => {
   const { data: contributors, isLoading } = useContributors();
+  const { canManageFunds, isSuperAdmin, isAdmin } = useUserRole();
   const [editingContributor, setEditingContributor] = useState<any>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   
+  // Check if user can create/edit contributors
+  const canManageContributors = () => {
+    return isSuperAdmin() || isAdmin() || canManageFunds();
+  };
+
   // Fetch contribution totals for each contributor
   const { data: contributionTotals } = useQuery({
     queryKey: ['contribution-totals'],
@@ -65,8 +73,12 @@ const Contributors = () => {
             <p className="text-gray-600 mt-1">Manage church contributor information and history</p>
           </div>
           <div className="flex items-center gap-3">
-            <ContributorCSVDialog contributors={contributors || []} />
-            <CreateContributorDialog />
+            {canManageContributors() && (
+              <>
+                <ContributorCSVDialog contributors={contributors || []} />
+                <CreateContributorDialog />
+              </>
+            )}
           </div>
         </div>
 
@@ -93,7 +105,7 @@ const Contributors = () => {
                   <TableHead>Contact</TableHead>
                   <TableHead>Total Contributions</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
+                  {canManageContributors() && <TableHead>Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -114,20 +126,22 @@ const Contributors = () => {
                         Active
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleEditContributor(contributor)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <QrCode className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                    {canManageContributors() && (
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleEditContributor(contributor)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            <QrCode className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -135,7 +149,7 @@ const Contributors = () => {
           </CardContent>
         </Card>
 
-        {editingContributor && (
+        {editingContributor && canManageContributors() && (
           <EditContributorDialog
             contributor={editingContributor}
             open={editDialogOpen}
