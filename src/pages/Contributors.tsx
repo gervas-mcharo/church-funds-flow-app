@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,16 +21,9 @@ const Contributors = () => {
   const [editingContributor, setEditingContributor] = useState<any>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   
-  // Check if user can create/edit contributors (excluding treasurer)
+  // Check if user can create/edit contributors
   const canManageContributors = () => {
-    return isSuperAdmin() || isAdmin() || (canManageFunds() && !isTreasurer());
-  };
-
-  const isTreasurer = () => {
-    // We need to check the actual role since canManageFunds includes treasurer
-    // This will be handled by checking the userRole directly
-    const { userRole } = useUserRole();
-    return userRole === 'treasurer';
+    return isSuperAdmin() || isAdmin() || canManageFunds();
   };
 
   // Fetch contribution totals for each contributor
