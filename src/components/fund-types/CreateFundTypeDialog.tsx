@@ -6,14 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCreateFundType } from "@/hooks/useCreateFundType";
 
 interface CreateFundTypeDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  variant?: "default" | "header";
 }
 
-export const CreateFundTypeDialog = ({ open, onOpenChange }: CreateFundTypeDialogProps) => {
+export const CreateFundTypeDialog = ({ open, onOpenChange, variant = "default" }: CreateFundTypeDialogProps) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [openingBalance, setOpeningBalance] = useState("");
@@ -34,7 +36,7 @@ export const CreateFundTypeDialog = ({ open, onOpenChange }: CreateFundTypeDialo
       name: name.trim(),
       description: description.trim() || undefined,
       opening_balance: balance,
-      current_balance: balance, // Initialize current balance with opening balance
+      current_balance: balance,
     }, {
       onSuccess: () => {
         setName("");
@@ -45,13 +47,37 @@ export const CreateFundTypeDialog = ({ open, onOpenChange }: CreateFundTypeDialo
     });
   };
 
+  const renderTrigger = () => {
+    if (variant === "header") {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
+                <Plus className="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Create Fund</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
+    // Default full-width button for dashboard
+    return (
+      <Button variant="outline" className="w-full justify-start gap-3 h-12">
+        <Plus className="h-4 w-4" />
+        Create Fund
+      </Button>
+    );
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full justify-start gap-3 h-12">
-          <Plus className="h-4 w-4" />
-          Create Fund
-        </Button>
+        {renderTrigger()}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

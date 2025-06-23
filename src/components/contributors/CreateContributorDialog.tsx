@@ -21,9 +21,10 @@ import { useToast } from "@/hooks/use-toast";
 interface CreateContributorDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  variant?: "default" | "header";
 }
 
-export function CreateContributorDialog({ open, onOpenChange }: CreateContributorDialogProps) {
+export function CreateContributorDialog({ open, onOpenChange, variant = "default" }: CreateContributorDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -87,31 +88,72 @@ export function CreateContributorDialog({ open, onOpenChange }: CreateContributo
     );
   };
 
-  if (!canCreateContributors()) {
+  const renderTrigger = () => {
+    if (variant === "header") {
+      if (!canCreateContributors()) {
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" disabled className="text-gray-400">
+                  <Lock className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Access Restricted</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      }
+
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
+                <Users className="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Add Contributor</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
+    // Default full-width button for dashboard
+    if (!canCreateContributors()) {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" disabled className="w-full justify-start gap-3 h-12 opacity-50">
+                <Lock className="h-4 w-4" />
+                Access Restricted
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>You need additional permissions to create contributors</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
     return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="outline" disabled className="w-full justify-start gap-3 h-12 opacity-50">
-              <Lock className="h-4 w-4" />
-              Access Restricted
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>You need additional permissions to create contributors</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Button variant="outline" className="w-full justify-start gap-3 h-12">
+        <Users className="h-4 w-4" />
+        Add Contributor
+      </Button>
     );
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full justify-start gap-3 h-12">
-          <Users className="h-4 w-4" />
-          Add Contributor
-        </Button>
+        {renderTrigger()}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
