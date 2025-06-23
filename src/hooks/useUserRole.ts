@@ -96,6 +96,45 @@ export const useUserRole = () => {
     return 'none';
   };
 
+  // Contributor management permissions
+  const canCreateContributors = () => {
+    return userRole === 'super_administrator' || 
+           userRole === 'administrator' || 
+           userRole === 'finance_administrator' ||
+           userRole === 'general_secretary' ||
+           userRole === 'pastor';
+  };
+
+  const canEditContributors = () => {
+    return userRole === 'super_administrator' || 
+           userRole === 'administrator' || 
+           userRole === 'finance_administrator' || 
+           userRole === 'finance_manager' || 
+           userRole === 'finance_elder' ||
+           userRole === 'general_secretary' ||
+           userRole === 'pastor';
+  };
+
+  const canDeleteContributors = () => {
+    return userRole === 'super_administrator' || 
+           userRole === 'administrator' || 
+           userRole === 'finance_administrator' ||
+           userRole === 'general_secretary' ||
+           userRole === 'pastor';
+  };
+
+  const canViewContributors = () => {
+    // All authenticated users can view contributors
+    return !!userRole;
+  };
+
+  const getContributorAccessLevel = () => {
+    if (canCreateContributors()) return 'full';
+    if (canEditContributors()) return 'manage';
+    if (canViewContributors()) return 'view';
+    return 'none';
+  };
+
   return {
     userRole,
     isLoading,
@@ -109,5 +148,10 @@ export const useUserRole = () => {
     canDeleteFunds,
     canViewFunds,
     getFundAccessLevel,
+    canCreateContributors,
+    canEditContributors,
+    canDeleteContributors,
+    canViewContributors,
+    getContributorAccessLevel,
   };
 };

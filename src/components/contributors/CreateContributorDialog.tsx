@@ -12,8 +12,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Users } from "lucide-react";
+import { Users, Lock } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCreateContributor } from "@/hooks/useContributors";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
 
 interface CreateContributorDialogProps {
@@ -30,6 +32,7 @@ export function CreateContributorDialog({ open, onOpenChange }: CreateContributo
   });
 
   const { mutate: createContributor, isPending } = useCreateContributor();
+  const { canCreateContributors } = useUserRole();
   const { toast } = useToast();
 
   const isControlled = open !== undefined;
@@ -38,6 +41,15 @@ export function CreateContributorDialog({ open, onOpenChange }: CreateContributo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!canCreateContributors()) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to create contributors",
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (!formData.name.trim()) {
       toast({
@@ -74,6 +86,24 @@ export function CreateContributorDialog({ open, onOpenChange }: CreateContributo
       }
     );
   };
+
+  if (!canCreateContributors()) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="outline" disabled className="w-full justify-start gap-3 h-12 opacity-50">
+              <Lock className="h-4 w-4" />
+              Access Restricted
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>You need additional permissions to create contributors</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

@@ -58,3 +58,21 @@ export const useUpdateContributor = () => {
     }
   });
 };
+
+export const useDeleteContributor = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (contributorId: string) => {
+      const { error } = await supabase
+        .from('contributors')
+        .delete()
+        .eq('id', contributorId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contributors'] });
+    }
+  });
+};
