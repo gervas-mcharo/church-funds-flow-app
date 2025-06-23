@@ -1,324 +1,310 @@
-
-import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Search, Edit, QrCode, Trash2, Lock } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useContributors } from "@/hooks/useContributors";
-import { useUserRole } from "@/hooks/useUserRole";
-import { useQuery } from "@tanstack/react-query";
+import { Plus, Search, Upload, Download, Edit, Trash2, Eye } from "lucide-react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { CreateContributorDialog } from "@/components/contributors/CreateContributorDialog";
-import { EditContributorDialog } from "@/components/contributors/EditContributorDialog";
-import { DeleteContributorDialog } from "@/components/contributors/DeleteContributorDialog";
-import { ContributorCSVDialog } from "@/components/contributors/ContributorCSVDialog";
-import { PermissionStatusBadge } from "@/components/contributors/PermissionStatusBadge";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge";
+import { DeleteContributorDialog } from "@/components/contributors/DeleteContributorDialog";
+import { PermissionStatusBadge } from "@/components/contributors/PermissionStatusBadge";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useContributors, useCreateContributor, useUpdateContributor } from "@/hooks/useContributors";
+
+interface Contributor {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+}
 
 const Contributors = () => {
-  const { data: contributors, isLoading } = useContributors();
-  const { 
-    canCreateContributors, 
-    canEditContributors, 
-    canDeleteContributors, 
-    canViewContributors,
-    getContributorAccessLevel,
-    userRole,
-    isLoading: roleLoading 
-  } = useUserRole();
-  const { toast } = useToast();
+  const [newContributor, setNewContributor] = useState({ name: "", email: "", phone: "" });
+  const [editingContributor, setEditingContributor] = useState<Contributor | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [contributorToDelete, setContributorToDelete] = useState<Contributor | null>(null);
   
-  const [editingContributor, setEditingContributor] = useState<any>(null);
-  const [deletingContributor, setDeletingContributor] = useState<any>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { getContributorAccessLevel, userRole } = useUserRole();
 
-  // Fetch contribution totals for each contributor
-  const { data: contributionTotals } = useQuery({
-    queryKey: ['contribution-totals'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('contributions')
-        .select(`
-          contributor_id,
-          amount
-        `);
-      
-      if (error) throw error;
-      
-      // Calculate totals by contributor
-      const totals = data.reduce((acc, contribution) => {
-        acc[contribution.contributor_id] = (acc[contribution.contributor_id] || 0) + Number(contribution.amount);
-        return acc;
-      }, {} as Record<string, number>);
-      
-      return totals;
-    }
-  });
-
-  const accessLevel = getContributorAccessLevel();
-
-  const handleEditContributor = (contributor: any) => {
-    if (!canEditContributors()) {
-      toast({
-        title: "Access Denied",
-        description: "You don't have permission to edit contributors",
-        variant: "destructive",
-      });
-      return;
-    }
-    setEditingContributor(contributor);
-    setEditDialogOpen(true);
-  };
-
-  const handleDeleteContributor = (contributor: any) => {
-    if (!canDeleteContributors()) {
-      toast({
-        title: "Access Denied",
-        description: "You don't have permission to delete contributors",
-        variant: "destructive",
-      });
-      return;
-    }
-    setDeletingContributor(contributor);
-    setDeleteDialogOpen(true);
-  };
+  const { data: contributors, isLoading } = useContributors();
+  const createContributorMutation = useCreateContributor();
+  const updateContributorMutation = useUpdateContributor();
 
   const handleCreateContributor = () => {
-    if (!canCreateContributors()) {
-      toast({
-        title: "Access Denied",
-        description: "You don't have permission to create contributors",
-        variant: "destructive",
+    if (newContributor.name.trim()) {
+      createContributorMutation.mutate(newContributor, {
+        onSuccess: () => {
+          setNewContributor({ name: "", email: "", phone: "" });
+          setShowCreateDialog(false);
+          toast({ title: "Contributor created successfully" });
+        },
+        onError: (error) => {
+          toast({ 
+            title: "Error creating contributor", 
+            description: error.message, 
+            variant: "destructive" 
+          });
+        }
       });
-      return;
     }
   };
 
-  if (roleLoading) {
-    return (
-      <DashboardLayout>
-        <div className="flex justify-center items-center h-64">
-          <div className="text-lg">Loading permissions...</div>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  const handleUpdateContributor = () => {
+    if (editingContributor) {
+      updateContributorMutation.mutate(editingContributor, {
+        onSuccess: () => {
+          setEditingContributor(null);
+          setShowEditDialog(false);
+          toast({ title: "Contributor updated successfully" });
+        },
+        onError: (error) => {
+          toast({ 
+            title: "Error updating contributor", 
+            description: error.message, 
+            variant: "destructive" 
+          });
+        }
+      });
+    }
+  };
 
-  if (!canViewContributors()) {
-    return (
-      <DashboardLayout>
-        <div className="flex flex-col items-center justify-center h-64 space-y-4">
-          <Lock className="h-16 w-16 text-gray-400" />
-          <div className="text-center">
-            <h2 className="text-xl font-semibold text-gray-900">Access Restricted</h2>
-            <p className="text-gray-600 mt-1">
-              You don't have permission to view contributors. Please contact your administrator.
-            </p>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  const handleDeleteContributor = (contributor: Contributor) => {
+    setContributorToDelete(contributor);
+  };
 
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="flex justify-center items-center h-64">
-          <div className="text-lg">Loading contributors...</div>
-        </div>
+        <div>Loading contributors...</div>
       </DashboardLayout>
     );
   }
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
+      <div className="container mx-auto py-10">
+        <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Contributors</h1>
-            <p className="text-gray-600 mt-1">Manage church contributor information and history</p>
-            <div className="mt-3">
-              <PermissionStatusBadge accessLevel={accessLevel} userRole={userRole} />
+            <div className="flex items-center gap-4 mb-2">
+              <h1 className="text-3xl font-bold text-gray-900">Contributors</h1>
+              <PermissionStatusBadge 
+                accessLevel={getContributorAccessLevel()} 
+                userRole={userRole || undefined}
+              />
             </div>
+            <p className="text-gray-600">Manage list of contributors</p>
           </div>
-          <div className="flex items-center gap-3">
-            {canCreateContributors() ? (
-              <>
-                <ContributorCSVDialog contributors={contributors || []} />
-                <CreateContributorDialog />
-              </>
-            ) : (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <Button 
-                        variant="outline" 
-                        disabled 
-                        className="w-full justify-start gap-3 h-12 opacity-50"
-                      >
-                        <Lock className="h-4 w-4" />
-                        Access Restricted
-                      </Button>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>You need additional permissions to create contributors</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-          </div>
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Contributor
+          </Button>
         </div>
 
-        <Card className="bg-white shadow-sm">
+        <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Contributor Directory</CardTitle>
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="Search contributors..."
-                    className="pl-10 w-64"
-                  />
-                </div>
-              </div>
-            </div>
+            <CardTitle>Contributors List</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
+              <TableCaption>A list of your contributors.</TableCaption>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[100px]">Avatar</TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Total Contributions</TableHead>
-                  <TableHead>Status</TableHead>
-                  {(canEditContributors() || canDeleteContributors()) && <TableHead>Actions</TableHead>}
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {contributors?.map((contributor) => (
                   <TableRow key={contributor.id}>
-                    <TableCell className="font-medium">{contributor.name}</TableCell>
                     <TableCell>
-                      <div className="text-sm">
-                        <div>{contributor.email || 'No email'}</div>
-                        <div className="text-gray-500">{contributor.phone || 'No phone'}</div>
-                      </div>
+                      <Avatar>
+                        <AvatarImage src={`https://avatar.vercel.sh/${contributor.email}.png`} />
+                        <AvatarFallback>{contributor.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
                     </TableCell>
-                    <TableCell>
-                      ${(contributionTotals?.[contributor.id] || 0).toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="default">
-                        Active
-                      </Badge>
-                    </TableCell>
-                    {(canEditContributors() || canDeleteContributors()) && (
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {canEditContributors() ? (
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => handleEditContributor(contributor)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          ) : (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button size="sm" variant="outline" disabled>
-                                    <Lock className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Edit access restricted</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                          
-                          <Button size="sm" variant="outline">
-                            <QrCode className="h-4 w-4" />
+                    <TableCell>{contributor.name}</TableCell>
+                    <TableCell>{contributor.email}</TableCell>
+                    <TableCell>{contributor.phone}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <Edit className="h-4 w-4" />
                           </Button>
-                          
-                          {canDeleteContributors() ? (
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => handleDeleteContributor(contributor)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          ) : (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button size="sm" variant="outline" disabled>
-                                    <Lock className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Delete access restricted</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </div>
-                      </TableCell>
-                    )}
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => {
+                              setEditingContributor(contributor);
+                              setShowEditDialog(true);
+                            }}>
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDeleteContributor(contributor)}>
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-            
-            {accessLevel === 'view' && (
-              <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="flex items-center gap-2 text-blue-700">
-                  <Eye className="h-4 w-4" />
-                  <span className="text-sm font-medium">View Only Access</span>
-                </div>
-                <p className="text-sm text-blue-600 mt-1">
-                  You have read-only access to contributors. Contact your administrator for additional permissions.
-                </p>
-              </div>
-            )}
           </CardContent>
         </Card>
 
-        {editingContributor && canEditContributors() && (
-          <EditContributorDialog
-            contributor={editingContributor}
-            open={editDialogOpen}
-            onOpenChange={(open) => {
-              setEditDialogOpen(open);
-              if (!open) {
-                setEditingContributor(null);
-              }
-            }}
-          />
-        )}
+        {/* Create Contributor Dialog */}
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogTrigger asChild>
+            {/* <Button>Open Dialog</Button> */}
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Contributor</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">
+                  Name
+                </Label>
+                <Input 
+                  id="name" 
+                  value={newContributor.name}
+                  onChange={(e) => setNewContributor(prev => ({ ...prev, name: e.target.value }))}
+                  className="col-span-3" 
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="email" className="text-right">
+                  Email
+                </Label>
+                <Input 
+                  type="email" 
+                  id="email" 
+                  value={newContributor.email}
+                  onChange={(e) => setNewContributor(prev => ({ ...prev, email: e.target.value }))}
+                  className="col-span-3" 
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="phone" className="text-right">
+                  Phone
+                </Label>
+                <Input 
+                  type="tel" 
+                  id="phone" 
+                  value={newContributor.phone}
+                  onChange={(e) => setNewContributor(prev => ({ ...prev, phone: e.target.value }))}
+                  className="col-span-3" 
+                />
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit" onClick={handleCreateContributor} disabled={createContributorMutation.isPending}>
+                {createContributorMutation.isPending ? "Creating..." : "Create Contributor"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
-        {deletingContributor && canDeleteContributors() && (
-          <DeleteContributorDialog
-            contributor={deletingContributor}
-            open={deleteDialogOpen}
-            onOpenChange={(open) => {
-              setDeleteDialogOpen(open);
-              if (!open) {
-                setDeletingContributor(null);
-              }
-            }}
-          />
-        )}
+        {/* Edit Contributor Dialog */}
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogTrigger asChild>
+            {/* <Button>Open Dialog</Button> */}
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Contributor</DialogTitle>
+            </DialogHeader>
+            {editingContributor && (
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right">
+                    Name
+                  </Label>
+                  <Input 
+                    id="name" 
+                    value={editingContributor.name}
+                    onChange={(e) => setEditingContributor(prev => 
+                      prev ? { ...prev, name: e.target.value } : null
+                    )}
+                    className="col-span-3" 
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="email" className="text-right">
+                    Email
+                  </Label>
+                  <Input 
+                    type="email" 
+                    id="email" 
+                    value={editingContributor.email || ""}
+                    onChange={(e) => setEditingContributor(prev => 
+                      prev && prev ? { ...prev, email: e.target.value } : null
+                    )}
+                    className="col-span-3" 
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="phone" className="text-right">
+                    Phone
+                  </Label>
+                  <Input 
+                    type="tel" 
+                    id="phone" 
+                    value={editingContributor.phone || ""}
+                    onChange={(e) => setEditingContributor(prev => 
+                      prev ? { ...prev, phone: e.target.value } : null
+                    )}
+                    className="col-span-3" 
+                  />
+                </div>
+              </div>
+            )}
+            <div className="flex justify-end">
+              <Button type="submit" onClick={handleUpdateContributor} disabled={updateContributorMutation.isPending}>
+                {updateContributorMutation.isPending ? "Updating..." : "Update Contributor"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Contributor Dialog */}
+        <DeleteContributorDialog
+          contributor={contributorToDelete}
+          open={!!contributorToDelete}
+          onOpenChange={(open) => !open && setContributorToDelete(null)}
+        />
       </div>
     </DashboardLayout>
   );

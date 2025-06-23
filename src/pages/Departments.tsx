@@ -15,7 +15,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DepartmentPersonnelCard } from "@/components/departments/DepartmentPersonnelCard";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useUserRole } from "@/hooks/useUserRole";
+import { DeleteDepartmentDialog } from "@/components/departments/DeleteDepartmentDialog";
+import { DepartmentAccessGuard } from "@/components/departments/DepartmentAccessGuard";
+import { PermissionStatusBadge } from "@/components/contributors/PermissionStatusBadge";
+import { useDepartmentPermissions } from "@/hooks/useDepartmentPermissions";
 
 interface Department {
   id: string;
@@ -31,10 +34,18 @@ const Departments = () => {
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [departmentToDelete, setDepartmentToDelete] = useState<Department | null>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { canManageDepartments } = useUserRole();
+  const { 
+    canCreateDepartments, 
+    canEditDepartments, 
+    canDeleteDepartments,
+    getDepartmentAccessLevel,
+    userRole,
+    isLoading: permissionsLoading 
+  } = useDepartmentPermissions();
 
   const { data: departments, isLoading } = useQuery({
     queryKey: ['departments'],
@@ -110,51 +121,53 @@ const Departments = () => {
     }
   });
 
-  const deleteDepartmentMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('departments')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['departments'] });
-      toast({ title: "Department deleted successfully" });
-    },
-    onError: (error) => {
-      toast({ 
-        title: "Error deleting department", 
-        description: error.message, 
-        variant: "destructive" 
-      });
-    }
-  });
-
   const handleCreateDepartment = () => {
+    if (!canCreateDepartments()) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to create departments",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (newDepartment.name.trim()) {
       createDepartmentMutation.mutate(newDepartment);
     }
   };
 
   const handleUpdateDepartment = () => {
+    if (!canEditDepartments()) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to edit departments",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (editingDepartment) {
       updateDepartmentMutation.mutate(editingDepartment);
     }
   };
 
-  const handleDeleteDepartment = (id: string, name: string) => {
-    if (confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
-      deleteDepartmentMutation.mutate(id);
+  const handleDeleteDepartment = (department: Department) => {
+    if (!canDeleteDepartments()) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to delete departments",
+        variant: "destructive"
+      });
+      return;
     }
+    setDepartmentToDelete(department);
   };
 
   const togglePersonnelPanel = (departmentId: string) => {
     setSelectedDepartmentId(selectedDepartmentId === departmentId ? null : departmentId);
   };
 
-  if (isLoading) {
+  if (isLoading || permissionsLoading) {
     return (
       <DashboardLayout>
         <div>Loading departments...</div>
@@ -164,81 +177,87 @@ const Departments = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Departments</h1>
-            <p className="text-gray-600 mt-1">Manage organizational departments and personnel</p>
+      <DepartmentAccessGuard requirePermission="view">
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <div className="flex items-center gap-4 mb-2">
+                <h1 className="text-3xl font-bold text-gray-900">Departments</h1>
+                <PermissionStatusBadge 
+                  accessLevel={getDepartmentAccessLevel()} 
+                  userRole={userRole || undefined}
+                />
+              </div>
+              <p className="text-gray-600">Manage organizational departments and personnel</p>
+            </div>
+
+            {canCreateDepartments() && (
+              <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Department
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create New Department</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="name">Department Name</Label>
+                      <Input
+                        id="name"
+                        value={newDepartment.name}
+                        onChange={(e) => setNewDepartment(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="Enter department name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        id="description"
+                        value={newDepartment.description}
+                        onChange={(e) => setNewDepartment(prev => ({ ...prev, description: e.target.value }))}
+                        placeholder="Enter department description"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={handleCreateDepartment}
+                        disabled={!newDepartment.name.trim() || createDepartmentMutation.isPending}
+                      >
+                        {createDepartmentMutation.isPending ? "Creating..." : "Create Department"}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
 
-          {canManageDepartments() && (
-            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Department
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create New Department</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Department Name</Label>
-                    <Input
-                      id="name"
-                      value={newDepartment.name}
-                      onChange={(e) => setNewDepartment(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="Enter department name"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      value={newDepartment.description}
-                      onChange={(e) => setNewDepartment(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Enter department description"
-                      rows={3}
-                    />
-                  </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                      Cancel
-                    </Button>
-                    <Button 
-                      onClick={handleCreateDepartment}
-                      disabled={!newDepartment.name.trim() || createDepartmentMutation.isPending}
-                    >
-                      {createDepartmentMutation.isPending ? "Creating..." : "Create Department"}
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
-
-        {/* Single Column Layout */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">All Departments</h2>
+          {/* Single Column Layout */}
           <div className="space-y-4">
-            {departments?.map((department) => (
-              <div key={department.id} className="space-y-0">
-                <Card className="bg-white shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="h-5 w-5" />
-                        {department.name}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={department.is_active ? "default" : "secondary"}>
-                          {department.is_active ? "Active" : "Inactive"}
-                        </Badge>
-                        {canManageDepartments() && (
-                          <>
+            <h2 className="text-xl font-semibold">All Departments</h2>
+            <div className="space-y-4">
+              {departments?.map((department) => (
+                <div key={department.id} className="space-y-0">
+                  <Card className="bg-white shadow-sm">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-5 w-5" />
+                          {department.name}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={department.is_active ? "default" : "secondary"}>
+                            {department.is_active ? "Active" : "Inactive"}
+                          </Badge>
+                          {canEditDepartments() && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -249,114 +268,129 @@ const Departments = () => {
                             >
                               <Edit2 className="h-4 w-4" />
                             </Button>
+                          )}
+                          {canDeleteDepartments() && (
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleDeleteDepartment(department.id, department.name)}
+                              onClick={() => handleDeleteDepartment(department)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
-                          </>
-                        )}
-                      </div>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {department.description && (
-                      <p className="text-gray-600 mb-4">{department.description}</p>
-                    )}
-                    <Collapsible 
-                      open={selectedDepartmentId === department.id}
-                      onOpenChange={() => togglePersonnelPanel(department.id)}
-                    >
-                      <CollapsibleTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full justify-between"
-                        >
-                          <div className="flex items-center">
-                            <Users className="h-4 w-4 mr-2" />
-                            Manage Personnel
-                          </div>
-                          {selectedDepartmentId === department.id ? (
-                            <ChevronUp className="h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
                           )}
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="mt-4">
-                        <DepartmentPersonnelCard 
-                          departmentId={department.id}
-                          departmentName={department.name}
-                        />
-                      </CollapsibleContent>
-                    </Collapsible>
-                  </CardContent>
-                </Card>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Edit Department Dialog */}
-        {canManageDepartments() && (
-          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Edit Department</DialogTitle>
-              </DialogHeader>
-              {editingDepartment && (
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="edit-name">Department Name</Label>
-                    <Input
-                      id="edit-name"
-                      value={editingDepartment.name}
-                      onChange={(e) => setEditingDepartment(prev => 
-                        prev ? { ...prev, name: e.target.value } : null
+                        </div>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {department.description && (
+                        <p className="text-gray-600 mb-4">{department.description}</p>
                       )}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-description">Description</Label>
-                    <Textarea
-                      id="edit-description"
-                      value={editingDepartment.description || ""}
-                      onChange={(e) => setEditingDepartment(prev => 
-                        prev ? { ...prev, description: e.target.value } : null
-                      )}
-                      rows={3}
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="is-active"
-                      checked={editingDepartment.is_active}
-                      onCheckedChange={(checked) => setEditingDepartment(prev => 
-                        prev ? { ...prev, is_active: checked } : null
-                      )}
-                    />
-                    <Label htmlFor="is-active">Active</Label>
-                  </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-                      Cancel
-                    </Button>
-                    <Button 
-                      onClick={handleUpdateDepartment}
-                      disabled={updateDepartmentMutation.isPending}
-                    >
-                      {updateDepartmentMutation.isPending ? "Updating..." : "Update Department"}
-                    </Button>
-                  </div>
+                      <Collapsible 
+                        open={selectedDepartmentId === department.id}
+                        onOpenChange={() => togglePersonnelPanel(department.id)}
+                      >
+                        <CollapsibleTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full justify-between"
+                          >
+                            <div className="flex items-center">
+                              <Users className="h-4 w-4 mr-2" />
+                              Manage Personnel
+                            </div>
+                            {selectedDepartmentId === department.id ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="mt-4">
+                          <DepartmentAccessGuard 
+                            requirePermission="view" 
+                            departmentId={department.id}
+                            fallbackMessage="You don't have permission to view personnel for this department"
+                          >
+                            <DepartmentPersonnelCard 
+                              departmentId={department.id}
+                              departmentName={department.name}
+                            />
+                          </DepartmentAccessGuard>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </CardContent>
+                  </Card>
                 </div>
-              )}
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Edit Department Dialog */}
+          {canEditDepartments() && (
+            <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit Department</DialogTitle>
+                </DialogHeader>
+                {editingDepartment && (
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="edit-name">Department Name</Label>
+                      <Input
+                        id="edit-name"
+                        value={editingDepartment.name}
+                        onChange={(e) => setEditingDepartment(prev => 
+                          prev ? { ...prev, name: e.target.value } : null
+                        )}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-description">Description</Label>
+                      <Textarea
+                        id="edit-description"
+                        value={editingDepartment.description || ""}
+                        onChange={(e) => setEditingDepartment(prev => 
+                          prev ? { ...prev, description: e.target.value } : null
+                        )}
+                        rows={3}
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="is-active"
+                        checked={editingDepartment.is_active}
+                        onCheckedChange={(checked) => setEditingDepartment(prev => 
+                          prev ? { ...prev, is_active: checked } : null
+                        )}
+                      />
+                      <Label htmlFor="is-active">Active</Label>
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={handleUpdateDepartment}
+                        disabled={updateDepartmentMutation.isPending}
+                      >
+                        {updateDepartmentMutation.isPending ? "Updating..." : "Update Department"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {/* Delete Department Dialog */}
+          <DeleteDepartmentDialog
+            department={departmentToDelete}
+            open={!!departmentToDelete}
+            onOpenChange={(open) => !open && setDepartmentToDelete(null)}
+          />
+        </div>
+      </DepartmentAccessGuard>
     </DashboardLayout>
   );
 };
