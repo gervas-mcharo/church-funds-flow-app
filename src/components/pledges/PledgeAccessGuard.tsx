@@ -34,12 +34,17 @@ export function PledgeAccessGuard({ children, fallback }: PledgeAccessGuardProps
           </CardHeader>
           <CardContent className="text-center">
             <p className="text-gray-600 mb-4">
-              You don't have permission to access Pledge Management. This feature is restricted to authorized personnel only.
+              You don't have permission to access Pledge Management. This feature is restricted to finance and administrative personnel only.
             </p>
             <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
               <Lock className="h-4 w-4" />
               <span>Current role: {userRole || 'No role assigned'}</span>
             </div>
+            {userRole && ['head_of_department', 'department_member', 'secretary'].includes(userRole) && (
+              <p className="text-sm text-amber-600 mt-2">
+                Departmental roles do not have access to financial pledge management.
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>

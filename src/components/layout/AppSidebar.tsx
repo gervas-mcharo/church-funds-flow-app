@@ -22,6 +22,7 @@ import {
   User,
   HandHeart
 } from "lucide-react";
+import { usePledgePermissions } from "@/hooks/usePledgePermissions";
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: BarChart3 },
@@ -29,7 +30,7 @@ const menuItems = [
   { title: "Contributors", url: "/contributors", icon: Users },
   { title: "Funds", url: "/fund-types", icon: Database },
   { title: "Departments", url: "/departments", icon: Folder },
-  { title: "Pledges", url: "/pledges", icon: HandHeart },
+  { title: "Pledges", url: "/pledges", icon: HandHeart, requiresPledgeAccess: true },
   { title: "Money Requests", url: "/money-requests", icon: FileText },
   { title: "Reports", url: "/reports", icon: BarChart3 },
   { title: "User Management", url: "/user-management", icon: User },
@@ -39,12 +40,21 @@ const menuItems = [
 export function AppSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
+  const { canAccessPledges } = usePledgePermissions();
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive 
       ? "bg-blue-100 text-blue-700 font-medium border-r-2 border-blue-700" 
       : "text-gray-700 hover:bg-gray-100 hover:text-gray-900";
+
+  // Filter menu items based on permissions
+  const visibleMenuItems = menuItems.filter(item => {
+    if (item.requiresPledgeAccess) {
+      return canAccessPledges();
+    }
+    return true;
+  });
 
   return (
     <Sidebar className="w-64">
@@ -67,7 +77,7 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {visibleMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink 

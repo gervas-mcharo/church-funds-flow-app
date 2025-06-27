@@ -5,8 +5,23 @@ export const usePledgePermissions = () => {
   const { userRole, isLoading } = useUserRole();
 
   const canAccessPledges = () => {
-    // All authenticated users can access pledges (at least view level)
-    return !!userRole;
+    // Only finance, leadership, administrative, and contributor roles can access pledges
+    // Explicitly exclude departmental roles
+    return userRole && ![
+      'head_of_department',
+      'department_member', 
+      'secretary'
+    ].includes(userRole) && [
+      'super_administrator',
+      'administrator', 
+      'finance_administrator',
+      'finance_manager',
+      'finance_elder',
+      'data_entry_clerk',
+      'general_secretary',
+      'pastor',
+      'treasurer'
+    ].includes(userRole);
   };
 
   const canCreatePledges = () => {
