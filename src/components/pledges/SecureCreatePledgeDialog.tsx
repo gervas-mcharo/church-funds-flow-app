@@ -8,7 +8,6 @@ import { usePledgePermissions } from "@/hooks/usePledgePermissions";
 
 export function SecureCreatePledgeDialog() {
   const { canCreatePledges } = usePledgePermissions();
-  const [dialogOpen, setDialogOpen] = useState(false);
 
   if (!canCreatePledges()) {
     return (
@@ -28,18 +27,5 @@ export function SecureCreatePledgeDialog() {
     );
   }
 
-  return (
-    <>
-      <Button onClick={() => setDialogOpen(true)} className="flex items-center gap-2">
-        <Plus className="h-4 w-4" />
-        Create Pledge
-      </Button>
-      {dialogOpen && (
-        <CreatePledgeDialog 
-          open={dialogOpen} 
-          onOpenChange={setDialogOpen} 
-        />
-      )}
-    </>
-  );
+  return <CreatePledgeDialog />;
 }

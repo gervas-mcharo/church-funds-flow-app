@@ -8,7 +8,6 @@ import { usePledgePermissions } from "@/hooks/usePledgePermissions";
 
 export function SecureBulkPledgeImportDialog() {
   const { canBulkImportPledges } = usePledgePermissions();
-  const [dialogOpen, setDialogOpen] = useState(false);
 
   if (!canBulkImportPledges()) {
     return (
@@ -28,18 +27,5 @@ export function SecureBulkPledgeImportDialog() {
     );
   }
 
-  return (
-    <>
-      <Button variant="outline" onClick={() => setDialogOpen(true)} className="flex items-center gap-2">
-        <Upload className="h-4 w-4" />
-        Bulk Import
-      </Button>
-      {dialogOpen && (
-        <BulkPledgeImportDialog 
-          open={dialogOpen} 
-          onOpenChange={setDialogOpen} 
-        />
-      )}
-    </>
-  );
+  return <BulkPledgeImportDialog />;
 }

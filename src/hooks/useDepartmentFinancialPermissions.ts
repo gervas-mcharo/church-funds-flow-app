@@ -1,3 +1,4 @@
+
 import { useUserRole } from "@/hooks/useUserRole";
 import { useDepartmentOwnership } from "@/hooks/useDepartmentOwnership";
 
@@ -5,16 +6,16 @@ export const useDepartmentFinancialPermissions = (departmentId?: string) => {
   const { userRole, isLoading } = useUserRole();
   const { canManageThisDepartment } = useDepartmentOwnership(departmentId);
 
-  // Church-wide treasurer permissions
+  // Church-wide treasurer permissions (current treasurer role)
   const isChurchTreasurer = () => {
-    return userRole === 'church_treasurer';
+    return userRole === 'treasurer';
   };
 
-  // Department-specific treasurer permissions
+  // Department-specific treasurer permissions (placeholder for future implementation)
   const isDepartmentTreasurer = (targetDepartmentId?: string) => {
-    if (userRole !== 'department_treasurer') return false;
-    if (!targetDepartmentId || !departmentId) return false;
-    return canManageThisDepartment(userRole) && departmentId === targetDepartmentId;
+    // This will be implemented when department_treasurer role is added to the database
+    // For now, return false as this role doesn't exist yet
+    return false;
   };
 
   // Financial access for department funds
