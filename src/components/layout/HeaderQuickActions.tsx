@@ -1,21 +1,14 @@
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { QrCode, FileText } from "lucide-react";
+import { QrCode } from "lucide-react";
 import { QRScanner } from "@/components/QRScanner";
 import { useQRScanner } from "@/hooks/useQRScanner";
 import { CreateContributorDialog } from "@/components/contributors/CreateContributorDialog";
-import { CreateFundTypeDialog } from "@/components/fund-types/CreateFundTypeDialog";
-import { useNavigate } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function HeaderQuickActions() {
   const { isOpen, openScanner, closeScanner, handleScan } = useQRScanner();
-  const navigate = useNavigate();
-
-  const handleGenerateReport = () => {
-    navigate('/reports');
-  };
 
   return (
     <>
@@ -38,24 +31,6 @@ export function HeaderQuickActions() {
           </Tooltip>
 
           <CreateContributorDialog variant="header" />
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleGenerateReport}
-                className="text-gray-600 hover:text-gray-900"
-              >
-                <FileText className="h-5 w-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Generate Report</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <CreateFundTypeDialog variant="header" />
         </div>
       </TooltipProvider>
 
