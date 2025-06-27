@@ -66,6 +66,7 @@ export type Database = {
           contribution_date: string
           contributor_id: string
           created_at: string
+          department_id: string | null
           fund_type_id: string
           id: string
           notes: string | null
@@ -76,6 +77,7 @@ export type Database = {
           contribution_date?: string
           contributor_id: string
           created_at?: string
+          department_id?: string | null
           fund_type_id: string
           id?: string
           notes?: string | null
@@ -86,6 +88,7 @@ export type Database = {
           contribution_date?: string
           contributor_id?: string
           created_at?: string
+          department_id?: string | null
           fund_type_id?: string
           id?: string
           notes?: string | null
@@ -97,6 +100,13 @@ export type Database = {
             columns: ["contributor_id"]
             isOneToOne: false
             referencedRelation: "contributors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contributions_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
             referencedColumns: ["id"]
           },
           {
@@ -172,6 +182,48 @@ export type Database = {
         }
         Relationships: []
       }
+      department_funds: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          department_id: string
+          fund_type_id: string
+          id: string
+          is_active: boolean
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          department_id: string
+          fund_type_id: string
+          id?: string
+          is_active?: boolean
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          department_id?: string
+          fund_type_id?: string
+          id?: string
+          is_active?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_funds_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_funds_fund_type_id_fkey"
+            columns: ["fund_type_id"]
+            isOneToOne: false
+            referencedRelation: "fund_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       department_personnel: {
         Row: {
           assigned_at: string
@@ -207,6 +259,41 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      department_treasurers: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          department_id: string
+          id: string
+          is_active: boolean
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          department_id: string
+          id?: string
+          is_active?: boolean
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          department_id?: string
+          id?: string
+          is_active?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_treasurers_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
             referencedColumns: ["id"]
           },
         ]
@@ -450,6 +537,7 @@ export type Database = {
           contributor_id: string
           created_at: string
           created_by: string | null
+          department_id: string | null
           end_date: string | null
           frequency: Database["public"]["Enums"]["pledge_frequency"]
           fund_type_id: string
@@ -471,6 +559,7 @@ export type Database = {
           contributor_id: string
           created_at?: string
           created_by?: string | null
+          department_id?: string | null
           end_date?: string | null
           frequency?: Database["public"]["Enums"]["pledge_frequency"]
           fund_type_id: string
@@ -492,6 +581,7 @@ export type Database = {
           contributor_id?: string
           created_at?: string
           created_by?: string | null
+          department_id?: string | null
           end_date?: string | null
           frequency?: Database["public"]["Enums"]["pledge_frequency"]
           fund_type_id?: string
@@ -522,6 +612,13 @@ export type Database = {
             columns: ["fund_type_id"]
             isOneToOne: false
             referencedRelation: "fund_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pledges_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
             referencedColumns: ["id"]
           },
         ]
@@ -684,6 +781,10 @@ export type Database = {
         Args: { user_id: string; dept_id: string }
         Returns: boolean
       }
+      can_access_department_finances: {
+        Args: { _user_id: string; _department_id: string }
+        Returns: boolean
+      }
       can_access_qr_management: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -727,6 +828,13 @@ export type Database = {
           role: Database["public"]["Enums"]["app_role"]
         }[]
       }
+      get_user_treasurer_departments: {
+        Args: { _user_id: string }
+        Returns: {
+          department_id: string
+          department_name: string
+        }[]
+      }
       has_department_role: {
         Args: {
           user_id: string
@@ -740,6 +848,10 @@ export type Database = {
           _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
         }
+        Returns: boolean
+      }
+      is_department_treasurer: {
+        Args: { _user_id: string; _department_id: string }
         Returns: boolean
       }
       update_pledge_status: {
@@ -762,6 +874,7 @@ export type Database = {
         | "general_secretary"
         | "finance_elder"
         | "contributor"
+        | "department_treasurer"
       money_request_status:
         | "submitted"
         | "pending_hod_approval"
@@ -913,6 +1026,7 @@ export const Constants = {
         "general_secretary",
         "finance_elder",
         "contributor",
+        "department_treasurer",
       ],
       money_request_status: [
         "submitted",

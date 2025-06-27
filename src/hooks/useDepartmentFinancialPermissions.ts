@@ -1,21 +1,27 @@
 
 import { useUserRole } from "@/hooks/useUserRole";
 import { useDepartmentOwnership } from "@/hooks/useDepartmentOwnership";
+import { useUserTreasurerDepartments } from "@/hooks/useDepartmentTreasurers";
 
 export const useDepartmentFinancialPermissions = (departmentId?: string) => {
   const { userRole, isLoading } = useUserRole();
   const { canManageThisDepartment } = useDepartmentOwnership(departmentId);
+  const { data: treasurerDepartments } = useUserTreasurerDepartments();
 
   // Church-wide treasurer permissions (current treasurer role)
   const isChurchTreasurer = () => {
     return userRole === 'treasurer';
   };
 
-  // Department-specific treasurer permissions (placeholder for future implementation)
+  // Department-specific treasurer permissions
   const isDepartmentTreasurer = (targetDepartmentId?: string) => {
-    // This will be implemented when department_treasurer role is added to the database
-    // For now, return false as this role doesn't exist yet
-    return false;
+    if (!targetDepartmentId || !treasurerDepartments) return false;
+    return treasurerDepartments.some(dept => dept.department_id === targetDepartmentId);
+  };
+
+  // Check if user is treasurer for the current department
+  const isCurrentDepartmentTreasurer = () => {
+    return departmentId ? isDepartmentTreasurer(departmentId) : false;
   };
 
   // Financial access for department funds
@@ -74,14 +80,36 @@ export const useDepartmentFinancialPermissions = (departmentId?: string) => {
            userRole === 'pastor';
   };
 
+  // Fund assignment permissions (only church-wide roles)
+  const canAssignFundsToDepartments = () => {
+    return userRole === 'super_administrator' || 
+           userRole === 'administrator' || 
+           userRole === 'finance_administrator' || 
+           userRole === 'treasurer' || 
+           userRole === 'general_secretary' || 
+           userRole === 'pastor';
+  };
+
+  // Department treasurer assignment permissions
+  const canAssignDepartmentTreasurers = () => {
+    return userRole === 'super_administrator' || 
+           userRole === 'administrator' || 
+           userRole === 'general_secretary' || 
+           userRole === 'pastor';
+  };
+
   return {
     userRole,
     isLoading,
+    treasurerDepartments: treasurerDepartments || [],
     isChurchTreasurer,
     isDepartmentTreasurer,
+    isCurrentDepartmentTreasurer,
     canAccessDepartmentFinances,
     canManageDepartmentFunds,
     canManageDepartmentContributions,
     canApproveDepartmentRequests,
+    canAssignFundsToDepartments,
+    canAssignDepartmentTreasurers,
   };
 };

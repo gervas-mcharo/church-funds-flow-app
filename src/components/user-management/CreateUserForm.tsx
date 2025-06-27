@@ -175,6 +175,9 @@ export function CreateUserForm({ roleLabels, roleCategories }: CreateUserFormPro
                     {role === 'treasurer' && (
                       <span className="ml-2 text-xs text-blue-600">(Church-wide)</span>
                     )}
+                    {role === 'department_treasurer' && (
+                      <span className="ml-2 text-xs text-green-600">(Department-specific)</span>
+                    )}
                   </SelectItem>
                 ))}
                 
@@ -197,6 +200,12 @@ export function CreateUserForm({ roleLabels, roleCategories }: CreateUserFormPro
           {selectedRole === 'treasurer' && (
             <p className="text-xs text-blue-600 mt-1">
               This role provides church-wide financial access to all funds and contributions.
+            </p>
+          )}
+          {selectedRole === 'department_treasurer' && (
+            <p className="text-xs text-green-600 mt-1">
+              This role provides financial access only to assigned department funds. 
+              Department assignment must be done separately after user creation.
             </p>
           )}
         </div>

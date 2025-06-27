@@ -168,7 +168,8 @@ const UserManagement = () => {
     finance_manager: "Finance Manager",
     head_of_department: "Head of Department",
     secretary: "Secretary",
-    treasurer: "Church Treasurer", // Updated label for existing role
+    treasurer: "Church Treasurer",
+    department_treasurer: "Department Treasurer", // Added new role
     department_member: "Department Member",
     contributor: "Contributor"
   };
@@ -182,6 +183,8 @@ const UserManagement = () => {
       case 'general_secretary': return 'bg-indigo-100 text-indigo-800';
       case 'finance_elder': return 'bg-yellow-100 text-yellow-800';
       case 'finance_manager': return 'bg-green-100 text-green-800';
+      case 'treasurer': return 'bg-blue-100 text-blue-800';
+      case 'department_treasurer': return 'bg-green-100 text-green-800 border-green-200';
       case 'head_of_department': return 'bg-blue-100 text-blue-800';
       case 'department_member': return 'bg-purple-100 text-purple-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -191,7 +194,7 @@ const UserManagement = () => {
   const getRolesByCategory = () => {
     return {
       leadership: ['super_administrator', 'administrator', 'pastor', 'general_secretary'],
-      financial: ['finance_administrator', 'finance_manager', 'finance_elder', 'treasurer'], // Keep treasurer in financial for now
+      financial: ['finance_administrator', 'finance_manager', 'finance_elder', 'treasurer', 'department_treasurer'], // Added department_treasurer
       departmental: ['head_of_department', 'secretary', 'department_member'],
       operational: ['data_entry_clerk', 'contributor']
     };

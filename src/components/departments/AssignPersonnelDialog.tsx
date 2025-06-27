@@ -17,12 +17,11 @@ interface AssignPersonnelDialogProps {
   onClose: () => void;
 }
 
-const departmentRoles: AppRole[] = ['head_of_department', 'secretary', 'treasurer', 'department_member'];
+const departmentRoles: AppRole[] = ['head_of_department', 'secretary', 'department_member'];
 
 const roleLabels = {
   head_of_department: "Head of Department",
   secretary: "Secretary",
-  treasurer: "Treasurer", 
   department_member: "Department Member"
 };
 
@@ -82,6 +81,13 @@ export function AssignPersonnelDialog({ departmentId, departmentName, onClose }:
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="bg-amber-50 p-3 rounded-md">
+            <p className="text-sm text-amber-700">
+              <strong>Note:</strong> For financial roles like Department Treasurer, use the dedicated 
+              treasurer assignment feature in the department management section.
+            </p>
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
