@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserMinus, UserPlus, Users } from "lucide-react";
-import { useDepartmentPersonnel, useRemoveDepartmentPersonnel } from "@/hooks/useDepartmentPersonnel";
+import { useDepartmentPersonnel, useRemovePersonnel } from "@/hooks/useDepartmentPersonnel";
 import { useDepartmentPermissions } from "@/hooks/useDepartmentPermissions";
 import { useState } from "react";
 import { AssignPersonnelDialog } from "./AssignPersonnelDialog";
@@ -20,7 +20,7 @@ export function DepartmentPersonnelCard({ departmentId, departmentName }: Depart
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const { data: personnel, isLoading } = useDepartmentPersonnel(departmentId);
   const { canManagePersonnel } = useDepartmentPermissions(departmentId);
-  const removePersonnelMutation = useRemoveDepartmentPersonnel();
+  const removePersonnelMutation = useRemovePersonnel();
 
   const handleRemovePersonnel = (personnelId: string) => {
     removePersonnelMutation.mutate(personnelId);
