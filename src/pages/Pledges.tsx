@@ -1,7 +1,7 @@
-
 import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { CreatePledgeDialog } from "@/components/pledges/CreatePledgeDialog";
+import { BulkPledgeImportDialog } from "@/components/pledges/BulkPledgeImportDialog";
 import { PledgeCard } from "@/components/pledges/PledgeCard";
 import { PledgeFilters } from "@/components/pledges/PledgeFilters";
 import { PledgeDetailsDialog } from "@/components/pledges/PledgeDetailsDialog";
@@ -60,7 +60,10 @@ const Pledges = () => {
             <h1 className="text-3xl font-bold text-gray-900">Pledge Management</h1>
             <p className="text-gray-600 mt-1">Track and manage contributor pledges</p>
           </div>
-          <CreatePledgeDialog />
+          <div className="flex gap-3">
+            <BulkPledgeImportDialog />
+            <CreatePledgeDialog />
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)} className="w-full">
@@ -174,7 +177,10 @@ const Pledges = () => {
                     ? "Try adjusting your filters to see more results."
                     : "Get started by creating your first pledge."}
                 </p>
-                <CreatePledgeDialog />
+                <div className="flex gap-3 justify-center">
+                  <BulkPledgeImportDialog />
+                  <CreatePledgeDialog />
+                </div>
               </div>
             )}
           </TabsContent>
