@@ -60,14 +60,15 @@ export const useUserRole = () => {
     return userRole && ![
       'head_of_department',
       'department_member', 
-      'secretary'
+      'secretary',
+      'department_treasurer' // Department treasurers have limited fund access
     ].includes(userRole) && [
       'super_administrator',
       'administrator', 
       'finance_administrator',
       'finance_manager',
       'finance_elder',
-      'treasurer', // Added treasurer back to financial management
+      'treasurer', // Church treasurer has full access
       'general_secretary',
       'pastor'
     ].includes(userRole);
@@ -77,12 +78,13 @@ export const useUserRole = () => {
     return userRole && ![
       'head_of_department',
       'department_member', 
-      'secretary'
+      'secretary',
+      'department_treasurer' // Department treasurers cannot create new funds
     ].includes(userRole) && [
       'super_administrator',
       'administrator', 
       'finance_administrator',
-      'treasurer', // Added treasurer
+      'treasurer',
       'general_secretary',
       'pastor'
     ].includes(userRole);
@@ -92,7 +94,8 @@ export const useUserRole = () => {
     return userRole && ![
       'head_of_department',
       'department_member', 
-      'secretary'
+      'secretary',
+      'department_treasurer' // Department treasurers cannot delete funds
     ].includes(userRole) && [
       'super_administrator',
       'administrator', 
@@ -103,7 +106,7 @@ export const useUserRole = () => {
   };
 
   const canViewFunds = () => {
-    // Exclude departmental roles from viewing funds, include treasurer
+    // Include department treasurers in fund viewing (they'll see filtered results)
     return userRole && ![
       'head_of_department',
       'department_member', 
@@ -123,12 +126,13 @@ export const useUserRole = () => {
     return userRole && ![
       'head_of_department',
       'department_member', 
-      'secretary'
+      'secretary',
+      'department_treasurer' // Department treasurers cannot create contributors
     ].includes(userRole) && [
       'super_administrator',
       'administrator', 
       'finance_administrator',
-      'treasurer', // Added treasurer
+      'treasurer',
       'general_secretary',
       'pastor'
     ].includes(userRole);
@@ -138,14 +142,15 @@ export const useUserRole = () => {
     return userRole && ![
       'head_of_department',
       'department_member', 
-      'secretary'
+      'secretary',
+      'department_treasurer' // Department treasurers cannot edit contributors
     ].includes(userRole) && [
       'super_administrator',
       'administrator', 
       'finance_administrator',
       'finance_manager',
       'finance_elder',
-      'treasurer', // Added treasurer
+      'treasurer',
       'general_secretary',
       'pastor'
     ].includes(userRole);
@@ -155,7 +160,8 @@ export const useUserRole = () => {
     return userRole && ![
       'head_of_department',
       'department_member', 
-      'secretary'
+      'secretary',
+      'department_treasurer' // Department treasurers cannot delete contributors
     ].includes(userRole) && [
       'super_administrator',
       'administrator', 
@@ -166,7 +172,7 @@ export const useUserRole = () => {
   };
 
   const canViewContributors = () => {
-    // Exclude departmental roles from viewing contributors, include treasurer
+    // Department treasurers can view contributors for their department contributions
     return userRole && ![
       'head_of_department',
       'department_member', 
@@ -181,14 +187,14 @@ export const useUserRole = () => {
     return 'none';
   };
 
-  // QR Management permissions - updated to include treasurer
+  // QR Management permissions - updated to include treasurer but not department_treasurer
   const canAccessQRManagement = () => {
     return userRole === 'super_administrator' || 
            userRole === 'administrator' || 
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
-           userRole === 'treasurer' || // Added treasurer
+           userRole === 'treasurer' || 
            userRole === 'data_entry_clerk' || 
            userRole === 'general_secretary' || 
            userRole === 'pastor';
@@ -200,7 +206,7 @@ export const useUserRole = () => {
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
-           userRole === 'treasurer' || // Added treasurer
+           userRole === 'treasurer' || 
            userRole === 'data_entry_clerk' || 
            userRole === 'general_secretary' || 
            userRole === 'pastor';
@@ -212,7 +218,7 @@ export const useUserRole = () => {
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
-           userRole === 'treasurer' || // Added treasurer
+           userRole === 'treasurer' || 
            userRole === 'general_secretary' || 
            userRole === 'pastor';
   };
@@ -223,7 +229,7 @@ export const useUserRole = () => {
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
-           userRole === 'treasurer' || // Added treasurer
+           userRole === 'treasurer' || 
            userRole === 'general_secretary' || 
            userRole === 'pastor';
   };

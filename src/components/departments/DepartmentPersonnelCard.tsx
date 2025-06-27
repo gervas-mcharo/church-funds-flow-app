@@ -1,187 +1,144 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, UserPlus, UserMinus } from "lucide-react";
-import { useDepartmentPersonnel, useRemovePersonnel } from "@/hooks/useDepartmentPersonnel";
-import { AssignPersonnelDialog } from "./AssignPersonnelDialog";
+import { Badge } from "@/components/ui/badge";
+import { UserMinus, UserPlus, Users } from "lucide-react";
+import { useDepartmentPersonnel, useRemoveDepartmentPersonnel } from "@/hooks/useDepartmentPersonnel";
+import { useDepartmentPermissions } from "@/hooks/useDepartmentPermissions";
 import { useState } from "react";
-import { useUserRole } from "@/hooks/useUserRole";
-import { useDepartmentOwnership } from "@/hooks/useDepartmentOwnership";
-import type { Database } from "@/integrations/supabase/types";
-
-type AppRole = Database["public"]["Enums"]["app_role"];
-
-type DepartmentPersonnel = Database["public"]["Tables"]["department_personnel"]["Row"] & {
-  user: {
-    first_name: string | null;
-    last_name: string | null;
-    email: string | null;
-  } | null;
-};
+import { AssignPersonnelDialog } from "./AssignPersonnelDialog";
+import { DepartmentTreasurerCard } from "./DepartmentTreasurerCard";
+import { DepartmentFundsCard } from "./DepartmentFundsCard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface DepartmentPersonnelCardProps {
   departmentId: string;
   departmentName: string;
 }
 
-const roleLabels = {
-  head_of_department: "Head of Department",
-  secretary: "Secretary", 
-  treasurer: "Treasurer",
-  department_member: "Department Member",
-  pastor: "Pastor",
-  general_secretary: "General Secretary",
-  finance_elder: "Finance Elder",
-  assistant_pastor: "Assistant Pastor",
-  elder: "Elder",
-  deacon: "Deacon",
-  deaconess: "Deaconess",
-  youth_leader: "Youth Leader",
-  choir_director: "Choir Director",
-  sunday_school_teacher: "Sunday School Teacher",
-  usher: "Usher",
-  security: "Security",
-  media_team: "Media Team",
-  maintenance: "Maintenance",
-  visitor: "Visitor",
-  administrator: "Administrator",
-  data_entry_clerk: "Data Entry Clerk",
-  finance_manager: "Finance Manager",
-  super_administrator: "Super Administrator",
-  finance_administrator: "Finance Administrator",
-  contributor: "Contributor"
-};
-
-const roleColors = {
-  head_of_department: "bg-purple-100 text-purple-800",
-  secretary: "bg-blue-100 text-blue-800",
-  treasurer: "bg-green-100 text-green-800",
-  department_member: "bg-gray-100 text-gray-800",
-  pastor: "bg-red-100 text-red-800",
-  general_secretary: "bg-indigo-100 text-indigo-800",
-  finance_elder: "bg-yellow-100 text-yellow-800",
-  assistant_pastor: "bg-pink-100 text-pink-800",
-  elder: "bg-orange-100 text-orange-800",
-  deacon: "bg-teal-100 text-teal-800",
-  deaconess: "bg-cyan-100 text-cyan-800",
-  youth_leader: "bg-lime-100 text-lime-800",
-  choir_director: "bg-violet-100 text-violet-800",
-  sunday_school_teacher: "bg-amber-100 text-amber-800",
-  usher: "bg-emerald-100 text-emerald-800",
-  security: "bg-slate-100 text-slate-800",
-  media_team: "bg-sky-100 text-sky-800",
-  maintenance: "bg-stone-100 text-stone-800",
-  visitor: "bg-neutral-100 text-neutral-800",
-  administrator: "bg-red-100 text-red-800",
-  data_entry_clerk: "bg-blue-100 text-blue-800",
-  finance_manager: "bg-green-100 text-green-800",
-  super_administrator: "bg-purple-100 text-purple-800",
-  finance_administrator: "bg-yellow-100 text-yellow-800",
-  contributor: "bg-gray-100 text-gray-800"
-};
-
 export function DepartmentPersonnelCard({ departmentId, departmentName }: DepartmentPersonnelCardProps) {
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const { data: personnel, isLoading } = useDepartmentPersonnel(departmentId);
-  const removePersonnelMutation = useRemovePersonnel();
-  const { userRole, canManagePersonnel } = useUserRole();
-  const { canManageThisDepartment } = useDepartmentOwnership(departmentId);
-
-  // Enhanced permission check that includes department ownership
-  const canManageThisDepartmentPersonnel = canManagePersonnel() && canManageThisDepartment(userRole);
+  const { canManagePersonnel } = useDepartmentPermissions(departmentId);
+  const removePersonnelMutation = useRemoveDepartmentPersonnel();
 
   const handleRemovePersonnel = (personnelId: string) => {
-    if (confirm("Are you sure you want to remove this person from the department?")) {
-      removePersonnelMutation.mutate(personnelId);
+    removePersonnelMutation.mutate(personnelId);
+  };
+
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case 'head_of_department': return 'bg-purple-100 text-purple-800';
+      case 'secretary': return 'bg-blue-100 text-blue-800';
+      case 'department_member': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const groupedPersonnel: Partial<Record<AppRole, DepartmentPersonnel[]>> = personnel?.reduce((acc, person) => {
-    if (!acc[person.role]) {
-      acc[person.role] = [];
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'head_of_department': return 'Head of Department';
+      case 'secretary': return 'Secretary';
+      case 'department_member': return 'Member';
+      default: return role;
     }
-    acc[person.role].push(person);
-    return acc;
-  }, {} as Partial<Record<AppRole, DepartmentPersonnel[]>>) || {};
+  };
 
   if (isLoading) {
-    return <div>Loading personnel...</div>;
+    return (
+      <div className="text-center py-4">Loading personnel...</div>
+    );
   }
 
   return (
-    <>
-      <Card className="bg-white shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              {departmentName} Personnel
-            </div>
-            {canManageThisDepartmentPersonnel && (
-              <Button
-                size="sm"
-                onClick={() => setShowAssignDialog(true)}
-              >
-                <UserPlus className="h-4 w-4 mr-2" />
-                Assign Personnel
-              </Button>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {Object.keys(groupedPersonnel).length === 0 ? (
-            <div className="text-center py-8">
-              <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">No personnel assigned to this department.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {Object.entries(groupedPersonnel).map(([role, people]) => (
-                <div key={role} className="space-y-2">
-                  <h4 className="font-medium text-sm text-gray-700 uppercase tracking-wide">
-                    {roleLabels[role as AppRole]}
-                  </h4>
-                  <div className="space-y-2">
-                    {people?.map((person) => (
-                      <div key={person.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <div>
-                            <p className="font-medium">
-                              {person.user?.first_name} {person.user?.last_name}
-                            </p>
-                            <p className="text-sm text-gray-600">{person.user?.email}</p>
-                          </div>
-                          <Badge className={roleColors[person.role as AppRole]}>
-                            {roleLabels[person.role as AppRole]}
-                          </Badge>
-                        </div>
-                        {canManageThisDepartmentPersonnel && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemovePersonnel(person.id)}
-                            disabled={removePersonnelMutation.isPending}
-                          >
-                            <UserMinus className="h-4 w-4" />
-                          </Button>
-                        )}
+    <Tabs defaultValue="personnel" className="w-full">
+      <TabsList className="grid w-full grid-cols-3">
+        <TabsTrigger value="personnel">Personnel</TabsTrigger>
+        <TabsTrigger value="treasurers">Treasurers</TabsTrigger>
+        <TabsTrigger value="funds">Funds</TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="personnel" className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Department Personnel
+              </div>
+              {canManagePersonnel() && (
+                <Button 
+                  size="sm" 
+                  onClick={() => setShowAssignDialog(true)}
+                  className="flex items-center gap-2"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Assign Personnel
+                </Button>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {personnel && personnel.length > 0 ? (
+              <div className="space-y-3">
+                {personnel.map((person) => (
+                  <div key={person.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <p className="font-medium">
+                          {person.user?.first_name} {person.user?.last_name}
+                        </p>
+                        <p className="text-sm text-gray-600">{person.user?.email}</p>
                       </div>
-                    ))}
+                      <Badge className={getRoleBadgeColor(person.role)}>
+                        {getRoleLabel(person.role)}
+                      </Badge>
+                    </div>
+                    {canManagePersonnel() && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleRemovePersonnel(person.id)}
+                        disabled={removePersonnelMutation.isPending}
+                      >
+                        <UserMinus className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <Users className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                <p>No personnel assigned to this department</p>
+                <p className="text-sm mt-1">Assign personnel to manage department operations</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-      {showAssignDialog && canManageThisDepartmentPersonnel && (
-        <AssignPersonnelDialog
-          departmentId={departmentId}
-          departmentName={departmentName}
-          onClose={() => setShowAssignDialog(false)}
+        {showAssignDialog && (
+          <AssignPersonnelDialog
+            departmentId={departmentId}
+            departmentName={departmentName}
+            onClose={() => setShowAssignDialog(false)}
+          />
+        )}
+      </TabsContent>
+
+      <TabsContent value="treasurers">
+        <DepartmentTreasurerCard 
+          departmentId={departmentId} 
+          departmentName={departmentName} 
         />
-      )}
-    </>
+      </TabsContent>
+
+      <TabsContent value="funds">
+        <DepartmentFundsCard 
+          departmentId={departmentId} 
+          departmentName={departmentName} 
+        />
+      </TabsContent>
+    </Tabs>
   );
 }

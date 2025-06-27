@@ -20,10 +20,12 @@ import {
   FileText,
   Folder,
   User,
-  HandHeart
+  HandHeart,
+  DollarSign
 } from "lucide-react";
 import { usePledgePermissions } from "@/hooks/usePledgePermissions";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useDepartmentFinancialPermissions } from "@/hooks/useDepartmentFinancialPermissions";
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: BarChart3 },
@@ -38,11 +40,23 @@ const menuItems = [
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
+// Department treasurer specific menu items
+const departmentTreasurerItems = [
+  { title: "Dashboard", url: "/", icon: BarChart3 },
+  { title: "My Departments", url: "/departments", icon: Folder },
+  { title: "Department Funds", url: "/fund-types", icon: Database },
+  { title: "Department Pledges", url: "/pledges", icon: HandHeart },
+  { title: "Money Requests", url: "/money-requests", icon: FileText },
+  { title: "Reports", url: "/reports", icon: BarChart3 },
+  { title: "Settings", url: "/settings", icon: Settings },
+];
+
 export function AppSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
   const { canAccessPledges } = usePledgePermissions();
-  const { canAccessQRManagement, canViewContributors, canViewFunds } = useUserRole();
+  const { canAccessQRManagement, canViewContributors, canViewFunds, userRole } = useUserRole();
+  const { isChurchTreasurer, treasurerDepartments } = useDepartmentFinancialPermissions();
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
@@ -50,8 +64,12 @@ export function AppSidebar() {
       ? "bg-blue-100 text-blue-700 font-medium border-r-2 border-blue-700" 
       : "text-gray-700 hover:bg-gray-100 hover:text-gray-900";
 
+  // Use department treasurer menu if user is only a department treasurer
+  const isDepartmentTreasurerOnly = userRole === 'department_treasurer';
+  const itemsToShow = isDepartmentTreasurerOnly ? departmentTreasurerItems : menuItems;
+
   // Filter menu items based on permissions
-  const visibleMenuItems = menuItems.filter(item => {
+  const visibleMenuItems = itemsToShow.filter(item => {
     if (item.requiresPledgeAccess) {
       return canAccessPledges();
     }
@@ -80,6 +98,22 @@ export function AppSidebar() {
               <p className="text-xs text-gray-500">Management System</p>
             </div>
           </div>
+          
+          {/* Show role and department context for department treasurers */}
+          {isDepartmentTreasurerOnly && treasurerDepartments.length > 0 && (
+            <div className="mt-3 p-2 bg-green-50 rounded-md">
+              <div className="flex items-center gap-2 text-green-700">
+                <DollarSign className="h-4 w-4" />
+                <span className="text-xs font-medium">Department Treasurer</span>
+              </div>
+              <div className="text-xs text-green-600 mt-1">
+                {treasurerDepartments.length === 1 
+                  ? `Managing: ${treasurerDepartments[0].department_name}`
+                  : `Managing ${treasurerDepartments.length} departments`
+                }
+              </div>
+            </div>
+          )}
         </div>
 
         <SidebarGroup>

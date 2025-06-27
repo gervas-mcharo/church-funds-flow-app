@@ -29,8 +29,8 @@ export function useDepartmentTreasurers(departmentId?: string) {
         .from('department_treasurers')
         .select(`
           *,
-          user:profiles(first_name, last_name, email),
-          department:departments(name)
+          profiles!department_treasurers_user_id_fkey(first_name, last_name, email),
+          departments!department_treasurers_department_id_fkey(name)
         `)
         .eq('is_active', true);
       
@@ -42,7 +42,24 @@ export function useDepartmentTreasurers(departmentId?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as DepartmentTreasurer[];
+      
+      // Transform the data to match our interface
+      return data?.map(item => ({
+        id: item.id,
+        user_id: item.user_id,
+        department_id: item.department_id,
+        assigned_at: item.assigned_at,
+        assigned_by: item.assigned_by,
+        is_active: item.is_active,
+        user: item.profiles ? {
+          first_name: item.profiles.first_name,
+          last_name: item.profiles.last_name,
+          email: item.profiles.email
+        } : undefined,
+        department: item.departments ? {
+          name: item.departments.name
+        } : undefined
+      })) as DepartmentTreasurer[];
     }
   });
 }

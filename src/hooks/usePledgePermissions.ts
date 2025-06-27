@@ -1,11 +1,11 @@
+
 import { useUserRole } from "@/hooks/useUserRole";
 
 export const usePledgePermissions = () => {
   const { userRole, isLoading } = useUserRole();
 
   const canAccessPledges = () => {
-    // Only finance, leadership, administrative, and contributor roles can access pledges
-    // Explicitly exclude departmental roles, include treasurer
+    // Include department_treasurer in pledge access
     return userRole && ![
       'head_of_department',
       'department_member', 
@@ -19,7 +19,8 @@ export const usePledgePermissions = () => {
       'data_entry_clerk',
       'general_secretary',
       'pastor',
-      'treasurer' // Added treasurer
+      'treasurer',
+      'department_treasurer' // Added department treasurer
     ].includes(userRole);
   };
 
@@ -30,7 +31,8 @@ export const usePledgePermissions = () => {
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
            userRole === 'data_entry_clerk' ||
-           userRole === 'treasurer' || // Added treasurer
+           userRole === 'treasurer' ||
+           userRole === 'department_treasurer' || // Added department treasurer
            userRole === 'general_secretary' ||
            userRole === 'pastor';
   };
@@ -41,7 +43,7 @@ export const usePledgePermissions = () => {
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
-           userRole === 'treasurer' || // Added treasurer
+           userRole === 'treasurer' ||
            userRole === 'general_secretary' || 
            userRole === 'pastor';
   };
@@ -52,7 +54,8 @@ export const usePledgePermissions = () => {
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
-           userRole === 'treasurer' || // Added treasurer
+           userRole === 'treasurer' ||
+           userRole === 'department_treasurer' || // Added department treasurer
            userRole === 'general_secretary' || 
            userRole === 'pastor';
   };
@@ -79,7 +82,8 @@ export const usePledgePermissions = () => {
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
-           userRole === 'treasurer'; // Added treasurer
+           userRole === 'treasurer' ||
+           userRole === 'department_treasurer'; // Added department treasurer
   };
 
   const getPledgeAccessLevel = () => {
