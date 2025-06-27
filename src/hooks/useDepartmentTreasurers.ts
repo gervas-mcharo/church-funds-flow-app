@@ -29,8 +29,8 @@ export function useDepartmentTreasurers(departmentId?: string) {
         .from('department_treasurers')
         .select(`
           *,
-          profiles!inner(first_name, last_name, email),
-          departments!inner(name)
+          profiles!department_treasurers_user_id_fkey(first_name, last_name, email),
+          departments!department_treasurers_department_id_fkey(name)
         `)
         .eq('is_active', true);
       
