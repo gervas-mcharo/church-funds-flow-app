@@ -34,7 +34,12 @@ export function SecureBulkPledgeImportDialog() {
         <Upload className="h-4 w-4" />
         Bulk Import
       </Button>
-      <BulkPledgeImportDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      {dialogOpen && (
+        <BulkPledgeImportDialog 
+          open={dialogOpen} 
+          onOpenChange={setDialogOpen} 
+        />
+      )}
     </>
   );
 }

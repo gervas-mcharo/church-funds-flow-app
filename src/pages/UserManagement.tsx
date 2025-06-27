@@ -168,7 +168,7 @@ const UserManagement = () => {
     finance_manager: "Finance Manager",
     head_of_department: "Head of Department",
     secretary: "Secretary",
-    treasurer: "Treasurer",
+    treasurer: "Church Treasurer", // Updated label for existing role
     department_member: "Department Member",
     contributor: "Contributor"
   };
@@ -191,7 +191,7 @@ const UserManagement = () => {
   const getRolesByCategory = () => {
     return {
       leadership: ['super_administrator', 'administrator', 'pastor', 'general_secretary'],
-      financial: ['finance_administrator', 'finance_manager', 'finance_elder', 'treasurer'],
+      financial: ['finance_administrator', 'finance_manager', 'finance_elder', 'treasurer'], // Keep treasurer in financial for now
       departmental: ['head_of_department', 'secretary', 'department_member'],
       operational: ['data_entry_clerk', 'contributor']
     };

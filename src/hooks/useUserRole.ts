@@ -55,7 +55,7 @@ export const useUserRole = () => {
            userRole === 'pastor';
   };
 
-  // Fund management permissions - exclude departmental roles
+  // Fund management permissions - updated to include treasurer
   const canManageFunds = () => {
     return userRole && ![
       'head_of_department',
@@ -67,7 +67,7 @@ export const useUserRole = () => {
       'finance_administrator',
       'finance_manager',
       'finance_elder',
-      'treasurer',
+      'treasurer', // Added treasurer back to financial management
       'general_secretary',
       'pastor'
     ].includes(userRole);
@@ -82,6 +82,7 @@ export const useUserRole = () => {
       'super_administrator',
       'administrator', 
       'finance_administrator',
+      'treasurer', // Added treasurer
       'general_secretary',
       'pastor'
     ].includes(userRole);
@@ -102,7 +103,7 @@ export const useUserRole = () => {
   };
 
   const canViewFunds = () => {
-    // Exclude departmental roles from viewing funds
+    // Exclude departmental roles from viewing funds, include treasurer
     return userRole && ![
       'head_of_department',
       'department_member', 
@@ -117,7 +118,7 @@ export const useUserRole = () => {
     return 'none';
   };
 
-  // Contributor management permissions - exclude departmental roles
+  // Contributor management permissions - updated to include treasurer
   const canCreateContributors = () => {
     return userRole && ![
       'head_of_department',
@@ -127,6 +128,7 @@ export const useUserRole = () => {
       'super_administrator',
       'administrator', 
       'finance_administrator',
+      'treasurer', // Added treasurer
       'general_secretary',
       'pastor'
     ].includes(userRole);
@@ -143,6 +145,7 @@ export const useUserRole = () => {
       'finance_administrator',
       'finance_manager',
       'finance_elder',
+      'treasurer', // Added treasurer
       'general_secretary',
       'pastor'
     ].includes(userRole);
@@ -163,7 +166,7 @@ export const useUserRole = () => {
   };
 
   const canViewContributors = () => {
-    // Exclude departmental roles from viewing contributors
+    // Exclude departmental roles from viewing contributors, include treasurer
     return userRole && ![
       'head_of_department',
       'department_member', 
@@ -178,13 +181,14 @@ export const useUserRole = () => {
     return 'none';
   };
 
-  // QR Management permissions - already properly excludes departmental roles
+  // QR Management permissions - updated to include treasurer
   const canAccessQRManagement = () => {
     return userRole === 'super_administrator' || 
            userRole === 'administrator' || 
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
+           userRole === 'treasurer' || // Added treasurer
            userRole === 'data_entry_clerk' || 
            userRole === 'general_secretary' || 
            userRole === 'pastor';
@@ -196,6 +200,7 @@ export const useUserRole = () => {
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
+           userRole === 'treasurer' || // Added treasurer
            userRole === 'data_entry_clerk' || 
            userRole === 'general_secretary' || 
            userRole === 'pastor';
@@ -207,6 +212,7 @@ export const useUserRole = () => {
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
+           userRole === 'treasurer' || // Added treasurer
            userRole === 'general_secretary' || 
            userRole === 'pastor';
   };
@@ -217,6 +223,7 @@ export const useUserRole = () => {
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
+           userRole === 'treasurer' || // Added treasurer
            userRole === 'general_secretary' || 
            userRole === 'pastor';
   };

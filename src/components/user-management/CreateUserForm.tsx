@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -173,6 +172,9 @@ export function CreateUserForm({ roleLabels, roleCategories }: CreateUserFormPro
                 {roleCategories.financial.map((role) => (
                   <SelectItem key={role} value={role}>
                     {roleLabels[role as AppRole]}
+                    {role === 'treasurer' && (
+                      <span className="ml-2 text-xs text-blue-600">(Church-wide)</span>
+                    )}
                   </SelectItem>
                 ))}
                 
@@ -192,6 +194,11 @@ export function CreateUserForm({ roleLabels, roleCategories }: CreateUserFormPro
               </div>
             </SelectContent>
           </Select>
+          {selectedRole === 'treasurer' && (
+            <p className="text-xs text-blue-600 mt-1">
+              This role provides church-wide financial access to all funds and contributions.
+            </p>
+          )}
         </div>
         
         <Button 

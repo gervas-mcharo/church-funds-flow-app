@@ -1,4 +1,3 @@
-
 import { useUserRole } from "@/hooks/useUserRole";
 
 export const usePledgePermissions = () => {
@@ -6,7 +5,7 @@ export const usePledgePermissions = () => {
 
   const canAccessPledges = () => {
     // Only finance, leadership, administrative, and contributor roles can access pledges
-    // Explicitly exclude departmental roles
+    // Explicitly exclude departmental roles, include treasurer
     return userRole && ![
       'head_of_department',
       'department_member', 
@@ -20,7 +19,7 @@ export const usePledgePermissions = () => {
       'data_entry_clerk',
       'general_secretary',
       'pastor',
-      'treasurer'
+      'treasurer' // Added treasurer
     ].includes(userRole);
   };
 
@@ -31,6 +30,7 @@ export const usePledgePermissions = () => {
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
            userRole === 'data_entry_clerk' ||
+           userRole === 'treasurer' || // Added treasurer
            userRole === 'general_secretary' ||
            userRole === 'pastor';
   };
@@ -41,6 +41,7 @@ export const usePledgePermissions = () => {
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
+           userRole === 'treasurer' || // Added treasurer
            userRole === 'general_secretary' || 
            userRole === 'pastor';
   };
@@ -51,6 +52,7 @@ export const usePledgePermissions = () => {
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
+           userRole === 'treasurer' || // Added treasurer
            userRole === 'general_secretary' || 
            userRole === 'pastor';
   };
@@ -77,7 +79,7 @@ export const usePledgePermissions = () => {
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
-           userRole === 'treasurer';
+           userRole === 'treasurer'; // Added treasurer
   };
 
   const getPledgeAccessLevel = () => {
