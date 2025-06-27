@@ -70,16 +70,16 @@ export function AppSidebar() {
 
   // Filter menu items based on permissions
   const visibleMenuItems = itemsToShow.filter(item => {
-    if (item.requiresPledgeAccess) {
+    if (item.hasOwnProperty('requiresPledgeAccess') && item.requiresPledgeAccess) {
       return canAccessPledges();
     }
-    if (item.requiresQRAccess) {
+    if (item.hasOwnProperty('requiresQRAccess') && item.requiresQRAccess) {
       return canAccessQRManagement();
     }
-    if (item.requiresContributorAccess) {
+    if (item.hasOwnProperty('requiresContributorAccess') && item.requiresContributorAccess) {
       return canViewContributors();
     }
-    if (item.requiresFundAccess) {
+    if (item.hasOwnProperty('requiresFundAccess') && item.requiresFundAccess) {
       return canViewFunds();
     }
     return true;

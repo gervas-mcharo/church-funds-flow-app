@@ -11,7 +11,7 @@ export const useDepartmentPermissions = (departmentId?: string) => {
            userRole === 'administrator' || 
            userRole === 'general_secretary' || 
            userRole === 'pastor' ||
-           canManageThisDepartment();
+           canManageThisDepartment(userRole);
   };
 
   const canViewDepartment = () => {
@@ -33,6 +33,33 @@ export const useDepartmentPermissions = (departmentId?: string) => {
            userRole === 'administrator';
   };
 
+  // Add missing department management functions
+  const canCreateDepartments = () => {
+    return userRole === 'super_administrator' || 
+           userRole === 'administrator' || 
+           userRole === 'general_secretary' || 
+           userRole === 'pastor';
+  };
+
+  const canEditDepartments = () => {
+    return userRole === 'super_administrator' || 
+           userRole === 'administrator' || 
+           userRole === 'general_secretary' || 
+           userRole === 'pastor';
+  };
+
+  const canDeleteDepartments = () => {
+    return userRole === 'super_administrator' || 
+           userRole === 'administrator';
+  };
+
+  const getDepartmentAccessLevel = () => {
+    if (canDeleteDepartments()) return 'full';
+    if (canEditDepartments()) return 'manage';
+    if (canViewDepartment()) return 'view';
+    return 'none';
+  };
+
   const getPersonnelAccessLevel = (targetDepartmentId?: string) => {
     if (canDeleteDepartment()) return 'full';
     if (canManagePersonnel()) return 'manage';
@@ -47,6 +74,10 @@ export const useDepartmentPermissions = (departmentId?: string) => {
     canViewDepartment,
     canEditDepartment,
     canDeleteDepartment,
+    canCreateDepartments,
+    canEditDepartments,
+    canDeleteDepartments,
+    getDepartmentAccessLevel,
     getPersonnelAccessLevel,
   };
 };
