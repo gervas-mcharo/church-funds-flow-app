@@ -33,6 +33,7 @@ import { DeleteContributorDialog } from "@/components/contributors/DeleteContrib
 import { PermissionStatusBadge } from "@/components/contributors/PermissionStatusBadge";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useContributors, useCreateContributor, useUpdateContributor } from "@/hooks/useContributors";
+import { ContributorAccessGuard } from "@/components/contributors/ContributorAccessGuard";
 
 interface Contributor {
   id: string;
@@ -107,146 +108,91 @@ const Contributors = () => {
   }
 
   return (
-    <DashboardLayout>
-      <div className="container mx-auto py-10">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <div className="flex items-center gap-4 mb-2">
-              <h1 className="text-3xl font-bold text-gray-900">Contributors</h1>
-              <PermissionStatusBadge 
-                accessLevel={getContributorAccessLevel()} 
-                userRole={userRole || undefined}
-              />
+    <ContributorAccessGuard>
+      <DashboardLayout>
+        <div className="container mx-auto py-10">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <div className="flex items-center gap-4 mb-2">
+                <h1 className="text-3xl font-bold text-gray-900">Contributors</h1>
+                <PermissionStatusBadge 
+                  accessLevel={getContributorAccessLevel()} 
+                  userRole={userRole || undefined}
+                />
+              </div>
+              <p className="text-gray-600">Manage list of contributors</p>
             </div>
-            <p className="text-gray-600">Manage list of contributors</p>
+            <Button onClick={() => setShowCreateDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Contributor
+            </Button>
           </div>
-          <Button onClick={() => setShowCreateDialog(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Contributor
-          </Button>
-        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Contributors List</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableCaption>A list of your contributors.</TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[100px]">Avatar</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {contributors?.map((contributor) => (
-                  <TableRow key={contributor.id}>
-                    <TableCell>
-                      <Avatar>
-                        <AvatarImage src={`https://avatar.vercel.sh/${contributor.email}.png`} />
-                        <AvatarFallback>{contributor.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                    </TableCell>
-                    <TableCell>{contributor.name}</TableCell>
-                    <TableCell>{contributor.email}</TableCell>
-                    <TableCell>{contributor.phone}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => {
-                              setEditingContributor(contributor);
-                              setShowEditDialog(true);
-                            }}>
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDeleteContributor(contributor)}>
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+          <Card>
+            <CardHeader>
+              <CardTitle>Contributors List</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableCaption>A list of your contributors.</TableCaption>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[100px]">Avatar</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {contributors?.map((contributor) => (
+                    <TableRow key={contributor.id}>
+                      <TableCell>
+                        <Avatar>
+                          <AvatarImage src={`https://avatar.vercel.sh/${contributor.email}.png`} />
+                          <AvatarFallback>{contributor.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                      </TableCell>
+                      <TableCell>{contributor.name}</TableCell>
+                      <TableCell>{contributor.email}</TableCell>
+                      <TableCell>{contributor.phone}</TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Open menu</span>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => {
+                                setEditingContributor(contributor);
+                                setShowEditDialog(true);
+                              }}>
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDeleteContributor(contributor)}>
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
 
-        {/* Create Contributor Dialog */}
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            {/* <Button>Open Dialog</Button> */}
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Contributor</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Name
-                </Label>
-                <Input 
-                  id="name" 
-                  value={newContributor.name}
-                  onChange={(e) => setNewContributor(prev => ({ ...prev, name: e.target.value }))}
-                  className="col-span-3" 
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">
-                  Email
-                </Label>
-                <Input 
-                  type="email" 
-                  id="email" 
-                  value={newContributor.email}
-                  onChange={(e) => setNewContributor(prev => ({ ...prev, email: e.target.value }))}
-                  className="col-span-3" 
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="phone" className="text-right">
-                  Phone
-                </Label>
-                <Input 
-                  type="tel" 
-                  id="phone" 
-                  value={newContributor.phone}
-                  onChange={(e) => setNewContributor(prev => ({ ...prev, phone: e.target.value }))}
-                  className="col-span-3" 
-                />
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <Button type="submit" onClick={handleCreateContributor} disabled={createContributorMutation.isPending}>
-                {createContributorMutation.isPending ? "Creating..." : "Create Contributor"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Edit Contributor Dialog */}
-        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-          <DialogTrigger asChild>
-            {/* <Button>Open Dialog</Button> */}
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Contributor</DialogTitle>
-            </DialogHeader>
-            {editingContributor && (
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogTrigger asChild>
+              {/* <Button>Open Dialog</Button> */}
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Contributor</DialogTitle>
+              </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="name" className="text-right">
@@ -254,10 +200,8 @@ const Contributors = () => {
                   </Label>
                   <Input 
                     id="name" 
-                    value={editingContributor.name}
-                    onChange={(e) => setEditingContributor(prev => 
-                      prev ? { ...prev, name: e.target.value } : null
-                    )}
+                    value={newContributor.name}
+                    onChange={(e) => setNewContributor(prev => ({ ...prev, name: e.target.value }))}
                     className="col-span-3" 
                   />
                 </div>
@@ -268,10 +212,8 @@ const Contributors = () => {
                   <Input 
                     type="email" 
                     id="email" 
-                    value={editingContributor.email || ""}
-                    onChange={(e) => setEditingContributor(prev => 
-                      prev && prev ? { ...prev, email: e.target.value } : null
-                    )}
+                    value={newContributor.email}
+                    onChange={(e) => setNewContributor(prev => ({ ...prev, email: e.target.value }))}
                     className="col-span-3" 
                   />
                 </div>
@@ -282,31 +224,89 @@ const Contributors = () => {
                   <Input 
                     type="tel" 
                     id="phone" 
-                    value={editingContributor.phone || ""}
-                    onChange={(e) => setEditingContributor(prev => 
-                      prev ? { ...prev, phone: e.target.value } : null
-                    )}
+                    value={newContributor.phone}
+                    onChange={(e) => setNewContributor(prev => ({ ...prev, phone: e.target.value }))}
                     className="col-span-3" 
                   />
                 </div>
               </div>
-            )}
-            <div className="flex justify-end">
-              <Button type="submit" onClick={handleUpdateContributor} disabled={updateContributorMutation.isPending}>
-                {updateContributorMutation.isPending ? "Updating..." : "Update Contributor"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+              <div className="flex justify-end">
+                <Button type="submit" onClick={handleCreateContributor} disabled={createContributorMutation.isPending}>
+                  {createContributorMutation.isPending ? "Creating..." : "Create Contributor"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
-        {/* Delete Contributor Dialog */}
-        <DeleteContributorDialog
-          contributor={contributorToDelete}
-          open={!!contributorToDelete}
-          onOpenChange={(open) => !open && setContributorToDelete(null)}
-        />
-      </div>
-    </DashboardLayout>
+          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+            <DialogTrigger asChild>
+              {/* <Button>Open Dialog</Button> */}
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Contributor</DialogTitle>
+              </DialogHeader>
+              {editingContributor && (
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="name" className="text-right">
+                      Name
+                    </Label>
+                    <Input 
+                      id="name" 
+                      value={editingContributor.name}
+                      onChange={(e) => setEditingContributor(prev => 
+                        prev ? { ...prev, name: e.target.value } : null
+                      )}
+                      className="col-span-3" 
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="email" className="text-right">
+                      Email
+                    </Label>
+                    <Input 
+                      type="email" 
+                      id="email" 
+                      value={editingContributor.email || ""}
+                      onChange={(e) => setEditingContributor(prev => 
+                        prev && prev ? { ...prev, email: e.target.value } : null
+                      )}
+                      className="col-span-3" 
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="phone" className="text-right">
+                      Phone
+                    </Label>
+                    <Input 
+                      type="tel" 
+                      id="phone" 
+                      value={editingContributor.phone || ""}
+                      onChange={(e) => setEditingContributor(prev => 
+                        prev ? { ...prev, phone: e.target.value } : null
+                      )}
+                      className="col-span-3" 
+                    />
+                  </div>
+                </div>
+              )}
+              <div className="flex justify-end">
+                <Button type="submit" onClick={handleUpdateContributor} disabled={updateContributorMutation.isPending}>
+                  {updateContributorMutation.isPending ? "Updating..." : "Update Contributor"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <DeleteContributorDialog
+            contributor={contributorToDelete}
+            open={!!contributorToDelete}
+            onOpenChange={(open) => !open && setContributorToDelete(null)}
+          />
+        </div>
+      </DashboardLayout>
+    </ContributorAccessGuard>
   );
 };
 

@@ -23,12 +23,13 @@ import {
   HandHeart
 } from "lucide-react";
 import { usePledgePermissions } from "@/hooks/usePledgePermissions";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: BarChart3 },
-  { title: "QR Management", url: "/qr-management", icon: QrCode },
-  { title: "Contributors", url: "/contributors", icon: Users },
-  { title: "Funds", url: "/fund-types", icon: Database },
+  { title: "QR Management", url: "/qr-management", icon: QrCode, requiresQRAccess: true },
+  { title: "Contributors", url: "/contributors", icon: Users, requiresContributorAccess: true },
+  { title: "Funds", url: "/fund-types", icon: Database, requiresFundAccess: true },
   { title: "Departments", url: "/departments", icon: Folder },
   { title: "Pledges", url: "/pledges", icon: HandHeart, requiresPledgeAccess: true },
   { title: "Money Requests", url: "/money-requests", icon: FileText },
@@ -41,6 +42,7 @@ export function AppSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
   const { canAccessPledges } = usePledgePermissions();
+  const { canAccessQRManagement, canViewContributors, canViewFunds } = useUserRole();
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
@@ -52,6 +54,15 @@ export function AppSidebar() {
   const visibleMenuItems = menuItems.filter(item => {
     if (item.requiresPledgeAccess) {
       return canAccessPledges();
+    }
+    if (item.requiresQRAccess) {
+      return canAccessQRManagement();
+    }
+    if (item.requiresContributorAccess) {
+      return canViewContributors();
+    }
+    if (item.requiresFundAccess) {
+      return canViewFunds();
     }
     return true;
   });

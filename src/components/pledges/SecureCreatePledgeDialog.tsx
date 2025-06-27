@@ -34,9 +34,7 @@ export function SecureCreatePledgeDialog() {
         <Plus className="h-4 w-4" />
         Create Pledge
       </Button>
-      {dialogOpen && (
-        <CreatePledgeDialog onClose={() => setDialogOpen(false)} />
-      )}
+      <CreatePledgeDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </>
   );
 }

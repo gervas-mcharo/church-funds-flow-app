@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -56,37 +55,59 @@ export const useUserRole = () => {
            userRole === 'pastor';
   };
 
-  // Fund management permissions
+  // Fund management permissions - exclude departmental roles
   const canManageFunds = () => {
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
-           userRole === 'finance_administrator' || 
-           userRole === 'finance_manager' || 
-           userRole === 'finance_elder' || 
-           userRole === 'treasurer' ||
-           userRole === 'general_secretary' ||
-           userRole === 'pastor';
+    return userRole && ![
+      'head_of_department',
+      'department_member', 
+      'secretary'
+    ].includes(userRole) && [
+      'super_administrator',
+      'administrator', 
+      'finance_administrator',
+      'finance_manager',
+      'finance_elder',
+      'treasurer',
+      'general_secretary',
+      'pastor'
+    ].includes(userRole);
   };
 
   const canCreateFunds = () => {
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
-           userRole === 'finance_administrator' ||
-           userRole === 'general_secretary' ||
-           userRole === 'pastor';
+    return userRole && ![
+      'head_of_department',
+      'department_member', 
+      'secretary'
+    ].includes(userRole) && [
+      'super_administrator',
+      'administrator', 
+      'finance_administrator',
+      'general_secretary',
+      'pastor'
+    ].includes(userRole);
   };
 
   const canDeleteFunds = () => {
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
-           userRole === 'finance_administrator' ||
-           userRole === 'general_secretary' ||
-           userRole === 'pastor';
+    return userRole && ![
+      'head_of_department',
+      'department_member', 
+      'secretary'
+    ].includes(userRole) && [
+      'super_administrator',
+      'administrator', 
+      'finance_administrator',
+      'general_secretary',
+      'pastor'
+    ].includes(userRole);
   };
 
   const canViewFunds = () => {
-    // All authenticated users can view funds, but with different access levels
-    return !!userRole;
+    // Exclude departmental roles from viewing funds
+    return userRole && ![
+      'head_of_department',
+      'department_member', 
+      'secretary'
+    ].includes(userRole);
   };
 
   const getFundAccessLevel = () => {
@@ -96,36 +117,58 @@ export const useUserRole = () => {
     return 'none';
   };
 
-  // Contributor management permissions
+  // Contributor management permissions - exclude departmental roles
   const canCreateContributors = () => {
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
-           userRole === 'finance_administrator' ||
-           userRole === 'general_secretary' ||
-           userRole === 'pastor';
+    return userRole && ![
+      'head_of_department',
+      'department_member', 
+      'secretary'
+    ].includes(userRole) && [
+      'super_administrator',
+      'administrator', 
+      'finance_administrator',
+      'general_secretary',
+      'pastor'
+    ].includes(userRole);
   };
 
   const canEditContributors = () => {
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
-           userRole === 'finance_administrator' || 
-           userRole === 'finance_manager' || 
-           userRole === 'finance_elder' ||
-           userRole === 'general_secretary' ||
-           userRole === 'pastor';
+    return userRole && ![
+      'head_of_department',
+      'department_member', 
+      'secretary'
+    ].includes(userRole) && [
+      'super_administrator',
+      'administrator', 
+      'finance_administrator',
+      'finance_manager',
+      'finance_elder',
+      'general_secretary',
+      'pastor'
+    ].includes(userRole);
   };
 
   const canDeleteContributors = () => {
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
-           userRole === 'finance_administrator' ||
-           userRole === 'general_secretary' ||
-           userRole === 'pastor';
+    return userRole && ![
+      'head_of_department',
+      'department_member', 
+      'secretary'
+    ].includes(userRole) && [
+      'super_administrator',
+      'administrator', 
+      'finance_administrator',
+      'general_secretary',
+      'pastor'
+    ].includes(userRole);
   };
 
   const canViewContributors = () => {
-    // All authenticated users can view contributors
-    return !!userRole;
+    // Exclude departmental roles from viewing contributors
+    return userRole && ![
+      'head_of_department',
+      'department_member', 
+      'secretary'
+    ].includes(userRole);
   };
 
   const getContributorAccessLevel = () => {
@@ -135,7 +178,7 @@ export const useUserRole = () => {
     return 'none';
   };
 
-  // QR Management permissions
+  // QR Management permissions - already properly excludes departmental roles
   const canAccessQRManagement = () => {
     return userRole === 'super_administrator' || 
            userRole === 'administrator' || 
