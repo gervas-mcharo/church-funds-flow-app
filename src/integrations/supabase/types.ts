@@ -688,11 +688,27 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      can_bulk_import_pledges: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      can_create_pledges: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       can_create_qr_codes: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      can_delete_pledges: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       can_delete_qr_codes: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      can_manage_pledges: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
