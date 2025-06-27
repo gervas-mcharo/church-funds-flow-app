@@ -743,6 +743,45 @@ export type Database = {
           },
         ]
       }
+      security_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string | null
+          table_name: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -785,11 +824,19 @@ export type Database = {
         Args: { _user_id: string; _department_id: string }
         Returns: boolean
       }
+      can_access_funds: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       can_access_qr_management: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
       can_bulk_import_pledges: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      can_create_funds: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
@@ -806,6 +853,10 @@ export type Database = {
         Returns: boolean
       }
       can_delete_qr_codes: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      can_manage_funds: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
@@ -853,6 +904,16 @@ export type Database = {
       is_department_treasurer: {
         Args: { _user_id: string; _department_id: string }
         Returns: boolean
+      }
+      log_security_event: {
+        Args: {
+          _action: string
+          _table_name: string
+          _record_id?: string
+          _old_values?: Json
+          _new_values?: Json
+        }
+        Returns: undefined
       }
       update_pledge_status: {
         Args: Record<PropertyKey, never>

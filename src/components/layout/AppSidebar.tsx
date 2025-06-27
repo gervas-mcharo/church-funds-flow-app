@@ -27,7 +27,17 @@ import { usePledgePermissions } from "@/hooks/usePledgePermissions";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useDepartmentFinancialPermissions } from "@/hooks/useDepartmentFinancialPermissions";
 
-const menuItems = [
+interface MenuItem {
+  title: string;
+  url: string;
+  icon: React.ComponentType<any>;
+  requiresQRAccess?: boolean;
+  requiresContributorAccess?: boolean;
+  requiresFundAccess?: boolean;
+  requiresPledgeAccess?: boolean;
+}
+
+const menuItems: MenuItem[] = [
   { title: "Dashboard", url: "/", icon: BarChart3 },
   { title: "QR Management", url: "/qr-management", icon: QrCode, requiresQRAccess: true },
   { title: "Contributors", url: "/contributors", icon: Users, requiresContributorAccess: true },
@@ -41,7 +51,7 @@ const menuItems = [
 ];
 
 // Department treasurer specific menu items
-const departmentTreasurerItems = [
+const departmentTreasurerItems: MenuItem[] = [
   { title: "Dashboard", url: "/", icon: BarChart3 },
   { title: "My Departments", url: "/departments", icon: Folder },
   { title: "Department Funds", url: "/fund-types", icon: Database },
@@ -70,16 +80,16 @@ export function AppSidebar() {
 
   // Filter menu items based on permissions
   const visibleMenuItems = itemsToShow.filter(item => {
-    if (item.hasOwnProperty('requiresPledgeAccess') && item.requiresPledgeAccess) {
+    if (item.requiresPledgeAccess) {
       return canAccessPledges();
     }
-    if (item.hasOwnProperty('requiresQRAccess') && item.requiresQRAccess) {
+    if (item.requiresQRAccess) {
       return canAccessQRManagement();
     }
-    if (item.hasOwnProperty('requiresContributorAccess') && item.requiresContributorAccess) {
+    if (item.requiresContributorAccess) {
       return canViewContributors();
     }
-    if (item.hasOwnProperty('requiresFundAccess') && item.requiresFundAccess) {
+    if (item.requiresFundAccess) {
       return canViewFunds();
     }
     return true;
