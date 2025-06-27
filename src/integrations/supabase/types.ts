@@ -684,6 +684,18 @@ export type Database = {
         Args: { user_id: string; dept_id: string }
         Returns: boolean
       }
+      can_access_qr_management: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      can_create_qr_codes: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      can_delete_qr_codes: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       create_approval_chain: {
         Args: { request_id: string }
         Returns: undefined

@@ -135,6 +135,62 @@ export const useUserRole = () => {
     return 'none';
   };
 
+  // QR Management permissions
+  const canAccessQRManagement = () => {
+    return userRole === 'super_administrator' || 
+           userRole === 'administrator' || 
+           userRole === 'finance_administrator' || 
+           userRole === 'finance_manager' || 
+           userRole === 'finance_elder' || 
+           userRole === 'data_entry_clerk' || 
+           userRole === 'general_secretary' || 
+           userRole === 'pastor';
+  };
+
+  const canGenerateQRCodes = () => {
+    return userRole === 'super_administrator' || 
+           userRole === 'administrator' || 
+           userRole === 'finance_administrator' || 
+           userRole === 'finance_manager' || 
+           userRole === 'finance_elder' || 
+           userRole === 'data_entry_clerk' || 
+           userRole === 'general_secretary' || 
+           userRole === 'pastor';
+  };
+
+  const canBulkGenerateQRCodes = () => {
+    return userRole === 'super_administrator' || 
+           userRole === 'administrator' || 
+           userRole === 'finance_administrator' || 
+           userRole === 'finance_manager' || 
+           userRole === 'finance_elder' || 
+           userRole === 'general_secretary' || 
+           userRole === 'pastor';
+  };
+
+  const canDownloadQRCodes = () => {
+    return userRole === 'super_administrator' || 
+           userRole === 'administrator' || 
+           userRole === 'finance_administrator' || 
+           userRole === 'finance_manager' || 
+           userRole === 'finance_elder' || 
+           userRole === 'general_secretary' || 
+           userRole === 'pastor';
+  };
+
+  const canDeleteQRCodes = () => {
+    return userRole === 'super_administrator' || 
+           userRole === 'administrator' || 
+           userRole === 'finance_administrator';
+  };
+
+  const getQRAccessLevel = () => {
+    if (canBulkGenerateQRCodes()) return 'full';
+    if (canGenerateQRCodes()) return 'create';
+    if (canAccessQRManagement()) return 'view';
+    return 'none';
+  };
+
   return {
     userRole,
     isLoading,
@@ -153,5 +209,11 @@ export const useUserRole = () => {
     canDeleteContributors,
     canViewContributors,
     getContributorAccessLevel,
+    canAccessQRManagement,
+    canGenerateQRCodes,
+    canBulkGenerateQRCodes,
+    canDownloadQRCodes,
+    canDeleteQRCodes,
+    getQRAccessLevel,
   };
 };
