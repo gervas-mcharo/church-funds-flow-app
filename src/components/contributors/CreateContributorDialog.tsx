@@ -1,98 +1,91 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Users, Lock } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCreateContributor } from "@/hooks/useContributors";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
-
 interface CreateContributorDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   variant?: "default" | "header";
 }
-
-export function CreateContributorDialog({ open, onOpenChange, variant = "default" }: CreateContributorDialogProps) {
+export function CreateContributorDialog({
+  open,
+  onOpenChange,
+  variant = "default"
+}: CreateContributorDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    phone: "",
+    phone: ""
   });
-
-  const { mutate: createContributor, isPending } = useCreateContributor();
-  const { canCreateContributors } = useUserRole();
-  const { toast } = useToast();
-
+  const {
+    mutate: createContributor,
+    isPending
+  } = useCreateContributor();
+  const {
+    canCreateContributors
+  } = useUserRole();
+  const {
+    toast
+  } = useToast();
   const isControlled = open !== undefined;
   const isOpen = isControlled ? open : internalOpen;
-  const setIsOpen = isControlled ? (onOpenChange || (() => {})) : setInternalOpen;
-
+  const setIsOpen = isControlled ? onOpenChange || (() => {}) : setInternalOpen;
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!canCreateContributors()) {
       toast({
         title: "Access Denied",
         description: "You don't have permission to create contributors",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-    
     if (!formData.name.trim()) {
       toast({
         title: "Error",
         description: "Name is required",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
-    createContributor(
-      {
-        name: formData.name.trim(),
-        email: formData.email.trim() || undefined,
-        phone: formData.phone.trim() || undefined,
+    createContributor({
+      name: formData.name.trim(),
+      email: formData.email.trim() || undefined,
+      phone: formData.phone.trim() || undefined
+    }, {
+      onSuccess: () => {
+        toast({
+          title: "Success",
+          description: "Contributor created successfully"
+        });
+        setFormData({
+          name: "",
+          email: "",
+          phone: ""
+        });
+        setIsOpen(false);
       },
-      {
-        onSuccess: () => {
-          toast({
-            title: "Success",
-            description: "Contributor created successfully",
-          });
-          setFormData({ name: "", email: "", phone: "" });
-          setIsOpen(false);
-        },
-        onError: (error) => {
-          toast({
-            title: "Error",
-            description: "Failed to create contributor",
-            variant: "destructive",
-          });
-          console.error("Error creating contributor:", error);
-        },
+      onError: error => {
+        toast({
+          title: "Error",
+          description: "Failed to create contributor",
+          variant: "destructive"
+        });
+        console.error("Error creating contributor:", error);
       }
-    );
+    });
   };
-
   const renderTrigger = () => {
     if (variant === "header") {
       if (!canCreateContributors()) {
-        return (
-          <TooltipProvider>
+        return <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="sm" disabled className="text-gray-400">
@@ -103,30 +96,23 @@ export function CreateContributorDialog({ open, onOpenChange, variant = "default
                 <p>Access Restricted</p>
               </TooltipContent>
             </Tooltip>
-          </TooltipProvider>
-        );
+          </TooltipProvider>;
       }
-
-      return (
-        <TooltipProvider>
+      return <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
-                <Users className="h-5 w-5" />
-              </Button>
+              
             </TooltipTrigger>
             <TooltipContent>
               <p>Add Contributor</p>
             </TooltipContent>
           </Tooltip>
-        </TooltipProvider>
-      );
+        </TooltipProvider>;
     }
 
     // Default full-width button for dashboard
     if (!canCreateContributors()) {
-      return (
-        <TooltipProvider>
+      return <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="outline" disabled className="w-full justify-start gap-3 h-12 opacity-50">
@@ -138,20 +124,14 @@ export function CreateContributorDialog({ open, onOpenChange, variant = "default
               <p>You need additional permissions to create contributors</p>
             </TooltipContent>
           </Tooltip>
-        </TooltipProvider>
-      );
+        </TooltipProvider>;
     }
-
-    return (
-      <Button variant="outline" className="w-full justify-start gap-3 h-12">
+    return <Button variant="outline" className="w-full justify-start gap-3 h-12">
         <Users className="h-4 w-4" />
         Add Contributor
-      </Button>
-    );
+      </Button>;
   };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+  return <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         {renderTrigger()}
       </DialogTrigger>
@@ -166,32 +146,24 @@ export function CreateContributorDialog({ open, onOpenChange, variant = "default
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="name">Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Enter contributor name"
-                required
-              />
+              <Input id="name" value={formData.name} onChange={e => setFormData({
+              ...formData,
+              name: e.target.value
+            })} placeholder="Enter contributor name" required />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="Enter email address"
-              />
+              <Input id="email" type="email" value={formData.email} onChange={e => setFormData({
+              ...formData,
+              email: e.target.value
+            })} placeholder="Enter email address" />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="Enter phone number"
-              />
+              <Input id="phone" value={formData.phone} onChange={e => setFormData({
+              ...formData,
+              phone: e.target.value
+            })} placeholder="Enter phone number" />
             </div>
           </div>
           <DialogFooter>
@@ -204,6 +176,5 @@ export function CreateContributorDialog({ open, onOpenChange, variant = "default
           </DialogFooter>
         </form>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 }
