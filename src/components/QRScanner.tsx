@@ -10,59 +10,17 @@ interface QRScannerProps {
   onClose: () => void;
 }
 
-// Constants for better maintainability
-const SCAN_INTERVAL = 150; // ms - throttling interval for CPU optimization
-const VIDEO_READY_TIMEOUT = 3000; // ms - fallback timeout
-const VIDEO_CONSTRAINTS = {
-  facingMode: 'environment',
-  width: { ideal: 1280 },
-  height: { ideal: 720 }
-};
-
 export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
   const [isScanning, setIsScanning] = useState(false);
   const [isRequestingCamera, setIsRequestingCamera] = useState(false);
   const [scanError, setScanError] = useState<string>('');
-  
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animationRef = useRef<number>();
-  const lastScanTime = useRef(0);
-  const fallbackTimeoutRef = useRef<NodeJS.Timeout>();
-
-  const getSpecificErrorMessage = (error: any): string => {
-    console.error('Camera access error:', error);
-    
-    if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-      return 'Camera access denied. Please allow camera permissions in your browser settings and try again.';
-    }
-    
-    if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
-      return 'No camera found. Please ensure your device has a camera connected.';
-    }
-    
-    if (error.name === 'NotSupportedError' || error.name === 'ConstraintNotSatisfiedError') {
-      return 'Camera constraints not supported. Your camera may not support the required settings.';
-    }
-    
-    if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
-      return 'Camera is being used by another application. Please close other apps using the camera and try again.';
-    }
-    
-    if (error.name === 'OverconstrainedError') {
-      return 'Camera settings are too restrictive. Trying with default settings...';
-    }
-    
-    return 'Unable to access camera. Please check your camera permissions and try again.';
-  };
 
   const handleVideoReady = () => {
-    console.log('Video is ready, starting scan');
-    if (fallbackTimeoutRef.current) {
-      clearTimeout(fallbackTimeoutRef.current);
-      fallbackTimeoutRef.current = undefined;
-    }
+    console.log('Video is ready, setting isScanning to true');
     setIsScanning(true);
     setIsRequestingCamera(false);
     scanForQRCode();
@@ -75,7 +33,11 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
       setScanError('');
       
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: VIDEO_CONSTRAINTS
+        video: { 
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
       });
       
       console.log('Camera access granted, stream received:', stream);
@@ -83,49 +45,44 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
       if (videoRef.current) {
         const video = videoRef.current;
         
-        // Clean up any existing listeners and timeouts
-        video.removeEventListener('canplay', handleVideoReady);
-        if (fallbackTimeoutRef.current) {
-          clearTimeout(fallbackTimeoutRef.current);
-        }
+        // Set up event listeners BEFORE setting srcObject
+        const setupEventListeners = () => {
+          // Remove any existing listeners first
+          video.removeEventListener('loadedmetadata', handleVideoReady);
+          video.removeEventListener('canplay', handleVideoReady);
+          video.removeEventListener('playing', handleVideoReady);
+          
+          // Add new listeners
+          video.addEventListener('loadedmetadata', handleVideoReady, { once: true });
+          video.addEventListener('canplay', handleVideoReady, { once: true });
+          video.addEventListener('playing', handleVideoReady, { once: true });
+        };
+
+        setupEventListeners();
         
-        // Set up single primary event listener
-        video.addEventListener('canplay', handleVideoReady, { once: true });
-        
-        // Set fallback timeout
-        fallbackTimeoutRef.current = setTimeout(() => {
-          if (video.readyState >= 2 && !isScanning) {
-            console.log('Fallback: Video ready via timeout');
-            handleVideoReady();
-          }
-        }, VIDEO_READY_TIMEOUT);
-        
-        // Set video source
+        // Now set the source
         video.srcObject = stream;
         streamRef.current = stream;
+        
+        // Fallback timeout in case events don't fire
+        const timeoutId = setTimeout(() => {
+          if (video.readyState >= 2 && !isScanning) {
+            console.log('Fallback: Video ready via timeout check');
+            handleVideoReady();
+          }
+        }, 2000);
+        
+        // Clear timeout if video loads properly
+        const clearTimeoutOnReady = () => {
+          clearTimeout(timeoutId);
+        };
+        video.addEventListener('loadedmetadata', clearTimeoutOnReady, { once: true });
+        video.addEventListener('canplay', clearTimeoutOnReady, { once: true });
       }
     } catch (error) {
-      const specificErrorMessage = getSpecificErrorMessage(error);
+      console.error('Error accessing camera:', error);
       setIsRequestingCamera(false);
-      setScanError(specificErrorMessage);
-      
-      // If it's an overconstrained error, try with basic constraints
-      if (error.name === 'OverconstrainedError') {
-        try {
-          const basicStream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: 'environment' }
-          });
-          
-          if (videoRef.current) {
-            videoRef.current.srcObject = basicStream;
-            streamRef.current = basicStream;
-            setScanError('');
-            setIsRequestingCamera(true);
-          }
-        } catch (basicError) {
-          setScanError(getSpecificErrorMessage(basicError));
-        }
-      }
+      setScanError('Unable to access camera. Please ensure camera permissions are granted.');
     }
   };
 
@@ -143,22 +100,9 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
       return;
     }
 
-    // Throttling for CPU optimization
-    const now = Date.now();
-    if (now - lastScanTime.current < SCAN_INTERVAL) {
-      animationRef.current = requestAnimationFrame(scanForQRCode);
-      return;
-    }
-    lastScanTime.current = now;
-
-    // Optimize canvas sizing
-    const videoWidth = video.videoWidth;
-    const videoHeight = video.videoHeight;
-    
-    if (canvas.width !== videoWidth || canvas.height !== videoHeight) {
-      canvas.width = videoWidth;
-      canvas.height = videoHeight;
-    }
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
 
     // Draw video frame to canvas
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -171,11 +115,6 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
       console.log('QR Code detected:', qrCode.data);
       stopScanning();
       onScan(qrCode.data);
-      
-      // Add haptic feedback if supported
-      if ('vibrate' in navigator) {
-        navigator.vibrate(100);
-      }
     } else {
       // Continue scanning
       animationRef.current = requestAnimationFrame(scanForQRCode);
@@ -187,30 +126,22 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
     
     // Clean up video event listeners
     if (videoRef.current) {
-      videoRef.current.removeEventListener('canplay', handleVideoReady);
+      const video = videoRef.current;
+      video.removeEventListener('loadedmetadata', handleVideoReady);
+      video.removeEventListener('canplay', handleVideoReady);
+      video.removeEventListener('playing', handleVideoReady);
     }
     
-    // Clean up timeouts
-    if (fallbackTimeoutRef.current) {
-      clearTimeout(fallbackTimeoutRef.current);
-      fallbackTimeoutRef.current = undefined;
-    }
-    
-    // Clean up media stream
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
-    
-    // Clean up animation frame
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
-    
     setIsScanning(false);
     setIsRequestingCamera(false);
     setScanError('');
-    lastScanTime.current = 0;
   };
 
   const handleClose = () => {
@@ -255,14 +186,7 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
               <Camera className="h-16 w-16 text-gray-400" />
             </div>
             {scanError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-600 text-center">{scanError}</p>
-                {scanError.includes('permissions') && (
-                  <p className="text-xs text-red-500 mt-1 text-center">
-                    Check your browser's address bar for camera permission requests.
-                  </p>
-                )}
-              </div>
+              <p className="text-sm text-red-500 text-center">{scanError}</p>
             )}
             <Button onClick={startScanning} className="w-full">
               Start Camera
@@ -303,10 +227,6 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
               <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/70 text-white px-2 py-1 rounded-full text-xs">
                 <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
                 <span>LIVE</span>
-              </div>
-              {/* Scan performance indicator */}
-              <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
-                Optimized Scanning
               </div>
             </div>
             <div className="flex gap-2">
