@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -25,13 +24,10 @@ export function useDepartmentTreasurers(departmentId?: string) {
   return useQuery({
     queryKey: ['department-treasurers', departmentId],
     queryFn: async () => {
+      // First get department treasurers
       let query = supabase
         .from('department_treasurers')
-        .select(`
-          *,
-          profiles!department_treasurers_user_id_fkey(first_name, last_name, email),
-          departments!department_treasurers_department_id_fkey(name)
-        `)
+        .select('*')
         .eq('is_active', true);
       
       if (departmentId) {
@@ -40,26 +36,59 @@ export function useDepartmentTreasurers(departmentId?: string) {
       
       query = query.order('assigned_at', { ascending: false });
 
-      const { data, error } = await query;
-      if (error) throw error;
-      
+      const { data: treasurersData, error: treasurersError } = await query;
+      if (treasurersError) throw treasurersError;
+
+      if (!treasurersData || treasurersData.length === 0) {
+        return [];
+      }
+
+      // Get unique user IDs and department IDs
+      const userIds = [...new Set(treasurersData.map(t => t.user_id))];
+      const departmentIds = [...new Set(treasurersData.map(t => t.department_id))];
+
+      // Fetch profiles for all users
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Fetch departments
+      const { data: departmentsData, error: departmentsError } = await supabase
+        .from('departments')
+        .select('id, name')
+        .in('id', departmentIds);
+
+      if (departmentsError) throw departmentsError;
+
+      // Create lookup maps
+      const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
+      const departmentsMap = new Map(departmentsData?.map(d => [d.id, d]) || []);
+
       // Transform the data to match our interface
-      return data?.map(item => ({
-        id: item.id,
-        user_id: item.user_id,
-        department_id: item.department_id,
-        assigned_at: item.assigned_at,
-        assigned_by: item.assigned_by,
-        is_active: item.is_active,
-        user: item.profiles ? {
-          first_name: item.profiles.first_name,
-          last_name: item.profiles.last_name,
-          email: item.profiles.email
-        } : undefined,
-        department: item.departments ? {
-          name: item.departments.name
-        } : undefined
-      })) as DepartmentTreasurer[];
+      return treasurersData.map(item => {
+        const profile = profilesMap.get(item.user_id);
+        const department = departmentsMap.get(item.department_id);
+
+        return {
+          id: item.id,
+          user_id: item.user_id,
+          department_id: item.department_id,
+          assigned_at: item.assigned_at,
+          assigned_by: item.assigned_by,
+          is_active: item.is_active,
+          user: profile ? {
+            first_name: profile.first_name,
+            last_name: profile.last_name,
+            email: profile.email
+          } : undefined,
+          department: department ? {
+            name: department.name
+          } : undefined
+        };
+      }) as DepartmentTreasurer[];
     }
   });
 }
