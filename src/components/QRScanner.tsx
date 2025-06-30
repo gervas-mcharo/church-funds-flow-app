@@ -1,24 +1,13 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Camera, X, Upload, Copy, CheckCircle } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Camera, X } from 'lucide-react';
 import jsQR from 'jsqr';
 
 interface QRScannerProps {
   onScan: (data: string) => void;
   onClose: () => void;
-}
-
-interface CameraDevice {
-  deviceId: string;
-  label: string;
-}
-
-interface ScanResult {
-  data: string;
-  confidence: number;
-  timestamp: number;
 }
 
 // Constants for better maintainability
@@ -34,53 +23,13 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
   const [isScanning, setIsScanning] = useState(false);
   const [isRequestingCamera, setIsRequestingCamera] = useState(false);
   const [scanError, setScanError] = useState<string>('');
-  const [cameras, setCameras] = useState<CameraDevice[]>([]);
-  const [selectedCamera, setSelectedCamera] = useState<string>('');
-  const [lastScanResult, setLastScanResult] = useState<ScanResult | null>(null);
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [isProcessingFile, setIsProcessingFile] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animationRef = useRef<number>();
   const lastScanTime = useRef(0);
   const fallbackTimeoutRef = useRef<NodeJS.Timeout>();
-
-  // Get available cameras
-  const getCameras = async () => {
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices
-        .filter(device => device.kind === 'videoinput')
-        .map((device, index) => ({
-          deviceId: device.deviceId,
-          label: device.label || `Camera ${index + 1}`
-        }));
-      
-      setCameras(videoDevices);
-      
-      // Auto-select back camera if available
-      const backCamera = videoDevices.find(camera => 
-        camera.label.toLowerCase().includes('back') || 
-        camera.label.toLowerCase().includes('environment')
-      );
-      if (backCamera) {
-        setSelectedCamera(backCamera.deviceId);
-      } else if (videoDevices.length > 0) {
-        setSelectedCamera(videoDevices[0].deviceId);
-      }
-    } catch (error) {
-      console.error('Error enumerating cameras:', error);
-    }
-  };
-
-  useEffect(() => {
-    if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
-      getCameras();
-    }
-  }, []);
 
   const getSpecificErrorMessage = (error: any): string => {
     console.error('Camera access error:', error);
@@ -125,13 +74,9 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
       setIsRequestingCamera(true);
       setScanError('');
       
-      const constraints = {
-        video: selectedCamera && selectedCamera !== ''
-          ? { ...VIDEO_CONSTRAINTS, deviceId: { exact: selectedCamera } }
-          : VIDEO_CONSTRAINTS
-      };
-      
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: VIDEO_CONSTRAINTS
+      });
       
       console.log('Camera access granted, stream received:', stream);
       
@@ -224,14 +169,6 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
 
     if (qrCode) {
       console.log('QR Code detected:', qrCode.data);
-      const confidence = calculateConfidence(qrCode);
-      
-      setLastScanResult({
-        data: qrCode.data,
-        confidence,
-        timestamp: Date.now()
-      });
-      
       stopScanning();
       onScan(qrCode.data);
       
@@ -243,26 +180,6 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
       // Continue scanning
       animationRef.current = requestAnimationFrame(scanForQRCode);
     }
-  };
-
-  const calculateConfidence = (qrCode: any): number => {
-    // Simple confidence calculation based on QR code properties
-    let confidence = 0.5;
-    
-    if (qrCode.location) {
-      // Check if corners are well-defined
-      const corners = qrCode.location;
-      if (corners && corners.topLeftCorner && corners.topRightCorner && 
-          corners.bottomLeftCorner && corners.bottomRightCorner) {
-        confidence += 0.3;
-      }
-    }
-    
-    if (qrCode.data && qrCode.data.length > 0) {
-      confidence += 0.2;
-    }
-    
-    return Math.min(1, confidence);
   };
 
   const stopScanning = () => {
@@ -301,103 +218,6 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
     onClose();
   };
 
-  // File handling functions
-  const handleFileSelect = (file: File) => {
-    if (!file || !file.type.startsWith('image/')) {
-      setScanError('Please select a valid image file');
-      return;
-    }
-
-    setIsProcessingFile(true);
-    setScanError('');
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        scanImageFile(img);
-      };
-      img.onerror = () => {
-        setIsProcessingFile(false);
-        setScanError('Failed to load image file');
-      };
-      img.src = e.target?.result as string;
-    };
-    reader.onerror = () => {
-      setIsProcessingFile(false);
-      setScanError('Failed to read file');
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const scanImageFile = (img: HTMLImageElement) => {
-    if (!canvasRef.current) {
-      setIsProcessingFile(false);
-      setScanError('Canvas not available');
-      return;
-    }
-
-    const canvas = canvasRef.current;
-    const context = canvas.getContext('2d');
-    
-    if (!context) {
-      setIsProcessingFile(false);
-      setScanError('Canvas context not available');
-      return;
-    }
-
-    canvas.width = img.width;
-    canvas.height = img.height;
-    context.drawImage(img, 0, 0);
-
-    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-    const qrCode = jsQR(imageData.data, imageData.width, imageData.height);
-
-    setIsProcessingFile(false);
-
-    if (qrCode) {
-      const confidence = calculateConfidence(qrCode);
-      setLastScanResult({
-        data: qrCode.data,
-        confidence,
-        timestamp: Date.now()
-      });
-      onScan(qrCode.data);
-    } else {
-      setScanError('No QR code found in the uploaded image');
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    
-    const files = e.dataTransfer.files;
-    if (files && files.length > 0) {
-      handleFileSelect(files[0]);
-    }
-  };
-
-  const copyToClipboard = async () => {
-    if (!lastScanResult) return;
-    
-    try {
-      await navigator.clipboard.writeText(lastScanResult.data);
-    } catch (error) {
-      console.error('Failed to copy to clipboard:', error);
-    }
-  };
-
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -429,53 +249,6 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
         </Button>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* File Upload Area */}
-        <div
-          className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-            isDragOver 
-              ? 'border-blue-500 bg-blue-50' 
-              : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
-          }`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-          <p className="text-sm text-gray-600">
-            {isProcessingFile ? 'Processing image...' : 'Click or drag to upload QR code image'}
-          </p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleFileSelect(file);
-            }}
-          />
-        </div>
-
-        {/* Camera Selection */}
-        {cameras.length > 0 && (
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Camera:</label>
-            <Select value={selectedCamera} onValueChange={setSelectedCamera}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select camera" />
-              </SelectTrigger>
-              <SelectContent>
-                {cameras.map((camera) => (
-                  <SelectItem key={camera.deviceId} value={camera.deviceId}>
-                    {camera.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
         {!isScanning && !isRequestingCamera ? (
           <div className="text-center space-y-4">
             <div className="w-48 h-48 bg-gray-100 mx-auto rounded-lg flex items-center justify-center">
@@ -551,30 +324,6 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
             <p className="text-sm text-gray-500 text-center">
               Point your camera at a QR code to scan it automatically
             </p>
-          </div>
-        )}
-
-        {/* Scan Result Display */}
-        {lastScanResult && (
-          <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium text-green-800">
-                QR Code Detected (Confidence: {(lastScanResult.confidence * 100).toFixed(0)}%)
-              </span>
-            </div>
-            <div className="bg-white p-2 rounded text-sm font-mono break-all">
-              {lastScanResult.data}
-            </div>
-            <Button
-              onClick={copyToClipboard}
-              variant="outline"
-              size="sm"
-              className="mt-2 w-full"
-            >
-              <Copy className="h-4 w-4 mr-2" />
-              Copy to Clipboard
-            </Button>
           </div>
         )}
       </CardContent>

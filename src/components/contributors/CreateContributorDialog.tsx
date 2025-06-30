@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Users, Lock, Plus } from "lucide-react";
+import { Users, Lock } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCreateContributor } from "@/hooks/useContributors";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -101,9 +101,7 @@ export function CreateContributorDialog({
       return <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="sm" onClick={() => setIsOpen(true)} className="text-gray-600 hover:text-gray-900">
-                <Plus className="h-5 w-5" />
-              </Button>
+              
             </TooltipTrigger>
             <TooltipContent>
               <p>Add Contributor</p>
