@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,7 +35,7 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
   const [isRequestingCamera, setIsRequestingCamera] = useState(false);
   const [scanError, setScanError] = useState<string>('');
   const [cameras, setCameras] = useState<CameraDevice[]>([]);
-  const [selectedCamera, setSelectedCamera] = useState<string>('');
+  const [selectedCamera, setSelectedCamera] = useState<string>('none');
   const [lastScanResult, setLastScanResult] = useState<ScanResult | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isProcessingFile, setIsProcessingFile] = useState(false);
@@ -77,7 +76,6 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
     }
   };
 
-  // Initialize cameras on component mount
   useEffect(() => {
     if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
       getCameras();
@@ -128,7 +126,7 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
       setScanError('');
       
       const constraints = {
-        video: selectedCamera 
+        video: selectedCamera && selectedCamera !== 'none'
           ? { ...VIDEO_CONSTRAINTS, deviceId: { exact: selectedCamera } }
           : VIDEO_CONSTRAINTS
       };
@@ -468,6 +466,7 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
                 <SelectValue placeholder="Select camera" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="none" disabled>Select camera...</SelectItem>
                 {cameras.map((camera) => (
                   <SelectItem key={camera.deviceId} value={camera.deviceId}>
                     {camera.label}
