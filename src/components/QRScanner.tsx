@@ -35,7 +35,7 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
   const [isRequestingCamera, setIsRequestingCamera] = useState(false);
   const [scanError, setScanError] = useState<string>('');
   const [cameras, setCameras] = useState<CameraDevice[]>([]);
-  const [selectedCamera, setSelectedCamera] = useState<string>('none');
+  const [selectedCamera, setSelectedCamera] = useState<string>('');
   const [lastScanResult, setLastScanResult] = useState<ScanResult | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isProcessingFile, setIsProcessingFile] = useState(false);
@@ -126,7 +126,7 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
       setScanError('');
       
       const constraints = {
-        video: selectedCamera && selectedCamera !== 'none'
+        video: selectedCamera && selectedCamera !== ''
           ? { ...VIDEO_CONSTRAINTS, deviceId: { exact: selectedCamera } }
           : VIDEO_CONSTRAINTS
       };
@@ -466,7 +466,6 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
                 <SelectValue placeholder="Select camera" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none" disabled>Select camera...</SelectItem>
                 {cameras.map((camera) => (
                   <SelectItem key={camera.deviceId} value={camera.deviceId}>
                     {camera.label}
