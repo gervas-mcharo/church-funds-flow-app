@@ -19,6 +19,13 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
   const streamRef = useRef<MediaStream | null>(null);
   const animationRef = useRef<number>();
 
+  const handleVideoReady = () => {
+    console.log('Video is ready, setting isScanning to true');
+    setIsScanning(true);
+    setIsRequestingCamera(false);
+    scanForQRCode();
+  };
+
   const startScanning = async () => {
     try {
       console.log('Starting camera access request...');
@@ -36,29 +43,41 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
       console.log('Camera access granted, stream received:', stream);
       
       if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        streamRef.current = stream;
+        const video = videoRef.current;
         
-        // Multiple event listeners to ensure we catch when video is ready
-        const handleVideoReady = () => {
-          console.log('Video is ready, setting isScanning to true');
-          setIsScanning(true);
-          setIsRequestingCamera(false);
-          scanForQRCode();
+        // Set up event listeners BEFORE setting srcObject
+        const setupEventListeners = () => {
+          // Remove any existing listeners first
+          video.removeEventListener('loadedmetadata', handleVideoReady);
+          video.removeEventListener('canplay', handleVideoReady);
+          video.removeEventListener('playing', handleVideoReady);
+          
+          // Add new listeners
+          video.addEventListener('loadedmetadata', handleVideoReady, { once: true });
+          video.addEventListener('canplay', handleVideoReady, { once: true });
+          video.addEventListener('playing', handleVideoReady, { once: true });
         };
 
-        // Try multiple events to ensure we catch when video is ready
-        videoRef.current.onloadedmetadata = handleVideoReady;
-        videoRef.current.oncanplay = handleVideoReady;
-        videoRef.current.onplaying = handleVideoReady;
+        setupEventListeners();
+        
+        // Now set the source
+        video.srcObject = stream;
+        streamRef.current = stream;
         
         // Fallback timeout in case events don't fire
-        setTimeout(() => {
-          if (videoRef.current && videoRef.current.readyState >= 2) {
+        const timeoutId = setTimeout(() => {
+          if (video.readyState >= 2 && !isScanning) {
             console.log('Fallback: Video ready via timeout check');
             handleVideoReady();
           }
-        }, 1000);
+        }, 2000);
+        
+        // Clear timeout if video loads properly
+        const clearTimeoutOnReady = () => {
+          clearTimeout(timeoutId);
+        };
+        video.addEventListener('loadedmetadata', clearTimeoutOnReady, { once: true });
+        video.addEventListener('canplay', clearTimeoutOnReady, { once: true });
       }
     } catch (error) {
       console.error('Error accessing camera:', error);
@@ -104,6 +123,15 @@ export const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
 
   const stopScanning = () => {
     console.log('Stopping camera access');
+    
+    // Clean up video event listeners
+    if (videoRef.current) {
+      const video = videoRef.current;
+      video.removeEventListener('loadedmetadata', handleVideoReady);
+      video.removeEventListener('canplay', handleVideoReady);
+      video.removeEventListener('playing', handleVideoReady);
+    }
+    
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
