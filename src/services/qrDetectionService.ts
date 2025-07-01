@@ -36,8 +36,21 @@ export class QRDetectionService {
       canvas.height = imageData.height;
       ctx.putImageData(imageData, 0, 0);
 
-      const result = await this.reader.decodeFromCanvas(canvas);
-      return result;
+      // Convert canvas to image element for zxing
+      const imageElement = new Image();
+      imageElement.src = canvas.toDataURL();
+      
+      return new Promise((resolve) => {
+        imageElement.onload = async () => {
+          try {
+            const result = await this.reader.decodeFromImageElement(imageElement);
+            resolve(result);
+          } catch (error) {
+            resolve(null);
+          }
+        };
+        imageElement.onerror = () => resolve(null);
+      });
     } catch (error) {
       return null;
     }
