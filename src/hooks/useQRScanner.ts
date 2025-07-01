@@ -19,8 +19,7 @@ export const useQRScanner = (config: Partial<QRScannerConfig> = {}) => {
   
   const finalConfig = { ...defaultConfig, ...config };
   const detectionService = useRef<QRDetectionService>();
-  const scanAnimationRef = useRef<number>();
-  const videoElementRef = useRef<HTMLVideoElement>();
+  const scanIntervalRef = useRef<NodeJS.Timeout>();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -30,8 +29,8 @@ export const useQRScanner = (config: Partial<QRScannerConfig> = {}) => {
       if (detectionService.current) {
         detectionService.current.destroy();
       }
-      if (scanAnimationRef.current) {
-        cancelAnimationFrame(scanAnimationRef.current);
+      if (scanIntervalRef.current) {
+        clearInterval(scanIntervalRef.current);
       }
     };
   }, []);
@@ -43,64 +42,40 @@ export const useQRScanner = (config: Partial<QRScannerConfig> = {}) => {
   };
 
   const startScanning = (videoElement: HTMLVideoElement) => {
-    if (isScanning || !detectionService.current || !videoElement) return;
+    if (isScanning || !detectionService.current) return;
 
-    // Wait for video to be ready
-    const checkVideoReady = () => {
-      if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
-        // Video not ready yet, try again
-        setTimeout(checkVideoReady, 100);
-        return;
+    setIsScanning(true);
+    
+    const scanLoop = async () => {
+      if (!videoElement || !detectionService.current || !isScanning) return;
+
+      try {
+        const result = await detectionService.current.scanFromVideo(videoElement);
+        
+        if (result) {
+          const scanResult: QRScanResult = {
+            data: result.getText(),
+            timestamp: new Date(),
+            format: result.getBarcodeFormat()?.toString(),
+            confidence: 1 // ZXing doesn't provide confidence score
+          };
+
+          handleScanResult(scanResult);
+        }
+      } catch (error) {
+        console.error('Scan error:', error);
       }
-
-      videoElementRef.current = videoElement;
-      setIsScanning(true);
-      scanLoop();
     };
 
-    checkVideoReady();
-  };
-
-  const scanLoop = async () => {
-    if (!isScanning || !videoElementRef.current || !detectionService.current) {
-      return;
-    }
-
-    try {
-      const result = await detectionService.current.scanFromVideoElement(videoElementRef.current);
-      
-      if (result) {
-        const scanResult: QRScanResult = {
-          data: result.getText(),
-          timestamp: new Date(),
-          format: result.getBarcodeFormat()?.toString(),
-          confidence: 1
-        };
-
-        handleScanResult(scanResult);
-        return; // Stop scanning after successful scan
-      }
-    } catch (error) {
-      console.error('Scan error:', error);
-    }
-
-    // Continue scanning if no result found
-    if (isScanning) {
-      scanAnimationRef.current = requestAnimationFrame(() => {
-        setTimeout(scanLoop, finalConfig.scanRate);
-      });
-    }
+    scanIntervalRef.current = setInterval(scanLoop, finalConfig.scanRate);
   };
 
   const stopScanning = () => {
     setIsScanning(false);
-    videoElementRef.current = undefined;
-    
-    if (scanAnimationRef.current) {
-      cancelAnimationFrame(scanAnimationRef.current);
-      scanAnimationRef.current = undefined;
+    if (scanIntervalRef.current) {
+      clearInterval(scanIntervalRef.current);
+      scanIntervalRef.current = undefined;
     }
-    
     if (detectionService.current) {
       detectionService.current.reset();
     }

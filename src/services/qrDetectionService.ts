@@ -3,46 +3,26 @@ import { BrowserMultiFormatReader, Result } from '@zxing/library';
 
 export class QRDetectionService {
   private reader: BrowserMultiFormatReader;
-  private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
+  private isScanning = false;
 
   constructor() {
     this.reader = new BrowserMultiFormatReader();
-    this.canvas = document.createElement('canvas');
-    this.ctx = this.canvas.getContext('2d')!;
   }
 
-  async scanFromVideoElement(videoElement: HTMLVideoElement): Promise<Result | null> {
-    if (!videoElement || videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
+  async scanFromVideo(videoElement: HTMLVideoElement): Promise<Result | null> {
+    if (!videoElement || this.isScanning) {
       return null;
     }
 
     try {
-      // Set canvas dimensions to match video
-      this.canvas.width = videoElement.videoWidth;
-      this.canvas.height = videoElement.videoHeight;
-      
-      // Draw current video frame to canvas
-      this.ctx.drawImage(videoElement, 0, 0);
-      
-      // Convert canvas to image element for zxing
-      const imageElement = new Image();
-      imageElement.src = this.canvas.toDataURL();
-      
-      return new Promise((resolve) => {
-        imageElement.onload = async () => {
-          try {
-            const result = await this.reader.decodeFromImageElement(imageElement);
-            resolve(result);
-          } catch (error) {
-            resolve(null);
-          }
-        };
-        imageElement.onerror = () => resolve(null);
-      });
+      this.isScanning = true;
+      const result = await this.reader.decodeOnceFromVideoDevice(undefined, videoElement);
+      return result;
     } catch (error) {
-      console.error('Error scanning video frame:', error);
+      // No QR code found or other error
       return null;
+    } finally {
+      this.isScanning = false;
     }
   }
 
@@ -78,6 +58,7 @@ export class QRDetectionService {
 
   reset() {
     this.reader.reset();
+    this.isScanning = false;
   }
 
   destroy() {
