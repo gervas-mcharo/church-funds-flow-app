@@ -52,7 +52,18 @@ export const QRScanner = ({
 
   const handleStartScanning = () => {
     if (videoRef.current && stream) {
-      onStartScanning(videoRef.current);
+      // Add event listeners to ensure video is ready
+      const video = videoRef.current;
+      
+      const startWhenReady = () => {
+        if (video.readyState >= video.HAVE_ENOUGH_DATA) {
+          onStartScanning(video);
+        } else {
+          video.addEventListener('loadeddata', () => onStartScanning(video), { once: true });
+        }
+      };
+
+      startWhenReady();
     }
   };
 
