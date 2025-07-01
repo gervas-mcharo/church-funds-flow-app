@@ -2,15 +2,25 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { QrCode, Plus, FileText, Users } from "lucide-react";
-import { QRScanner } from "@/components/QRScanner";
+import { QrCode, FileText } from "lucide-react";
+import { QRScanner } from "@/components/qr/QRScanner";
 import { useQRScanner } from "@/hooks/useQRScanner";
 import { CreateContributorDialog } from "@/components/contributors/CreateContributorDialog";
 import { CreateFundTypeDialog } from "@/components/fund-types/CreateFundTypeDialog";
 import { useNavigate } from "react-router-dom";
 
 export function QuickActions() {
-  const { isOpen, openScanner, closeScanner, handleScan } = useQRScanner();
+  const { 
+    isOpen, 
+    isScanning, 
+    scanHistory, 
+    openScanner, 
+    closeScanner, 
+    startScanning, 
+    stopScanning, 
+    clearHistory, 
+    onScan 
+  } = useQRScanner();
   const navigate = useNavigate();
 
   const handleGenerateReport = () => {
@@ -58,7 +68,15 @@ export function QuickActions() {
             <SheetTitle>QR Code Scanner</SheetTitle>
           </SheetHeader>
           <div className="mt-4">
-            <QRScanner onScan={handleScan} onClose={closeScanner} />
+            <QRScanner 
+              onScan={onScan} 
+              onClose={closeScanner}
+              isScanning={isScanning}
+              onStartScanning={startScanning}
+              onStopScanning={stopScanning}
+              scanHistory={scanHistory}
+              onClearHistory={clearHistory}
+            />
           </div>
         </SheetContent>
       </Sheet>

@@ -2,13 +2,23 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { QrCode } from "lucide-react";
-import { QRScanner } from "@/components/QRScanner";
+import { QRScanner } from "@/components/qr/QRScanner";
 import { useQRScanner } from "@/hooks/useQRScanner";
 import { CreateContributorDialog } from "@/components/contributors/CreateContributorDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function HeaderQuickActions() {
-  const { isOpen, openScanner, closeScanner, handleScan } = useQRScanner();
+  const { 
+    isOpen, 
+    isScanning, 
+    scanHistory, 
+    openScanner, 
+    closeScanner, 
+    startScanning, 
+    stopScanning, 
+    clearHistory, 
+    onScan 
+  } = useQRScanner();
 
   return (
     <>
@@ -40,7 +50,15 @@ export function HeaderQuickActions() {
             <SheetTitle>QR Code Scanner</SheetTitle>
           </SheetHeader>
           <div className="mt-4">
-            <QRScanner onScan={handleScan} onClose={closeScanner} />
+            <QRScanner 
+              onScan={onScan} 
+              onClose={closeScanner}
+              isScanning={isScanning}
+              onStartScanning={startScanning}
+              onStopScanning={stopScanning}
+              scanHistory={scanHistory}
+              onClearHistory={clearHistory}
+            />
           </div>
         </SheetContent>
       </Sheet>
