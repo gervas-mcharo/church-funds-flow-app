@@ -1,24 +1,13 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { QrCode } from "lucide-react";
-import { QRScanner } from "@/components/qr/QRScanner";
-import { useQRScanner } from "@/hooks/useQRScanner";
+import { QRContributionScanner } from "@/components/contributions/QRContributionScanner";
 import { CreateContributorDialog } from "@/components/contributors/CreateContributorDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function HeaderQuickActions() {
-  const { 
-    isOpen, 
-    isScanning, 
-    scanHistory, 
-    openScanner, 
-    closeScanner, 
-    startScanning, 
-    stopScanning, 
-    clearHistory, 
-    onScan 
-  } = useQRScanner();
+  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
 
   return (
     <>
@@ -29,7 +18,7 @@ export function HeaderQuickActions() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={openScanner}
+                onClick={() => setIsQRScannerOpen(true)}
                 className="text-gray-600 hover:text-gray-900"
               >
                 <QrCode className="h-5 w-5" />
@@ -44,24 +33,10 @@ export function HeaderQuickActions() {
         </div>
       </TooltipProvider>
 
-      <Sheet open={isOpen} onOpenChange={closeScanner}>
-        <SheetContent side="bottom" className="h-[80vh]">
-          <SheetHeader>
-            <SheetTitle>QR Code Scanner</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
-            <QRScanner 
-              onScan={onScan} 
-              onClose={closeScanner}
-              isScanning={isScanning}
-              onStartScanning={startScanning}
-              onStopScanning={stopScanning}
-              scanHistory={scanHistory}
-              onClearHistory={clearHistory}
-            />
-          </div>
-        </SheetContent>
-      </Sheet>
+      <QRContributionScanner
+        isOpen={isQRScannerOpen}
+        onClose={() => setIsQRScannerOpen(false)}
+      />
     </>
   );
 }

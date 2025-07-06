@@ -1,26 +1,15 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { QrCode, FileText } from "lucide-react";
-import { QRScanner } from "@/components/qr/QRScanner";
-import { useQRScanner } from "@/hooks/useQRScanner";
+import { QRContributionScanner } from "@/components/contributions/QRContributionScanner";
 import { CreateContributorDialog } from "@/components/contributors/CreateContributorDialog";
 import { CreateFundTypeDialog } from "@/components/fund-types/CreateFundTypeDialog";
 import { useNavigate } from "react-router-dom";
 
 export function QuickActions() {
-  const { 
-    isOpen, 
-    isScanning, 
-    scanHistory, 
-    openScanner, 
-    closeScanner, 
-    startScanning, 
-    stopScanning, 
-    clearHistory, 
-    onScan 
-  } = useQRScanner();
+  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleGenerateReport = () => {
@@ -37,7 +26,7 @@ export function QuickActions() {
           <Button
             variant="default"
             className="w-full justify-start gap-3 h-12"
-            onClick={openScanner}
+            onClick={() => setIsQRScannerOpen(true)}
           >
             <QrCode className="h-5 w-5" />
             Scan QR Code
@@ -62,24 +51,10 @@ export function QuickActions() {
         </CardContent>
       </Card>
 
-      <Sheet open={isOpen} onOpenChange={closeScanner}>
-        <SheetContent side="bottom" className="h-[80vh]">
-          <SheetHeader>
-            <SheetTitle>QR Code Scanner</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
-            <QRScanner 
-              onScan={onScan} 
-              onClose={closeScanner}
-              isScanning={isScanning}
-              onStartScanning={startScanning}
-              onStopScanning={stopScanning}
-              scanHistory={scanHistory}
-              onClearHistory={clearHistory}
-            />
-          </div>
-        </SheetContent>
-      </Sheet>
+      <QRContributionScanner
+        isOpen={isQRScannerOpen}
+        onClose={() => setIsQRScannerOpen(false)}
+      />
     </>
   );
 }

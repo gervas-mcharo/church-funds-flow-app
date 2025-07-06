@@ -11,7 +11,7 @@ const defaultConfig: QRScannerConfig = {
   maxHistorySize: 10
 };
 
-export const useQRScanner = (config: Partial<QRScannerConfig> = {}) => {
+export const useQRScanner = (config: Partial<QRScannerConfig> = {}, onContributionScan?: (qrData: any) => void) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [scanHistory, setScanHistory] = useState<QRScanResult[]>([]);
@@ -102,17 +102,22 @@ export const useQRScanner = (config: Partial<QRScannerConfig> = {}) => {
     closeScanner();
   };
 
-  const onScan = (data: string) => {
+  const onScan = (data: string, options?: { openContributionForm?: boolean }) => {
     console.log('QR Code scanned:', data);
     
     // Try to parse as JSON for contributor data
     try {
       const parsedData = JSON.parse(data);
-      if (parsedData.contributorId) {
+      if (parsedData.contributorId && parsedData.fundTypeId) {
         toast({
           title: "QR Code Scanned Successfully",
-          description: `Contributor ID: ${parsedData.contributorId}`,
+          description: `Contributor: ${parsedData.contributorId}`,
         });
+        
+        // If callback provided for opening contribution form, call it
+        if (options?.openContributionForm && onContributionScan) {
+          onContributionScan(parsedData);
+        }
       } else {
         toast({
           title: "QR Code Scanned",
