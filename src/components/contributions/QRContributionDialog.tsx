@@ -18,8 +18,8 @@ import { useFundTypes } from '@/hooks/useFundTypes';
 import { useCreateContribution, useCreateBatchContributions } from '@/hooks/useContributions';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { PledgeContributionSuggestion } from '@/components/pledges/PledgeContributionSuggestion';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAutoApplyContributionToPledge } from '@/hooks/useAutoApplyContributionToPledge';
 
 const contributionSchema = z.object({
   contributorId: z.string().min(1, 'Contributor is required'),
@@ -50,16 +50,14 @@ interface ScannedContribution {
 export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogProps) => {
   const [mode, setMode] = useState<'single' | 'batch'>('single');
   const [isScanning, setIsScanning] = useState(false);
-  const [scannedData, setScannedData] = useState<any>(null);
-  const [batchContributions, setBatchContributions] = useState<ScannedContribution[]>([]);
-  const [lastScanTime, setLastScanTime] = useState<number>(0);
-  const [createdContribution, setCreatedContribution] = useState<{
-    id: string;
+  const [scannedData, setScannedData] = useState<{
     contributorId: string;
     fundTypeId: string;
-    amount: number;
+    contributorName: string;
+    fundTypeName: string;
   } | null>(null);
-  const [showPledgeSuggestions, setShowPledgeSuggestions] = useState(false);
+  const [batchContributions, setBatchContributions] = useState<ScannedContribution[]>([]);
+  const [lastScanTime, setLastScanTime] = useState<number>(0);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -70,6 +68,7 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
   const { data: contributors } = useContributors();
   const { data: fundTypes } = useFundTypes();
   const createContribution = useCreateContribution();
+  const autoApplyToPledge = useAutoApplyContributionToPledge();
   const createBatchContributions = useCreateBatchContributions();
   
   const {
@@ -262,14 +261,13 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
         description: `Successfully recorded $${data.amount}`,
       });
 
-      // Store the created contribution for pledge suggestions
-      setCreatedContribution({
-        id: result.id,
+      // Automatically apply contribution to matching pledges
+      await autoApplyToPledge.mutateAsync({
+        contributionId: result.id,
         contributorId: data.contributorId,
         fundTypeId: data.fundTypeId,
-        amount: parseFloat(data.amount),
+        contributionAmount: parseFloat(data.amount)
       });
-      setShowPledgeSuggestions(true);
 
       // Reset form
       form.reset();
@@ -304,15 +302,28 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
         contribution_date: new Date().toISOString(),
       }));
 
-      await createBatchContributions.mutateAsync(contributionData);
+      const results = await Promise.all(contributionData.map(async (data) => {
+        const result = await createContribution.mutateAsync(data);
+        return { ...result, originalData: data };
+      }));
+
+      // Auto-apply each contribution to pledges
+      await Promise.all(results.map(async (result) => {
+        await autoApplyToPledge.mutateAsync({
+          contributionId: result.id,
+          contributorId: result.originalData.contributor_id,
+          fundTypeId: result.originalData.fund_type_id,
+          contributionAmount: result.originalData.amount
+        });
+      }));
 
       toast({
-        title: 'Batch Submitted',
-        description: `Recorded ${validContributions.length} contributions`,
+        title: 'Batch Contributions Recorded',
+        description: `Successfully recorded ${results.length} contributions with automatic pledge applications`,
       });
 
       setBatchContributions([]);
-      handleClose();
+      setMode('single');
     } catch (error) {
       toast({
         title: 'Error',
@@ -332,37 +343,11 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
     setBatchContributions(prev => prev.filter(c => c.id !== id));
   };
 
-  const handlePledgeSuggestionApplied = () => {
-    setShowPledgeSuggestions(false);
-    setCreatedContribution(null);
-    
-    // Ask if they want to continue scanning
-    if (confirm('Continue scanning more contributions?')) {
-      startScanning();
-    } else {
-      handleClose();
-    }
-  };
-
-  const handleDismissPledgeSuggestions = () => {
-    setShowPledgeSuggestions(false);
-    setCreatedContribution(null);
-    
-    // Ask if they want to continue scanning
-    if (confirm('Continue scanning more contributions?')) {
-      startScanning();
-    } else {
-      handleClose();
-    }
-  };
-
   const handleClose = () => {
     stopScanning();
     stopCamera();
     setScannedData(null);
     setBatchContributions([]);
-    setCreatedContribution(null);
-    setShowPledgeSuggestions(false);
     form.reset();
     onClose();
   };
@@ -635,29 +620,6 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
             </Card>
           )}
 
-          {/* Pledge Suggestions */}
-          {showPledgeSuggestions && createdContribution && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium">Apply to Pledge</h3>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleDismissPledgeSuggestions}
-                >
-                  Skip
-                </Button>
-              </div>
-              
-              <PledgeContributionSuggestion
-                contributorId={createdContribution.contributorId}
-                fundTypeId={createdContribution.fundTypeId}
-                contributionAmount={createdContribution.amount}
-                contributionId={createdContribution.id}
-                onApply={handlePledgeSuggestionApplied}
-              />
-            </div>
-          )}
         </div>
       </DialogContent>
     </Dialog>
