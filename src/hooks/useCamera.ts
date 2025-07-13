@@ -65,12 +65,18 @@ export const useCamera = () => {
         stream.getTracks().forEach(track => track.stop());
       }
 
+      // Detect if on mobile device for optimized constraints
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
       const constraints: MediaStreamConstraints = {
         video: {
           deviceId: deviceId ? { exact: deviceId } : undefined,
           facingMode: deviceId ? undefined : 'environment',
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
+          width: { ideal: isMobile ? 640 : 1280 },
+          height: { ideal: isMobile ? 480 : 720 },
+          ...(isMobile && {
+            frameRate: { ideal: 15, max: 30 }
+          })
         }
       };
 

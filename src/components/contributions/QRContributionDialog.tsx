@@ -19,6 +19,7 @@ import { useCreateContribution, useCreateBatchContributions } from '@/hooks/useC
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { PledgeContributionSuggestion } from '@/components/pledges/PledgeContributionSuggestion';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const contributionSchema = z.object({
   contributorId: z.string().min(1, 'Contributor is required'),
@@ -63,6 +64,7 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scanIntervalRef = useRef<NodeJS.Timeout>();
+  const isMobile = useIsMobile();
   
   const { toast } = useToast();
   const { data: contributors } = useContributors();
@@ -117,18 +119,43 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
     
     if (!ctx || video.readyState !== video.HAVE_ENOUGH_DATA) return;
     
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0);
+    // Optimize canvas size for mobile devices
+    const maxCanvasSize = isMobile ? 800 : 1920;
+    const scale = Math.min(maxCanvasSize / video.videoWidth, maxCanvasSize / video.videoHeight, 1);
+    
+    canvas.width = video.videoWidth * scale;
+    canvas.height = video.videoHeight * scale;
+    
+    // Optimize canvas context for performance
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     
     try {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const code = jsQR(imageData.data, imageData.width, imageData.height, {
-        inversionAttempts: "dontInvert",
-      });
+      
+      // Try multiple jsQR configurations for better mobile detection
+      const configs = [
+        { inversionAttempts: "attemptBoth" as const },
+        { inversionAttempts: "onlyInvert" as const },
+        { inversionAttempts: "dontInvert" as const }
+      ];
+      
+      let code = null;
+      for (const config of configs) {
+        code = jsQR(imageData.data, imageData.width, imageData.height, config);
+        if (code) break;
+      }
       
       if (code) {
+        console.log('QR Code detected:', { data: code.data, location: code.location });
         handleQRDetected(code.data);
+      } else if (isMobile) {
+        // Add debug logging for mobile
+        console.log('QR detection attempt - no code found', {
+          canvasSize: `${canvas.width}x${canvas.height}`,
+          videoSize: `${video.videoWidth}x${video.videoHeight}`,
+          scale: scale
+        });
       }
     } catch (error) {
       console.error('QR detection error:', error);
@@ -209,7 +236,9 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
     await startCamera();
     setIsScanning(true);
     
-    scanIntervalRef.current = setInterval(detectQRCode, 300);
+    // Use longer interval on mobile for better performance
+    const scanInterval = isMobile ? 800 : 300;
+    scanIntervalRef.current = setInterval(detectQRCode, scanInterval);
   };
 
   const stopScanning = () => {
@@ -394,6 +423,9 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
                         playsInline
                         muted
                         className="w-full aspect-square bg-black rounded object-cover max-h-80"
+                        style={{
+                          transform: isMobile ? 'scaleX(-1)' : 'none'
+                        }}
                       />
                       <canvas ref={canvasRef} className="hidden" />
                       
