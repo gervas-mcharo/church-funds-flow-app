@@ -2,12 +2,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { QrCode } from "lucide-react";
-import { QRContributionScanner } from "@/components/contributions/QRContributionScanner";
+import { QRContributionDialog } from "@/components/contributions/QRContributionDialog";
 import { CreateContributorDialog } from "@/components/contributors/CreateContributorDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function HeaderQuickActions() {
-  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
+  const [isQRDialogOpen, setIsQRDialogOpen] = useState(false);
 
   return (
     <>
@@ -18,7 +18,7 @@ export function HeaderQuickActions() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setIsQRScannerOpen(true)}
+                onClick={() => setIsQRDialogOpen(true)}
                 className="text-gray-600 hover:text-gray-900"
               >
                 <QrCode className="h-5 w-5" />
@@ -33,9 +33,9 @@ export function HeaderQuickActions() {
         </div>
       </TooltipProvider>
 
-      <QRContributionScanner
-        isOpen={isQRScannerOpen}
-        onClose={() => setIsQRScannerOpen(false)}
+      <QRContributionDialog
+        isOpen={isQRDialogOpen}
+        onClose={() => setIsQRDialogOpen(false)}
       />
     </>
   );

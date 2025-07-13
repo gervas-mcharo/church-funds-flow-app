@@ -3,13 +3,13 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { QrCode, FileText } from "lucide-react";
-import { QRContributionScanner } from "@/components/contributions/QRContributionScanner";
+import { QRContributionDialog } from "@/components/contributions/QRContributionDialog";
 import { CreateContributorDialog } from "@/components/contributors/CreateContributorDialog";
 import { CreateFundTypeDialog } from "@/components/fund-types/CreateFundTypeDialog";
 import { useNavigate } from "react-router-dom";
 
 export function QuickActions() {
-  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
+  const [isQRDialogOpen, setIsQRDialogOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleGenerateReport = () => {
@@ -26,7 +26,7 @@ export function QuickActions() {
           <Button
             variant="default"
             className="w-full justify-start gap-3 h-12"
-            onClick={() => setIsQRScannerOpen(true)}
+            onClick={() => setIsQRDialogOpen(true)}
           >
             <QrCode className="h-5 w-5" />
             Scan QR Code
@@ -51,9 +51,9 @@ export function QuickActions() {
         </CardContent>
       </Card>
 
-      <QRContributionScanner
-        isOpen={isQRScannerOpen}
-        onClose={() => setIsQRScannerOpen(false)}
+      <QRContributionDialog
+        isOpen={isQRDialogOpen}
+        onClose={() => setIsQRDialogOpen(false)}
       />
     </>
   );
