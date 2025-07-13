@@ -18,6 +18,7 @@ import { useFundTypes } from '@/hooks/useFundTypes';
 import { useCreateContribution, useCreateBatchContributions } from '@/hooks/useContributions';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { PledgeContributionSuggestion } from '@/components/pledges/PledgeContributionSuggestion';
 
 const contributionSchema = z.object({
   contributorId: z.string().min(1, 'Contributor is required'),
@@ -51,6 +52,13 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
   const [scannedData, setScannedData] = useState<any>(null);
   const [batchContributions, setBatchContributions] = useState<ScannedContribution[]>([]);
   const [lastScanTime, setLastScanTime] = useState<number>(0);
+  const [createdContribution, setCreatedContribution] = useState<{
+    id: string;
+    contributorId: string;
+    fundTypeId: string;
+    amount: number;
+  } | null>(null);
+  const [showPledgeSuggestions, setShowPledgeSuggestions] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -213,7 +221,7 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
 
   const handleSubmit = async (data: ContributionFormData) => {
     try {
-      await createContribution.mutateAsync({
+      const result = await createContribution.mutateAsync({
         contributor_id: data.contributorId,
         fund_type_id: data.fundTypeId,
         amount: parseFloat(data.amount),
@@ -225,16 +233,19 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
         description: `Successfully recorded $${data.amount}`,
       });
 
+      // Store the created contribution for pledge suggestions
+      setCreatedContribution({
+        id: result.id,
+        contributorId: data.contributorId,
+        fundTypeId: data.fundTypeId,
+        amount: parseFloat(data.amount),
+      });
+      setShowPledgeSuggestions(true);
+
       // Reset form
       form.reset();
       setScannedData(null);
       
-      // Ask if they want to continue
-      if (confirm('Continue scanning more contributions?')) {
-        startScanning();
-      } else {
-        handleClose();
-      }
     } catch (error) {
       toast({
         title: 'Error',
@@ -292,11 +303,37 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
     setBatchContributions(prev => prev.filter(c => c.id !== id));
   };
 
+  const handlePledgeSuggestionApplied = () => {
+    setShowPledgeSuggestions(false);
+    setCreatedContribution(null);
+    
+    // Ask if they want to continue scanning
+    if (confirm('Continue scanning more contributions?')) {
+      startScanning();
+    } else {
+      handleClose();
+    }
+  };
+
+  const handleDismissPledgeSuggestions = () => {
+    setShowPledgeSuggestions(false);
+    setCreatedContribution(null);
+    
+    // Ask if they want to continue scanning
+    if (confirm('Continue scanning more contributions?')) {
+      startScanning();
+    } else {
+      handleClose();
+    }
+  };
+
   const handleClose = () => {
     stopScanning();
     stopCamera();
     setScannedData(null);
     setBatchContributions([]);
+    setCreatedContribution(null);
+    setShowPledgeSuggestions(false);
     form.reset();
     onClose();
   };
@@ -564,6 +601,30 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* Pledge Suggestions */}
+          {showPledgeSuggestions && createdContribution && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Apply to Pledge</h3>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleDismissPledgeSuggestions}
+                >
+                  Skip
+                </Button>
+              </div>
+              
+              <PledgeContributionSuggestion
+                contributorId={createdContribution.contributorId}
+                fundTypeId={createdContribution.fundTypeId}
+                contributionAmount={createdContribution.amount}
+                contributionId={createdContribution.id}
+                onApply={handlePledgeSuggestionApplied}
+              />
+            </div>
           )}
         </div>
       </DialogContent>
