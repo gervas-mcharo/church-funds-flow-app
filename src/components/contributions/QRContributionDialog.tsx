@@ -92,6 +92,13 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
     }
   }, [scannedData, form]);
 
+  // Auto-start camera when dialog opens
+  useEffect(() => {
+    if (isOpen && !stream && !isLoading) {
+      startCamera();
+    }
+  }, [isOpen]);
+
   const detectQRCode = async () => {
     if (!videoRef.current || !canvasRef.current) return;
     
