@@ -343,7 +343,7 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
                         autoPlay
                         playsInline
                         muted
-                        className="w-full h-48 bg-black rounded object-cover"
+                        className="w-full aspect-square bg-black rounded object-cover max-h-80"
                       />
                       <canvas ref={canvasRef} className="hidden" />
                       
@@ -363,7 +363,7 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
                       )}
                     </>
                   ) : (
-                    <div className="w-full h-48 bg-muted rounded flex items-center justify-center">
+                    <div className="w-full aspect-square bg-muted rounded flex items-center justify-center max-h-80">
                       <div className="text-center">
                         <Camera className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
                         <p className="text-sm text-muted-foreground">
