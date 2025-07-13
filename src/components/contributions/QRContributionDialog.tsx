@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import jsQR from 'jsqr';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -114,12 +115,12 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
     
     try {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      // Using a simple approach - in real implementation, you'd use a QR detection library
-      // For now, we'll simulate QR detection
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: "dontInvert",
+      });
       
-      // This is a placeholder - you'd integrate with jsQR or similar library here
-      if (Math.random() < 0.1) { // Simulate occasional detection
-        handleQRDetected('{"contributorId":"test-id","fundTypeId":"test-fund"}');
+      if (code) {
+        handleQRDetected(code.data);
       }
     } catch (error) {
       console.error('QR detection error:', error);
@@ -132,7 +133,14 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
     
     try {
       const parsedData = JSON.parse(qrData);
-      if (!parsedData.contributorId || !parsedData.fundTypeId) return;
+      if (!parsedData.contributorId || !parsedData.fundTypeId) {
+        toast({
+          title: 'Invalid QR Code',
+          description: 'QR code does not contain required contributor and fund type information',
+          variant: 'destructive',
+        });
+        return;
+      }
       
       const contributor = contributors?.find(c => c.id === parsedData.contributorId);
       const fundType = fundTypes?.find(f => f.id === parsedData.fundTypeId);
@@ -140,7 +148,7 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
       if (!contributor || !fundType) {
         toast({
           title: 'Invalid QR Code',
-          description: 'Contributor or fund type not found',
+          description: 'Contributor or fund type not found in the system',
           variant: 'destructive',
         });
         return;
@@ -181,6 +189,11 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
       }
     } catch (error) {
       console.error('Error parsing QR data:', error);
+      toast({
+        title: 'Invalid QR Code',
+        description: 'QR code contains invalid data format',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -384,13 +397,6 @@ export const QRContributionDialog = ({ isOpen, onClose }: QRContributionDialogPr
                     {isScanning ? 'Stop Scanning' : 'Start Scanning'}
                   </Button>
                   
-                  {/* Test button for development */}
-                  <Button
-                    variant="outline"
-                    onClick={() => handleQRDetected('{"contributorId":"test-id","fundTypeId":"test-fund"}')}
-                  >
-                    Test Scan
-                  </Button>
                 </div>
               </div>
             </CardContent>
