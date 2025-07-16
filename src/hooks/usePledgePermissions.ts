@@ -11,7 +11,6 @@ export const usePledgePermissions = () => {
       'department_member', 
       'secretary'
     ].includes(userRole) && [
-      'super_administrator',
       'administrator', 
       'finance_administrator',
       'finance_manager',
@@ -25,8 +24,7 @@ export const usePledgePermissions = () => {
   };
 
   const canCreatePledges = () => {
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
+    return userRole === 'administrator' || 
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
@@ -38,8 +36,7 @@ export const usePledgePermissions = () => {
   };
 
   const canBulkImportPledges = () => {
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
+    return userRole === 'administrator' || 
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
@@ -49,8 +46,7 @@ export const usePledgePermissions = () => {
   };
 
   const canEditPledges = () => {
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
+    return userRole === 'administrator' || 
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
@@ -61,14 +57,12 @@ export const usePledgePermissions = () => {
   };
 
   const canDeletePledges = () => {
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
+    return userRole === 'administrator' || 
            userRole === 'finance_administrator';
   };
 
   const canManagePledgeStatus = () => {
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
+    return userRole === 'administrator' || 
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
@@ -77,8 +71,7 @@ export const usePledgePermissions = () => {
   };
 
   const canApplyContributions = () => {
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
+    return userRole === 'administrator' || 
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 

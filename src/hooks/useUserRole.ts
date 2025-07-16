@@ -30,11 +30,7 @@ export const useUserRole = () => {
   });
 
   const canManageUsers = () => {
-    return userRole === 'super_administrator' || userRole === 'administrator';
-  };
-
-  const isSuperAdmin = () => {
-    return userRole === 'super_administrator';
+    return userRole === 'administrator';
   };
 
   const isAdmin = () => {
@@ -42,15 +38,13 @@ export const useUserRole = () => {
   };
 
   const canManageDepartments = () => {
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
+    return userRole === 'administrator' || 
            userRole === 'general_secretary' || 
            userRole === 'pastor';
   };
 
   const canManagePersonnel = () => {
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
+    return userRole === 'administrator' || 
            userRole === 'general_secretary' || 
            userRole === 'pastor';
   };
@@ -63,7 +57,6 @@ export const useUserRole = () => {
       'secretary',
       'department_treasurer' // Department treasurers have limited fund access
     ].includes(userRole) && [
-      'super_administrator',
       'administrator', 
       'finance_administrator',
       'finance_manager',
@@ -81,7 +74,6 @@ export const useUserRole = () => {
       'secretary',
       'department_treasurer' // Department treasurers cannot create new funds
     ].includes(userRole) && [
-      'super_administrator',
       'administrator', 
       'finance_administrator',
       'treasurer',
@@ -97,7 +89,6 @@ export const useUserRole = () => {
       'secretary',
       'department_treasurer' // Department treasurers cannot delete funds
     ].includes(userRole) && [
-      'super_administrator',
       'administrator', 
       'finance_administrator',
       'general_secretary',
@@ -129,7 +120,6 @@ export const useUserRole = () => {
       'secretary',
       'department_treasurer' // Department treasurers cannot create contributors
     ].includes(userRole) && [
-      'super_administrator',
       'administrator', 
       'finance_administrator',
       'treasurer',
@@ -145,7 +135,6 @@ export const useUserRole = () => {
       'secretary',
       'department_treasurer' // Department treasurers cannot edit contributors
     ].includes(userRole) && [
-      'super_administrator',
       'administrator', 
       'finance_administrator',
       'finance_manager',
@@ -163,7 +152,6 @@ export const useUserRole = () => {
       'secretary',
       'department_treasurer' // Department treasurers cannot delete contributors
     ].includes(userRole) && [
-      'super_administrator',
       'administrator', 
       'finance_administrator',
       'general_secretary',
@@ -189,8 +177,7 @@ export const useUserRole = () => {
 
   // QR Management permissions - updated to include treasurer but not department_treasurer
   const canAccessQRManagement = () => {
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
+    return userRole === 'administrator' || 
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
@@ -201,8 +188,7 @@ export const useUserRole = () => {
   };
 
   const canGenerateQRCodes = () => {
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
+    return userRole === 'administrator' || 
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
@@ -213,8 +199,7 @@ export const useUserRole = () => {
   };
 
   const canBulkGenerateQRCodes = () => {
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
+    return userRole === 'administrator' || 
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
@@ -224,8 +209,7 @@ export const useUserRole = () => {
   };
 
   const canDownloadQRCodes = () => {
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
+    return userRole === 'administrator' || 
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
@@ -235,8 +219,7 @@ export const useUserRole = () => {
   };
 
   const canDeleteQRCodes = () => {
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
+    return userRole === 'administrator' || 
            userRole === 'finance_administrator';
   };
 
@@ -251,7 +234,6 @@ export const useUserRole = () => {
     userRole,
     isLoading,
     canManageUsers,
-    isSuperAdmin,
     isAdmin,
     canManageDepartments,
     canManagePersonnel,

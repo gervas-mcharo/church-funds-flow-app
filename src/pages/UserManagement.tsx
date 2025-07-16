@@ -158,7 +158,7 @@ const UserManagement = () => {
   };
 
   const roleLabels: Record<AppRole, string> = {
-    super_administrator: "Super Administrator",
+    super_administrator: "Administrator", // Maps to administrator for display
     administrator: "Administrator",
     finance_administrator: "Finance Administrator", 
     pastor: "Pastor",
@@ -169,14 +169,14 @@ const UserManagement = () => {
     head_of_department: "Head of Department",
     secretary: "Secretary",
     treasurer: "Church Treasurer",
-    department_treasurer: "Department Treasurer", // Added new role
+    department_treasurer: "Department Treasurer",
     department_member: "Department Member",
-    contributor: "Contributor"
+    contributor: "Contributor" // Legacy role, not used in new system
   };
 
   const getRoleBadgeColor = (role: AppRole) => {
     switch (role) {
-      case 'super_administrator': return 'bg-red-100 text-red-800 border-red-200';
+      case 'super_administrator': return 'bg-red-100 text-red-800'; // Same as administrator
       case 'administrator': return 'bg-red-100 text-red-800';
       case 'finance_administrator': return 'bg-orange-100 text-orange-800';
       case 'pastor': return 'bg-purple-100 text-purple-800';
@@ -187,16 +187,17 @@ const UserManagement = () => {
       case 'department_treasurer': return 'bg-green-100 text-green-800 border-green-200';
       case 'head_of_department': return 'bg-blue-100 text-blue-800';
       case 'department_member': return 'bg-purple-100 text-purple-800';
+      case 'contributor': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getRolesByCategory = () => {
     return {
-      leadership: ['super_administrator', 'administrator', 'pastor', 'general_secretary'],
+      leadership: ['administrator', 'pastor', 'general_secretary'],
       financial: ['finance_administrator', 'finance_manager', 'finance_elder', 'treasurer', 'department_treasurer'], // Added department_treasurer
       departmental: ['head_of_department', 'secretary', 'department_member'],
-      operational: ['data_entry_clerk', 'contributor']
+      operational: ['data_entry_clerk']
     };
   };
 
@@ -222,7 +223,7 @@ const UserManagement = () => {
             <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-md flex items-center gap-2">
               <Lock className="h-4 w-4 text-amber-600" />
               <span className="text-sm text-amber-700">
-                You have read-only access. Only Super Administrators and Administrators can manage user roles.
+                You have read-only access. Only Administrators can manage user roles.
               </span>
             </div>
           )}
@@ -243,7 +244,7 @@ const UserManagement = () => {
                 <div className="text-center py-8 text-gray-500">
                   <Lock className="h-12 w-12 mx-auto mb-3 text-gray-400" />
                   <p className="text-sm">
-                    Only Super Administrators and Administrators can create new users.
+                    Only Administrators can create new users.
                   </p>
                   <p className="text-xs text-gray-400 mt-1">
                     Your current role: {userRole ? roleLabels[userRole] : 'No Role'}

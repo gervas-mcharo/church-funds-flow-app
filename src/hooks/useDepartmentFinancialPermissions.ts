@@ -33,8 +33,7 @@ export const useDepartmentFinancialPermissions = (departmentId?: string) => {
     if (isDepartmentTreasurer(targetDepartmentId)) return true;
     
     // Other financial roles with church-wide access
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
+    return userRole === 'administrator' || 
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
@@ -47,8 +46,7 @@ export const useDepartmentFinancialPermissions = (departmentId?: string) => {
     if (isChurchTreasurer()) return true;
     if (isDepartmentTreasurer(targetDepartmentId)) return true;
     
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
+    return userRole === 'administrator' || 
            userRole === 'finance_administrator' || 
            userRole === 'general_secretary' || 
            userRole === 'pastor';
@@ -59,8 +57,7 @@ export const useDepartmentFinancialPermissions = (departmentId?: string) => {
     if (isChurchTreasurer()) return true;
     if (isDepartmentTreasurer(targetDepartmentId)) return true;
     
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
+    return userRole === 'administrator' || 
            userRole === 'finance_administrator' || 
            userRole === 'finance_manager' || 
            userRole === 'finance_elder' || 
@@ -73,8 +70,7 @@ export const useDepartmentFinancialPermissions = (departmentId?: string) => {
     if (isChurchTreasurer()) return true;
     if (isDepartmentTreasurer(targetDepartmentId)) return true;
     
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
+    return userRole === 'administrator' || 
            userRole === 'finance_administrator' || 
            userRole === 'general_secretary' || 
            userRole === 'pastor';
@@ -82,8 +78,7 @@ export const useDepartmentFinancialPermissions = (departmentId?: string) => {
 
   // Fund assignment permissions (only church-wide roles)
   const canAssignFundsToDepartments = () => {
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
+    return userRole === 'administrator' || 
            userRole === 'finance_administrator' || 
            userRole === 'treasurer' || 
            userRole === 'general_secretary' || 
@@ -92,8 +87,7 @@ export const useDepartmentFinancialPermissions = (departmentId?: string) => {
 
   // Department treasurer assignment permissions
   const canAssignDepartmentTreasurers = () => {
-    return userRole === 'super_administrator' || 
-           userRole === 'administrator' || 
+    return userRole === 'administrator' || 
            userRole === 'general_secretary' || 
            userRole === 'pastor';
   };

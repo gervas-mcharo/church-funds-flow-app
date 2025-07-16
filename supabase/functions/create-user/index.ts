@@ -71,7 +71,7 @@ serve(async (req) => {
     }
 
     const hasAdminRole = userRoles?.some(roleRecord => 
-      ['super_administrator', 'administrator'].includes(roleRecord.role)
+      ['administrator'].includes(roleRecord.role)
     )
 
     if (!hasAdminRole) {

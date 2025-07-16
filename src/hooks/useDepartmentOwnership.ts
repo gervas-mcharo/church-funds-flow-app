@@ -30,8 +30,8 @@ export function useDepartmentOwnership(departmentId?: string) {
   });
 
   const canManageThisDepartment = (userRole: string | null) => {
-    // Super admins and admins can manage any department
-    if (userRole === 'super_administrator' || userRole === 'administrator') {
+    // Admins can manage any department
+    if (userRole === 'administrator') {
       return true;
     }
     
