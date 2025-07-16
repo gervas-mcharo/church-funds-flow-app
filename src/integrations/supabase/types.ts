@@ -906,8 +906,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      initialize_system_with_admin: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
       is_department_treasurer: {
         Args: { _user_id: string; _department_id: string }
+        Returns: boolean
+      }
+      is_system_initialized: {
+        Args: Record<PropertyKey, never>
         Returns: boolean
       }
       log_security_event: {

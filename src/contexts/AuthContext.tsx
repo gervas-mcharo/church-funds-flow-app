@@ -8,7 +8,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, firstName: string, lastName: string, isFirstAdmin?: boolean) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -102,7 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
+  const signUp = async (email: string, password: string, firstName: string, lastName: string, isFirstAdmin = false) => {
     // Input validation and sanitization
     const sanitizedEmail = sanitizeInput(email.toLowerCase());
     const sanitizedFirstName = sanitizeInput(firstName);
@@ -124,7 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: sanitizedEmail,
         password,
         options: {
@@ -138,6 +138,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (error) {
         console.warn('Sign-up attempt failed for email:', sanitizedEmail);
+        return { error };
+      }
+
+      // If this is the first admin and sign up was successful, initialize the system
+      if (isFirstAdmin && data.user) {
+        const { error: initError } = await supabase.rpc('initialize_system_with_admin', {
+          _user_id: data.user.id
+        });
+        
+        if (initError) {
+          console.error('Error initializing system:', initError);
+          return { error: initError };
+        }
       }
       
       return { error };
