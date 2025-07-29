@@ -56,22 +56,22 @@ CREATE POLICY "Admins can manage department treasurer assignments" ON public.dep
 CREATE POLICY "Authorized users can view funds" ON public.fund_types FOR SELECT USING (can_access_funds());
 CREATE POLICY "Authorized users can create funds" ON public.fund_types FOR INSERT WITH CHECK (can_create_funds());
 CREATE POLICY "Authorized users can update funds" ON public.fund_types FOR UPDATE USING (can_manage_funds());
-CREATE POLICY "High-level admins can delete funds" ON public.fund_types FOR DELETE USING (EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = ANY(ARRAY['super_administrator', 'administrator', 'finance_administrator', 'general_secretary', 'pastor'])));
+CREATE POLICY "High-level admins can delete funds" ON public.fund_types FOR DELETE USING (EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = ANY(ARRAY['administrator', 'finance_administrator', 'general_secretary', 'pastor'])));
 
 -- Department funds policies
 CREATE POLICY "Users can view department funds they have access to" ON public.department_funds FOR SELECT USING (current_user_has_admin_role() OR has_role(auth.uid(), 'treasurer') OR is_department_treasurer(auth.uid(), department_id));
 CREATE POLICY "Admins can manage department funds" ON public.department_funds FOR ALL USING (current_user_has_admin_role()) WITH CHECK (current_user_has_admin_role());
 
 -- Contributors policies
-CREATE POLICY "Authorized users can view contributors" ON public.contributors FOR SELECT USING (EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = ANY(ARRAY['super_administrator', 'administrator', 'finance_administrator', 'finance_manager', 'finance_elder', 'treasurer', 'data_entry_clerk', 'general_secretary', 'pastor'])));
-CREATE POLICY "Authorized users can create contributors" ON public.contributors FOR INSERT WITH CHECK (EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = ANY(ARRAY['super_administrator', 'administrator', 'finance_administrator', 'treasurer', 'general_secretary', 'pastor'])));
-CREATE POLICY "Authorized users can update contributors" ON public.contributors FOR UPDATE USING (EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = ANY(ARRAY['super_administrator', 'administrator', 'finance_administrator', 'finance_manager', 'finance_elder', 'treasurer', 'general_secretary', 'pastor'])));
-CREATE POLICY "High-level admins can delete contributors" ON public.contributors FOR DELETE USING (EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = ANY(ARRAY['super_administrator', 'administrator', 'finance_administrator', 'general_secretary', 'pastor'])));
+CREATE POLICY "Authorized users can view contributors" ON public.contributors FOR SELECT USING (EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = ANY(ARRAY['administrator', 'finance_administrator', 'finance_manager', 'finance_elder', 'treasurer', 'data_entry_clerk', 'general_secretary', 'pastor'])));
+CREATE POLICY "Authorized users can create contributors" ON public.contributors FOR INSERT WITH CHECK (EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = ANY(ARRAY['administrator', 'finance_administrator', 'treasurer', 'general_secretary', 'pastor'])));
+CREATE POLICY "Authorized users can update contributors" ON public.contributors FOR UPDATE USING (EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = ANY(ARRAY['administrator', 'finance_administrator', 'finance_manager', 'finance_elder', 'treasurer', 'general_secretary', 'pastor'])));
+CREATE POLICY "High-level admins can delete contributors" ON public.contributors FOR DELETE USING (EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = ANY(ARRAY['administrator', 'finance_administrator', 'general_secretary', 'pastor'])));
 
 -- QR codes policies
 CREATE POLICY "Authorized users can view QR codes" ON public.qr_codes FOR SELECT USING (can_access_qr_management());
 CREATE POLICY "Authorized users can create QR codes" ON public.qr_codes FOR INSERT WITH CHECK (can_create_qr_codes());
-CREATE POLICY "Admin roles can update QR codes" ON public.qr_codes FOR UPDATE USING (EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = ANY(ARRAY['super_administrator', 'administrator', 'finance_administrator', 'finance_manager', 'finance_elder'])));
+CREATE POLICY "Admin roles can update QR codes" ON public.qr_codes FOR UPDATE USING (EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = ANY(ARRAY['administrator', 'finance_administrator', 'finance_manager', 'finance_elder'])));
 CREATE POLICY "High-level admin roles can delete QR codes" ON public.qr_codes FOR DELETE USING (can_delete_qr_codes());
 
 -- Contributions policies
@@ -96,20 +96,20 @@ CREATE POLICY "Users can delete pledge contributions based on role" ON public.pl
 CREATE POLICY "Users can view pledge audit logs based on role" ON public.pledge_audit_log FOR SELECT USING (can_manage_pledges());
 
 -- Money requests policies
-CREATE POLICY "Users can view accessible money requests" ON public.money_requests FOR SELECT USING (requester_id = auth.uid() OR has_role(auth.uid(), 'administrator') OR has_role(auth.uid(), 'super_administrator') OR has_role(auth.uid(), 'head_of_department') OR has_role(auth.uid(), 'finance_elder') OR has_role(auth.uid(), 'general_secretary') OR has_role(auth.uid(), 'pastor') OR can_access_department(auth.uid(), requesting_department_id));
+CREATE POLICY "Users can view accessible money requests" ON public.money_requests FOR SELECT USING (requester_id = auth.uid() OR has_role(auth.uid(), 'administrator') OR has_role(auth.uid(), 'head_of_department') OR has_role(auth.uid(), 'finance_elder') OR has_role(auth.uid(), 'general_secretary') OR has_role(auth.uid(), 'pastor') OR can_access_department(auth.uid(), requesting_department_id));
 CREATE POLICY "Users can create money requests" ON public.money_requests FOR INSERT WITH CHECK (requester_id = auth.uid());
 CREATE POLICY "Users can create requests for their departments" ON public.money_requests FOR INSERT WITH CHECK (can_access_department(auth.uid(), requesting_department_id) AND auth.uid() = requester_id);
-CREATE POLICY "Authorized users can update money requests" ON public.money_requests FOR UPDATE USING (has_role(auth.uid(), 'administrator') OR has_role(auth.uid(), 'super_administrator') OR has_role(auth.uid(), 'head_of_department') OR has_role(auth.uid(), 'finance_elder') OR has_role(auth.uid(), 'general_secretary') OR has_role(auth.uid(), 'pastor'));
+CREATE POLICY "Authorized users can update money requests" ON public.money_requests FOR UPDATE USING (has_role(auth.uid(), 'administrator') OR has_role(auth.uid(), 'head_of_department') OR has_role(auth.uid(), 'finance_elder') OR has_role(auth.uid(), 'general_secretary') OR has_role(auth.uid(), 'pastor'));
 CREATE POLICY "Department personnel can update requests" ON public.money_requests FOR UPDATE USING (can_access_department(auth.uid(), requesting_department_id));
 
 -- Approval chain policies
-CREATE POLICY "Users can view accessible approval chains" ON public.approval_chain FOR SELECT USING (EXISTS (SELECT 1 FROM money_requests mr WHERE mr.id = money_request_id AND (mr.requester_id = auth.uid() OR has_role(auth.uid(), 'administrator') OR has_role(auth.uid(), 'super_administrator') OR has_role(auth.uid(), 'head_of_department') OR has_role(auth.uid(), 'finance_elder') OR has_role(auth.uid(), 'general_secretary') OR has_role(auth.uid(), 'pastor') OR can_access_department(auth.uid(), mr.requesting_department_id))));
+CREATE POLICY "Users can view accessible approval chains" ON public.approval_chain FOR SELECT USING (EXISTS (SELECT 1 FROM money_requests mr WHERE mr.id = money_request_id AND (mr.requester_id = auth.uid() OR has_role(auth.uid(), 'administrator') OR has_role(auth.uid(), 'head_of_department') OR has_role(auth.uid(), 'finance_elder') OR has_role(auth.uid(), 'general_secretary') OR has_role(auth.uid(), 'pastor') OR can_access_department(auth.uid(), mr.requesting_department_id))));
 CREATE POLICY "System can create approval chain entries" ON public.approval_chain FOR INSERT WITH CHECK (true);
 CREATE POLICY "Approvers can update their approval decisions" ON public.approval_chain FOR UPDATE USING (approver_id = auth.uid() OR has_role(auth.uid(), 'administrator'));
 CREATE POLICY "Users can approve for their department role" ON public.approval_chain FOR UPDATE USING (EXISTS (SELECT 1 FROM money_requests mr WHERE mr.id = money_request_id AND has_department_role(auth.uid(), mr.requesting_department_id, approver_role)));
 
 -- Request attachments policies
-CREATE POLICY "Users can view attachments for accessible requests" ON public.request_attachments FOR SELECT USING (EXISTS (SELECT 1 FROM money_requests mr WHERE mr.id = money_request_id AND (mr.requester_id = auth.uid() OR has_role(auth.uid(), 'administrator') OR has_role(auth.uid(), 'super_administrator') OR has_role(auth.uid(), 'head_of_department') OR has_role(auth.uid(), 'finance_elder') OR has_role(auth.uid(), 'general_secretary') OR has_role(auth.uid(), 'pastor'))));
+CREATE POLICY "Users can view attachments for accessible requests" ON public.request_attachments FOR SELECT USING (EXISTS (SELECT 1 FROM money_requests mr WHERE mr.id = money_request_id AND (mr.requester_id = auth.uid() OR has_role(auth.uid(), 'administrator') OR has_role(auth.uid(), 'head_of_department') OR has_role(auth.uid(), 'finance_elder') OR has_role(auth.uid(), 'general_secretary') OR has_role(auth.uid(), 'pastor'))));
 CREATE POLICY "Users can upload attachments for their requests" ON public.request_attachments FOR INSERT WITH CHECK (uploaded_by = auth.uid());
 
 -- Security audit log policies

@@ -110,7 +110,6 @@ AS $function$
     -- Department treasurers can access their own department's finances
     public.is_department_treasurer(_user_id, _department_id) OR
     -- Other administrative roles with church-wide access
-    public.has_role(_user_id, 'super_administrator') OR
     public.has_role(_user_id, 'administrator') OR
     public.has_role(_user_id, 'finance_administrator') OR
     public.has_role(_user_id, 'finance_manager') OR
@@ -188,7 +187,6 @@ AS $function$
     FROM public.user_roles
     WHERE user_id = auth.uid()
       AND role IN (
-        'super_administrator', 
         'administrator', 
         'finance_administrator', 
         'finance_manager', 
@@ -209,7 +207,6 @@ AS $function$
     FROM public.user_roles
     WHERE user_id = auth.uid()
       AND role IN (
-        'super_administrator', 
         'administrator', 
         'finance_administrator', 
         'finance_manager', 
@@ -231,7 +228,6 @@ AS $function$
     FROM public.user_roles
     WHERE user_id = auth.uid()
       AND role IN (
-        'super_administrator', 
         'administrator', 
         'finance_administrator', 
         'finance_manager', 
@@ -252,7 +248,6 @@ AS $function$
     FROM public.user_roles
     WHERE user_id = auth.uid()
       AND role IN (
-        'super_administrator', 
         'administrator', 
         'finance_administrator'
       )
@@ -270,7 +265,6 @@ AS $function$
     FROM public.user_roles
     WHERE user_id = auth.uid()
       AND role IN (
-        'super_administrator', 
         'administrator', 
         'finance_administrator', 
         'treasurer',
@@ -290,7 +284,6 @@ AS $function$
     FROM public.user_roles
     WHERE user_id = auth.uid()
       AND role IN (
-        'super_administrator', 
         'administrator', 
         'finance_administrator', 
         'finance_manager', 
@@ -314,7 +307,6 @@ AS $function$
     FROM public.user_roles
     WHERE user_id = auth.uid()
       AND role IN (
-        'super_administrator', 
         'administrator', 
         'finance_administrator', 
         'finance_manager', 
@@ -337,7 +329,6 @@ AS $function$
     FROM public.user_roles
     WHERE user_id = auth.uid()
       AND role IN (
-        'super_administrator', 
         'administrator', 
         'finance_administrator', 
         'finance_manager', 
@@ -359,7 +350,6 @@ AS $function$
     FROM public.user_roles
     WHERE user_id = auth.uid()
       AND role IN (
-        'super_administrator', 
         'administrator', 
         'finance_administrator'
       )
@@ -376,7 +366,6 @@ AS $function$
     FROM public.user_roles
     WHERE user_id = auth.uid()
       AND role IN (
-        'super_administrator', 
         'administrator', 
         'finance_administrator', 
         'finance_manager', 

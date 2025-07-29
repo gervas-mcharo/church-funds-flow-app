@@ -10,7 +10,6 @@ CREATE TYPE public.app_role AS ENUM (
     'secretary',
     'treasurer',
     'department_member',
-    'super_administrator',
     'finance_administrator',
     'pastor',
     'general_secretary',

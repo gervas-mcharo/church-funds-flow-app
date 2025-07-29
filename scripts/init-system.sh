@@ -110,16 +110,19 @@ print_success "Environment validation passed."
 generate_supabase_keys() {
     print_status "Generating Supabase keys..."
     
-    # Generate anon key (simplified - in production use proper JWT generation)
+    # Generate proper JWT tokens for Supabase keys
     if [ -z "$SUPABASE_ANON_KEY" ] || [ "$SUPABASE_ANON_KEY" = "your-supabase-anon-key" ]; then
-        SUPABASE_ANON_KEY=$(openssl rand -hex 32)
+        # Generate anon JWT with 'anon' role
+        SUPABASE_ANON_KEY=$(echo '{"alg":"HS256","typ":"JWT"}' | base64 -w 0 | tr -d '=' | tr '/+' '_-').$(echo "{\"iss\":\"supabase\",\"ref\":\"local\",\"role\":\"anon\",\"iat\":$(date +%s),\"exp\":$(($(date +%s) + 31536000))}" | base64 -w 0 | tr -d '=' | tr '/+' '_-').$(echo -n "$(echo '{"alg":"HS256","typ":"JWT"}' | base64 -w 0 | tr -d '=' | tr '/+' '_-').$(echo "{\"iss\":\"supabase\",\"ref\":\"local\",\"role\":\"anon\",\"iat\":$(date +%s),\"exp\":$(($(date +%s) + 31536000))}" | base64 -w 0 | tr -d '=' | tr '/+' '_-')" | openssl dgst -sha256 -hmac "$JWT_SECRET" -binary | base64 -w 0 | tr -d '=' | tr '/+' '_-')
         sed -i "s/SUPABASE_ANON_KEY=.*/SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY/" .env
+        print_success "Generated Supabase anon key"
     fi
     
-    # Generate service role key
+    # Generate service role JWT with 'service_role' role
     if [ -z "$SUPABASE_SERVICE_KEY" ] || [ "$SUPABASE_SERVICE_KEY" = "your-supabase-service-role-key" ]; then
-        SUPABASE_SERVICE_KEY=$(openssl rand -hex 32)
+        SUPABASE_SERVICE_KEY=$(echo '{"alg":"HS256","typ":"JWT"}' | base64 -w 0 | tr -d '=' | tr '/+' '_-').$(echo "{\"iss\":\"supabase\",\"ref\":\"local\",\"role\":\"service_role\",\"iat\":$(date +%s),\"exp\":$(($(date +%s) + 31536000))}" | base64 -w 0 | tr -d '=' | tr '/+' '_-').$(echo -n "$(echo '{"alg":"HS256","typ":"JWT"}' | base64 -w 0 | tr -d '=' | tr '/+' '_-').$(echo "{\"iss\":\"supabase\",\"ref\":\"local\",\"role\":\"service_role\",\"iat\":$(date +%s),\"exp\":$(($(date +%s) + 31536000))}" | base64 -w 0 | tr -d '=' | tr '/+' '_-')" | openssl dgst -sha256 -hmac "$JWT_SECRET" -binary | base64 -w 0 | tr -d '=' | tr '/+' '_-')
         sed -i "s/SUPABASE_SERVICE_KEY=.*/SUPABASE_SERVICE_KEY=$SUPABASE_SERVICE_KEY/" .env
+        print_success "Generated Supabase service role key"
     fi
 }
 
@@ -151,10 +154,8 @@ case $choice in
         ;;
 esac
 
-# Generate keys if in development mode
-if [ "$choice" = "1" ]; then
-    generate_supabase_keys
-fi
+# Generate keys for both development and production modes
+generate_supabase_keys
 
 # Pull latest images
 print_status "Pulling Docker images..."

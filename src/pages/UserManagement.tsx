@@ -158,7 +158,6 @@ const UserManagement = () => {
   };
 
   const roleLabels: Record<AppRole, string> = {
-    super_administrator: "Administrator", // Maps to administrator for display
     administrator: "Administrator",
     finance_administrator: "Finance Administrator", 
     pastor: "Pastor",
@@ -176,7 +175,6 @@ const UserManagement = () => {
 
   const getRoleBadgeColor = (role: AppRole) => {
     switch (role) {
-      case 'super_administrator': return 'bg-red-100 text-red-800'; // Same as administrator
       case 'administrator': return 'bg-red-100 text-red-800';
       case 'finance_administrator': return 'bg-orange-100 text-orange-800';
       case 'pastor': return 'bg-purple-100 text-purple-800';
