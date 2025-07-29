@@ -168,9 +168,9 @@ print_success "Authentication schema ready"
 
 # Array of migration files in order
 migrations=(
-    "supabase/migrations/01_initial_schema.sql:Initial Database Schema"
-    "supabase/migrations/02_rls_policies.sql:Row Level Security Policies"
-    "supabase/migrations/03_functions_and_triggers.sql:Database Functions and Triggers"
+    "scripts/sql/01_initial_schema.sql:Initial Database Schema"
+    "scripts/sql/02_rls_policies.sql:Row Level Security Policies"
+    "scripts/sql/03_functions_and_triggers.sql:Database Functions and Triggers"
 )
 
 # Apply migrations
