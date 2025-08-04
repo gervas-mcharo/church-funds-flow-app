@@ -33,16 +33,42 @@ print_error() {
 }
 
 # Check if Docker is running
+print_status "Checking Docker installation and status..."
 if ! docker info >/dev/null 2>&1; then
-    print_error "Docker is not running. Please start Docker and try again."
+    print_error "Docker is not running or not installed. Please start Docker and try again."
+    print_error "Visit https://docs.docker.com/get-docker/ for installation instructions."
     exit 1
 fi
 
-# Check if Docker Compose is available
-if ! command -v docker-compose >/dev/null 2>&1; then
-    print_error "Docker Compose is not installed. Please install Docker Compose."
+print_success "Docker is running."
+
+# Check for Docker Compose (V2 first, then V1 fallback)
+print_status "Checking Docker Compose installation..."
+COMPOSE_COMMAND=""
+
+# Check for Docker Compose V2 (docker compose)
+if docker compose version >/dev/null 2>&1; then
+    COMPOSE_COMMAND="docker compose"
+    COMPOSE_VERSION=$(docker compose version --short 2>/dev/null || echo "unknown")
+    print_success "Docker Compose V2 found (version: $COMPOSE_VERSION)"
+# Check for Docker Compose V1 (docker-compose)
+elif command -v docker-compose >/dev/null 2>&1; then
+    COMPOSE_COMMAND="docker-compose"
+    COMPOSE_VERSION=$(docker-compose version --short 2>/dev/null || echo "unknown")
+    print_success "Docker Compose V1 found (version: $COMPOSE_VERSION)"
+    print_warning "You're using Docker Compose V1. Consider upgrading to V2 for better performance."
+else
+    print_error "Docker Compose is not installed."
+    print_error "Please install Docker Compose:"
+    print_error "  - For Docker Desktop: Compose is included"
+    print_error "  - For Linux: https://docs.docker.com/compose/install/"
     exit 1
 fi
+
+# Function to run compose commands with the detected version
+run_compose() {
+    $COMPOSE_COMMAND "$@"
+}
 
 # Create necessary directories
 print_status "Creating directory structure..."
@@ -159,17 +185,17 @@ generate_supabase_keys
 
 # Pull latest images
 print_status "Pulling Docker images..."
-docker-compose -f $COMPOSE_FILE pull
+run_compose -f $COMPOSE_FILE pull
 
 # Start the services
 print_status "Starting services..."
-docker-compose -f $COMPOSE_FILE up -d
+run_compose -f $COMPOSE_FILE up -d
 
 # Wait for database to be ready
 print_status "Waiting for database to be ready..."
 timeout=60
 counter=0
-until docker-compose -f $COMPOSE_FILE exec -T postgres pg_isready -U ${POSTGRES_USER:-postgres} >/dev/null 2>&1; do
+until run_compose -f $COMPOSE_FILE exec -T postgres pg_isready -U ${POSTGRES_USER:-postgres} >/dev/null 2>&1; do
     if [ $counter -eq $timeout ]; then
         print_error "Database failed to start within $timeout seconds."
         exit 1
@@ -204,10 +230,10 @@ fi
 
 echo ""
 echo "🔍 To view logs:"
-echo "  docker-compose -f $COMPOSE_FILE logs -f"
+echo "  $COMPOSE_COMMAND -f $COMPOSE_FILE logs -f"
 echo ""
 echo "🛑 To stop services:"
-echo "  docker-compose -f $COMPOSE_FILE down"
+echo "  $COMPOSE_COMMAND -f $COMPOSE_FILE down"
 echo ""
 
 print_warning "Don't forget to:"
