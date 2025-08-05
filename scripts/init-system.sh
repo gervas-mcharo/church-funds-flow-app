@@ -91,9 +91,9 @@ if [ ! -f .env ]; then
         echo "Required configurations:"
         echo "- DOMAIN: Your domain name"
         echo "- POSTGRES_PASSWORD: Database password"
-        echo "- JWT_SECRET: JWT secret key (32+ characters)"
-        echo "- SUPABASE_ANON_KEY: Supabase anonymous key"
-        echo "- SUPABASE_SERVICE_KEY: Supabase service role key"
+        echo "- JWT_SECRET: Will be auto-generated if not set"
+        echo "- SUPABASE_ANON_KEY: Will be auto-generated"
+        echo "- SUPABASE_SERVICE_KEY: Will be auto-generated"
         echo ""
         exit 1
     else
@@ -122,9 +122,9 @@ set -a  # automatically export all variables
 source .env
 set +a  # disable automatic export
 
-# Validate required environment variables
+# Validate required environment variables (auto-generated ones excluded)
 print_status "Validating environment configuration..."
-required_vars=("DOMAIN" "POSTGRES_PASSWORD" "JWT_SECRET" "SUPABASE_ANON_KEY" "SUPABASE_SERVICE_KEY")
+required_vars=("DOMAIN" "POSTGRES_PASSWORD")
 missing_vars=()
 
 for var in "${required_vars[@]}"; do
@@ -138,13 +138,50 @@ if [ ${#missing_vars[@]} -ne 0 ]; then
     for var in "${missing_vars[@]}"; do
         echo "  - $var"
     done
+    echo ""
+    print_error "Please set these in your .env file before continuing."
     exit 1
 fi
 
-# Check JWT secret length
-if [ ${#JWT_SECRET} -lt 32 ]; then
-    print_error "JWT_SECRET must be at least 32 characters long."
+# Check and generate JWT secret if needed
+if [ -z "$JWT_SECRET" ] || [ "$JWT_SECRET" = "your-super-secret-jwt-token-with-at-least-32-characters-long" ] || [ ${#JWT_SECRET} -lt 32 ]; then
+    print_status "Generating strong JWT secret..."
+    
+    # Check if openssl is available
+    if command -v openssl >/dev/null 2>&1; then
+        NEW_JWT_SECRET=$(openssl rand -base64 48 | tr -d '\n')
+        print_success "Generated JWT secret using OpenSSL"
+    # Fallback to /dev/urandom if openssl is not available
+    elif [ -r /dev/urandom ]; then
+        NEW_JWT_SECRET=$(head -c 48 /dev/urandom | base64 | tr -d '\n' | tr -d '=' | head -c 64)
+        print_success "Generated JWT secret using /dev/urandom"
+    else
+        print_error "Cannot generate JWT secret: neither openssl nor /dev/urandom available"
+        print_error "Please manually set a strong JWT_SECRET (64+ characters) in your .env file"
+        exit 1
+    fi
+    
+    # Update the .env file
+    if [ -f .env ]; then
+        # Replace existing JWT_SECRET line or add if it doesn't exist
+        if grep -q "^JWT_SECRET=" .env; then
+            sed -i "s/^JWT_SECRET=.*/JWT_SECRET=$NEW_JWT_SECRET/" .env
+        else
+            echo "JWT_SECRET=$NEW_JWT_SECRET" >> .env
+        fi
+    fi
+    
+    # Set the variable for current session
+    JWT_SECRET="$NEW_JWT_SECRET"
+    export JWT_SECRET
+    
+    print_success "JWT secret updated in .env file (${#JWT_SECRET} characters)"
+elif [ ${#JWT_SECRET} -lt 32 ]; then
+    print_error "JWT_SECRET must be at least 32 characters long (current: ${#JWT_SECRET})."
+    print_error "Run the script again to auto-generate a strong secret."
     exit 1
+else
+    print_success "JWT secret validation passed (${#JWT_SECRET} characters)"
 fi
 
 print_success "Environment validation passed."
