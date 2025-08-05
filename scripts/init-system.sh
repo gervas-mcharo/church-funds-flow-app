@@ -102,8 +102,25 @@ if [ ! -f .env ]; then
     fi
 fi
 
-# Load environment variables
+# Load environment variables (with validation for proper format)
+print_status "Loading environment variables..."
+if ! grep -q "^[A-Z_][A-Z0-9_]*=" .env; then
+    print_error ".env file appears to be malformed. Please check the format."
+    exit 1
+fi
+
+# Check for unquoted values with spaces (common issue)
+if grep -q "^[A-Z_][A-Z0-9_]*=.*[[:space:]].*[^\"']$" .env; then
+    print_error "Found unquoted values with spaces in .env file."
+    print_error "Please quote values that contain spaces, e.g.:"
+    print_error "  ORGANIZATION_NAME=\"Church Management System\""
+    print_error "  PROJECT_NAME=\"Church Financial App\""
+    exit 1
+fi
+
+set -a  # automatically export all variables
 source .env
+set +a  # disable automatic export
 
 # Validate required environment variables
 print_status "Validating environment configuration..."
