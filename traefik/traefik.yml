@@ -33,24 +33,23 @@ providers:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: ${ACME_EMAIL}
+      # Email will be set via command line argument
+      email: ""
       storage: /acme.json
       httpChallenge:
         entryPoint: web
 
-# Logging
+# Logging - simplified to avoid permission issues
 log:
   level: INFO
-  filePath: "/var/log/traefik/traefik.log"
 
-accessLog:
-  filePath: "/var/log/traefik/access.log"
+accessLog: {}
 
-# Metrics
+# Metrics for monitoring
 metrics:
   prometheus:
     addEntryPointsLabels: true
     addServicesLabels: true
 
-# Health check
+# Health check endpoint
 ping: {}

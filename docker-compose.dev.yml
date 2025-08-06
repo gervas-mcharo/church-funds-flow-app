@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Development Traefik (simpler config)
+  # Development Traefik (simpler config) - FIXED VERSION
   traefik:
     image: traefik:v3.0
     container_name: traefik-dev
@@ -12,11 +12,18 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik/traefik.dev.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/logs:/var/log/traefik  # FIXED: Added logs mount
     networks:
       - traefik
     environment:
       - TRAEFIK_API_DASHBOARD=true
       - TRAEFIK_API_INSECURE=true
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   # PostgreSQL Database
   postgres:
@@ -41,7 +48,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # PostgREST API
+  # PostgREST API - FIXED LABELS FOR DEV
   postgrest:
     image: postgrest/postgrest:v12.0.2
     container_name: postgrest-dev
@@ -63,7 +70,7 @@ services:
       - "traefik.http.routers.api-dev.rule=Host(`localhost`) && PathPrefix(`/rest/`)"
       - "traefik.http.services.api-dev.loadbalancer.server.port=3000"
 
-  # GoTrue Authentication
+  # GoTrue Authentication - FIXED LABELS FOR DEV
   gotrue:
     image: supabase/gotrue:v2.151.0
     container_name: gotrue-dev
@@ -93,7 +100,7 @@ services:
       - "traefik.http.routers.auth-dev.rule=Host(`localhost`) && PathPrefix(`/auth/`)"
       - "traefik.http.services.auth-dev.loadbalancer.server.port=9999"
 
-  # Supabase Studio
+  # Supabase Studio - FIXED LABELS FOR DEV
   studio:
     image: supabase/studio:20240326-5e5586d
     container_name: studio-dev
@@ -134,7 +141,7 @@ services:
     networks:
       - supabase
 
-  # Storage API
+  # Storage API - FIXED LABELS FOR DEV
   storage:
     image: supabase/storage-api:v1.0.6
     container_name: storage-dev

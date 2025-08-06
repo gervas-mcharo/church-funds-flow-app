@@ -206,6 +206,20 @@ generate_supabase_keys() {
     fi
 }
 
+# Function to setup the traefik configuration files
+setup_traefik() {
+    print_status "Setting up Traefik configuration..."
+    
+    # Run the dedicated Traefik setup script
+    if [ -f scripts/setup-traefik.sh ]; then
+        ./scripts/setup-traefik.sh "$1"
+    else
+        print_error "Traefik setup script not found!"
+        exit 1
+    fi
+}
+
+
 # Choose deployment type
 echo ""
 echo "Select deployment type:"
@@ -216,10 +230,12 @@ read -p "Enter choice [1-2]: " choice
 case $choice in
     1)
         COMPOSE_FILE="docker-compose.dev.yml"
+        DEPLOYMENT_MODE="development"
         print_status "Setting up development environment..."
         ;;
     2)
         COMPOSE_FILE="docker-compose.yml"
+        DEPLOYMENT_MODE="production"
         print_status "Setting up production environment..."
         
         # Validate domain for production
@@ -234,6 +250,7 @@ case $choice in
         ;;
 esac
 
+setup_traefik "$DEPLOYMENT_MODE"
 # Generate keys for both development and production modes
 generate_supabase_keys
 

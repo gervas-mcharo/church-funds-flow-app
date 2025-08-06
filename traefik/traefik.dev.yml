@@ -17,7 +17,7 @@ providers:
     exposedByDefault: false
     network: traefik
 
-# Logging
+# Logging for development
 log:
   level: DEBUG
 

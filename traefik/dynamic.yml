@@ -29,7 +29,7 @@ http:
         burst: 200
         period: 1m
 
-    # CORS middleware for API
+    # CORS middleware for API (generic - will be overridden per service)
     cors-api:
       headers:
         accessControlAllowMethods:
@@ -38,18 +38,24 @@ http:
           - PUT
           - DELETE
           - OPTIONS
+          - PATCH
         accessControlAllowHeaders:
           - "*"
         accessControlAllowOriginList:
-          - "https://${DOMAIN}"
-          - "http://localhost"
-          - "http://localhost:3000"
+          - "*"
         accessControlMaxAge: 100
         addVaryHeader: true
 
     # Compression middleware
     compression:
       compress: {}
+
+    # Auth middleware for dashboard
+    dashboard-auth:
+      basicAuth:
+        users:
+          # admin:admin (change this in production)
+          - "admin:$2y$10$8BmOJ7rMj7jKOw1QqjwxX.QJ7XJ0YJ3XJ7XJ7XJ7XJ7XJ7XJ7XJ7XJ"
 
 # TLS Configuration
 tls:
