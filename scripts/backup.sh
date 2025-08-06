@@ -4,41 +4,18 @@
 
 set -e
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# Source common functions
+source "$(dirname "$0")/common.sh"
 
-print_status() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
+print_status "🔄 Starting backup for Church Management System..."
 
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
+# Load environment variables
+load_env || exit 1
 
 # Configuration
 BACKUP_DIR="./backups"
 DATE=$(date +%Y%m%d_%H%M%S)
 CONTAINER_NAME=${1:-postgres}
-
-# Load environment variables
-if [ -f .env ]; then
-    source .env
-else
-    print_error ".env file not found"
-    exit 1
-fi
 
 POSTGRES_USER=${POSTGRES_USER:-postgres}
 POSTGRES_DB=${POSTGRES_DB:-postgres}
@@ -46,10 +23,8 @@ POSTGRES_DB=${POSTGRES_DB:-postgres}
 # Create backup directory
 mkdir -p $BACKUP_DIR
 
-print_status "🔄 Starting backup for Church Management System..."
-
 # Check if container is running
-if ! docker ps --format "table {{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
+if ! check_container_running "$CONTAINER_NAME"; then
     print_error "PostgreSQL container '${CONTAINER_NAME}' is not running."
     exit 1
 fi

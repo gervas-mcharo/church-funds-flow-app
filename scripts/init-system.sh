@@ -5,32 +5,11 @@
 
 set -e
 
+# Source common functions
+source "$(dirname "$0")/common.sh"
+
 echo "🏛️  Church Management System - Docker Setup"
 echo "============================================="
-
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Function to print colored output
-print_status() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
-
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
 
 # Check if Docker is running
 print_status "Checking Docker installation and status..."
@@ -42,30 +21,11 @@ fi
 
 print_success "Docker is running."
 
-# Check for Docker Compose (V2 first, then V1 fallback)
+# Check for Docker Compose using common function
 print_status "Checking Docker Compose installation..."
-COMPOSE_COMMAND=""
+COMPOSE_COMMAND=$(detect_compose_command) || exit 1
 
-# Check for Docker Compose V2 (docker compose)
-if docker compose version >/dev/null 2>&1; then
-    COMPOSE_COMMAND="docker compose"
-    COMPOSE_VERSION=$(docker compose version --short 2>/dev/null || echo "unknown")
-    print_success "Docker Compose V2 found (version: $COMPOSE_VERSION)"
-# Check for Docker Compose V1 (docker-compose)
-elif command -v docker-compose >/dev/null 2>&1; then
-    COMPOSE_COMMAND="docker-compose"
-    COMPOSE_VERSION=$(docker-compose version --short 2>/dev/null || echo "unknown")
-    print_success "Docker Compose V1 found (version: $COMPOSE_VERSION)"
-    print_warning "You're using Docker Compose V1. Consider upgrading to V2 for better performance."
-else
-    print_error "Docker Compose is not installed."
-    print_error "Please install Docker Compose:"
-    print_error "  - For Docker Desktop: Compose is included"
-    print_error "  - For Linux: https://docs.docker.com/compose/install/"
-    exit 1
-fi
-
-# Function to run compose commands with the detected version
+# Function to run compose commands with the detected version  
 run_compose() {
     $COMPOSE_COMMAND "$@"
 }
@@ -102,25 +62,9 @@ if [ ! -f .env ]; then
     fi
 fi
 
-# Load environment variables (with validation for proper format)
+# Load environment variables using common function
 print_status "Loading environment variables..."
-if ! grep -q "^[A-Z_][A-Z0-9_]*=" .env; then
-    print_error ".env file appears to be malformed. Please check the format."
-    exit 1
-fi
-
-# Check for unquoted values with spaces (common issue)
-if grep -q "^[A-Z_][A-Z0-9_]*=.*[[:space:]].*[^\"']$" .env; then
-    print_error "Found unquoted values with spaces in .env file."
-    print_error "Please quote values that contain spaces, e.g.:"
-    print_error "  ORGANIZATION_NAME=\"Church Management System\""
-    print_error "  PROJECT_NAME=\"Church Financial App\""
-    exit 1
-fi
-
-set -a  # automatically export all variables
-source .env
-set +a  # disable automatic export
+load_env || exit 1
 
 # Validate required environment variables (auto-generated ones excluded)
 print_status "Validating environment configuration..."
@@ -218,8 +162,6 @@ setup_traefik() {
         exit 1
     fi
 }
-
-
 # Choose deployment type
 echo ""
 echo "Select deployment type:"
