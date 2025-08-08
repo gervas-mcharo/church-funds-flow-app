@@ -109,7 +109,7 @@ if [ -z "$JWT_SECRET" ] || [ "$JWT_SECRET" = "your-super-secret-jwt-token-with-a
     if [ -f .env ]; then
         # Replace existing JWT_SECRET line or add if it doesn't exist
         if grep -q "^JWT_SECRET=" .env; then
-            sed -i "s/^JWT_SECRET=.*/JWT_SECRET=$NEW_JWT_SECRET/" .env
+            sed -i "s|^JWT_SECRET=.*|JWT_SECRET=$NEW_JWT_SECRET|" .env
         else
             echo "JWT_SECRET=$NEW_JWT_SECRET" >> .env
         fi
@@ -138,14 +138,14 @@ generate_supabase_keys() {
     if [ -z "$SUPABASE_ANON_KEY" ] || [ "$SUPABASE_ANON_KEY" = "your-supabase-anon-key" ]; then
         # Generate anon JWT with 'anon' role
         SUPABASE_ANON_KEY=$(echo '{"alg":"HS256","typ":"JWT"}' | base64 -w 0 | tr -d '=' | tr '/+' '_-').$(echo "{\"iss\":\"supabase\",\"ref\":\"local\",\"role\":\"anon\",\"iat\":$(date +%s),\"exp\":$(($(date +%s) + 31536000))}" | base64 -w 0 | tr -d '=' | tr '/+' '_-').$(echo -n "$(echo '{"alg":"HS256","typ":"JWT"}' | base64 -w 0 | tr -d '=' | tr '/+' '_-').$(echo "{\"iss\":\"supabase\",\"ref\":\"local\",\"role\":\"anon\",\"iat\":$(date +%s),\"exp\":$(($(date +%s) + 31536000))}" | base64 -w 0 | tr -d '=' | tr '/+' '_-')" | openssl dgst -sha256 -hmac "$JWT_SECRET" -binary | base64 -w 0 | tr -d '=' | tr '/+' '_-')
-        sed -i "s/SUPABASE_ANON_KEY=.*/SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY/" .env
+        sed -i "s|SUPABASE_ANON_KEY=.*|SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY|" .env
         print_success "Generated Supabase anon key"
     fi
     
     # Generate service role JWT with 'service_role' role
     if [ -z "$SUPABASE_SERVICE_KEY" ] || [ "$SUPABASE_SERVICE_KEY" = "your-supabase-service-role-key" ]; then
         SUPABASE_SERVICE_KEY=$(echo '{"alg":"HS256","typ":"JWT"}' | base64 -w 0 | tr -d '=' | tr '/+' '_-').$(echo "{\"iss\":\"supabase\",\"ref\":\"local\",\"role\":\"service_role\",\"iat\":$(date +%s),\"exp\":$(($(date +%s) + 31536000))}" | base64 -w 0 | tr -d '=' | tr '/+' '_-').$(echo -n "$(echo '{"alg":"HS256","typ":"JWT"}' | base64 -w 0 | tr -d '=' | tr '/+' '_-').$(echo "{\"iss\":\"supabase\",\"ref\":\"local\",\"role\":\"service_role\",\"iat\":$(date +%s),\"exp\":$(($(date +%s) + 31536000))}" | base64 -w 0 | tr -d '=' | tr '/+' '_-')" | openssl dgst -sha256 -hmac "$JWT_SECRET" -binary | base64 -w 0 | tr -d '=' | tr '/+' '_-')
-        sed -i "s/SUPABASE_SERVICE_KEY=.*/SUPABASE_SERVICE_KEY=$SUPABASE_SERVICE_KEY/" .env
+        sed -i "s|SUPABASE_SERVICE_KEY=.*|SUPABASE_SERVICE_KEY=$SUPABASE_SERVICE_KEY|" .env
         print_success "Generated Supabase service role key"
     fi
 }
