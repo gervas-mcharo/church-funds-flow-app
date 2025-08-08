@@ -884,6 +884,21 @@ export type Database = {
           department_name: string
         }[]
       }
+      has_department_role: {
+        Args: {
+          user_id: string
+          dept_id: string
+          required_role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
       initialize_system_with_admin: {
         Args: { _user_id: string }
         Returns: undefined
