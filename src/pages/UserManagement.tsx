@@ -169,8 +169,7 @@ const UserManagement = () => {
     secretary: "Secretary",
     treasurer: "Church Treasurer",
     department_treasurer: "Department Treasurer",
-    department_member: "Department Member",
-    contributor: "Contributor" // Legacy role, not used in new system
+    department_member: "Department Member"
   };
 
   const getRoleBadgeColor = (role: AppRole) => {
@@ -185,7 +184,8 @@ const UserManagement = () => {
       case 'department_treasurer': return 'bg-green-100 text-green-800 border-green-200';
       case 'head_of_department': return 'bg-blue-100 text-blue-800';
       case 'department_member': return 'bg-purple-100 text-purple-800';
-      case 'contributor': return 'bg-gray-100 text-gray-800';
+      case 'secretary': return 'bg-gray-100 text-gray-800';
+      case 'data_entry_clerk': return 'bg-teal-100 text-teal-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
