@@ -14,7 +14,6 @@ CREATE TYPE public.app_role AS ENUM (
     'pastor',
     'general_secretary',
     'finance_elder',
-    'contributor',
     'department_treasurer'
 );
 

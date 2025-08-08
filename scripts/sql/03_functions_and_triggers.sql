@@ -58,16 +58,7 @@ AS $function$
   );
 $function$;
 
--- Function to get user departments
-CREATE OR REPLACE FUNCTION public.get_user_departments(user_id uuid)
-RETURNS TABLE(department_id uuid, role app_role)
-LANGUAGE sql
-STABLE SECURITY DEFINER
-AS $function$
-  SELECT dp.department_id, dp.role
-  FROM public.department_personnel dp
-  WHERE dp.user_id = user_id;
-$function$;
+-- Note: get_user_departments function removed as it doesn't exist in current database
 
 -- Function to check if user is department treasurer
 CREATE OR REPLACE FUNCTION public.is_department_treasurer(_user_id uuid, _department_id uuid)
@@ -191,6 +182,7 @@ AS $function$
         'finance_administrator', 
         'finance_manager', 
         'finance_elder', 
+        'treasurer',
         'general_secretary', 
         'pastor'
       )
@@ -212,6 +204,8 @@ AS $function$
         'finance_manager', 
         'finance_elder', 
         'data_entry_clerk',
+        'treasurer',
+        'department_treasurer',
         'general_secretary', 
         'pastor'
       )
