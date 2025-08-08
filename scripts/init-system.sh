@@ -21,14 +21,25 @@ fi
 
 print_success "Docker is running."
 
-# Check for Docker Compose using common function
+# Check for Docker Compose using common function  
 print_status "Checking Docker Compose installation..."
-COMPOSE_COMMAND=$(detect_compose_command) || exit 1
-
-# Function to run compose commands with the detected version  
-run_compose() {
-    $COMPOSE_COMMAND "$@"
-}
+# Validate Docker Compose is available and capture the command for display purposes
+if docker compose version >/dev/null 2>&1; then
+    COMPOSE_DISPLAY_COMMAND="docker compose"
+    COMPOSE_VERSION=$(docker compose version --short 2>/dev/null || echo "unknown")
+    print_success "Docker Compose V2 found (version: $COMPOSE_VERSION)"
+elif command -v docker-compose >/dev/null 2>&1; then
+    COMPOSE_DISPLAY_COMMAND="docker-compose"
+    COMPOSE_VERSION=$(docker-compose version --short 2>/dev/null || echo "unknown")
+    print_success "Docker Compose V1 found (version: $COMPOSE_VERSION)"
+    print_warning "You're using Docker Compose V1. Consider upgrading to V2 for better performance."
+else
+    print_error "Docker Compose is not installed."
+    print_error "Please install Docker Compose:"
+    print_error "  - For Docker Desktop: Compose is included"
+    print_error "  - For Linux: https://docs.docker.com/compose/install/"
+    exit 1
+fi
 
 # Create necessary directories
 print_status "Creating directory structure..."
@@ -171,6 +182,7 @@ setup_traefik() {
         exit 1
     fi
 }
+
 # Choose deployment type
 echo ""
 echo "Select deployment type:"
@@ -200,7 +212,6 @@ case $choice in
         exit 1
         ;;
 esac
-
 
 # Generate keys for both development and production modes
 generate_supabase_keys
@@ -255,10 +266,10 @@ fi
 
 echo ""
 echo "🔍 To view logs:"
-echo "  $COMPOSE_COMMAND -f $COMPOSE_FILE logs -f"
+echo "  $COMPOSE_DISPLAY_COMMAND -f $COMPOSE_FILE logs -f"
 echo ""
 echo "🛑 To stop services:"
-echo "  $COMPOSE_COMMAND -f $COMPOSE_FILE down"
+echo "  $COMPOSE_DISPLAY_COMMAND -f $COMPOSE_FILE down"
 echo ""
 
 print_warning "Don't forget to:"

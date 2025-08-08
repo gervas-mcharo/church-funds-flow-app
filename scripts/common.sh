@@ -26,7 +26,24 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Detect Docker Compose command
+# Detect Docker Compose command (silent version for command substitution)
+detect_compose_command_silent() {
+    local compose_command=""
+    
+    # Check for Docker Compose V2 (docker compose)
+    if docker compose version >/dev/null 2>&1; then
+        compose_command="docker compose"
+    # Check for Docker Compose V1 (docker-compose)
+    elif command -v docker-compose >/dev/null 2>&1; then
+        compose_command="docker-compose"
+    else
+        return 1
+    fi
+    
+    echo "$compose_command"
+}
+
+# Detect Docker Compose command (verbose version with output)
 detect_compose_command() {
     local compose_command=""
     
@@ -55,7 +72,8 @@ detect_compose_command() {
 # Function to run compose commands with the detected version
 run_compose() {
     local compose_cmd
-    compose_cmd=$(detect_compose_command) || return 1
+    # Use the silent version to avoid capturing print output
+    compose_cmd=$(detect_compose_command_silent) || return 1
     $compose_cmd "$@"
 }
 
