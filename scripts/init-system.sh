@@ -311,6 +311,8 @@ if [ $retry_count -eq $max_retries ]; then
 fi
 
 # STAGE 4: Run database migrations
+export ENVIRONMENT=$ENVIRONMENT
+export COMPOSE_FILE=$COMPOSE_FILE
 print_status "Running database migrations..."
 if ! ./scripts/migrate-db.sh; then
     print_error "Database migrations failed"
