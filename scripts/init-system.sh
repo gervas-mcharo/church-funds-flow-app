@@ -223,33 +223,145 @@ setup_traefik "$ENVIRONMENT"
 print_status "Pulling Docker images..."
 run_compose -f $COMPOSE_FILE pull
 
-# Start the services
-print_status "Starting services..."
-run_compose -f $COMPOSE_FILE up -d
+# STAGE 1: Start PostgreSQL first (to avoid dependency errors)
+print_status "Starting PostgreSQL..."
+run_compose -f $COMPOSE_FILE up -d postgres
 
-# Wait for database to be ready
-print_status "Waiting for database to be ready..."
-timeout=60
+# Wait for PostgreSQL to be healthy
+print_status "Waiting for PostgreSQL to be healthy (first run may take 2-3 minutes)..."
+timeout=300  # 5 minutes for initial setup
 counter=0
-until run_compose -f $COMPOSE_FILE exec -T postgres pg_isready -U ${POSTGRES_USER:-postgres} >/dev/null 2>&1; do
-    if [ $counter -eq $timeout ]; then
-        print_error "Database failed to start within $timeout seconds."
+start_time=$(date +%s)
+
+while [ $counter -lt $timeout ]; do
+    # Check if postgres service is healthy
+    postgres_status=$(run_compose -f $COMPOSE_FILE ps postgres --format "table {{.Status}}" | tail -n +2)
+    
+    if echo "$postgres_status" | grep -q "healthy"; then
+        print_success "PostgreSQL is healthy!"
+        break
+    fi
+    
+    # Check if postgres service is unhealthy (fail fast)
+    if echo "$postgres_status" | grep -q "unhealthy"; then
+        print_error "PostgreSQL container is unhealthy"
+        print_status "PostgreSQL status: $postgres_status"
+        print_status "Checking PostgreSQL logs:"
+        run_compose -f $COMPOSE_FILE logs --tail=30 postgres
         exit 1
     fi
-    echo -n "."
+    
+    # Progress indicator with timing
+    if [ $((counter % 10)) -eq 0 ]; then
+        elapsed=$(($(date +%s) - start_time))
+        if [ $counter -eq 0 ]; then
+            echo -n "  Progress: ."
+        else
+            echo -n " (${elapsed}s)."
+        fi
+    else
+        echo -n "."
+    fi
+    
     sleep 2
-    ((counter++))
+    ((counter += 2))
 done
 
-print_success "Database is ready!"
+# Check if we timed out
+if [ $counter -ge $timeout ]; then
+    print_error "PostgreSQL failed to become healthy within $timeout seconds."
+    print_status "Final PostgreSQL status:"
+    run_compose -f $COMPOSE_FILE ps postgres
+    print_status "Recent PostgreSQL logs:"
+    run_compose -f $COMPOSE_FILE logs --tail=50 postgres
+    exit 1
+fi
 
-# Run database migrations
+echo  # New line after progress dots
+
+# STAGE 2: Start all remaining services (dependencies should now be satisfied)
+print_status "Starting remaining services..."
+run_compose -f $COMPOSE_FILE up -d
+
+# Allow services time to initialize
+print_status "Allowing services to initialize..."
+sleep 15
+
+# STAGE 3: Verify database connectivity
+print_status "Verifying database connectivity..."
+retry_count=0
+max_retries=10
+
+while [ $retry_count -lt $max_retries ]; do
+    if run_compose -f $COMPOSE_FILE exec -T postgres pg_isready -U ${POSTGRES_USER:-postgres} >/dev/null 2>&1; then
+        print_success "Database connectivity verified!"
+        break
+    fi
+    
+    echo -n "."
+    sleep 2
+    ((retry_count++))
+done
+
+if [ $retry_count -eq $max_retries ]; then
+    print_error "Database connectivity check failed after $max_retries attempts"
+    print_status "Checking PostgreSQL process status:"
+    run_compose -f $COMPOSE_FILE exec -T postgres ps aux | grep postgres || true
+    exit 1
+fi
+
+# STAGE 4: Run database migrations
 print_status "Running database migrations..."
-./scripts/migrate-db.sh
+if ! ./scripts/migrate-db.sh; then
+    print_error "Database migrations failed"
+    print_status "Recent PostgreSQL logs:"
+    run_compose -f $COMPOSE_FILE logs --tail=30 postgres
+    exit 1
+fi
+
+# STAGE 5: Final health check of all services
+print_status "Performing final health check of all services..."
+sleep 5  # Allow services to settle after migrations
+
+# Check service statuses
+print_status "Checking service statuses..."
+all_services_status=$(run_compose -f $COMPOSE_FILE ps --format "table {{.Name}}\t{{.Status}}")
+
+echo "Service Status Summary:"
+echo "$all_services_status"
+
+# Check for any failed/exited services
+failed_services=$(echo "$all_services_status" | grep -E "(Exit|Restarting)" | awk '{print $1}' || true)
+if [ -n "$failed_services" ]; then
+    print_error "Some services have failed:"
+    echo "$failed_services"
+    for service in $failed_services; do
+        print_status "Logs for $service:"
+        run_compose -f $COMPOSE_FILE logs --tail=20 "$service"
+        echo "---"
+    done
+    print_error "Deployment failed due to service failures"
+    exit 1
+fi
+
+# Check for unhealthy services (warning, not failure)
+unhealthy_services=$(echo "$all_services_status" | grep -i unhealthy | awk '{print $1}' || true)
+if [ -n "$unhealthy_services" ]; then
+    print_warning "Some services are unhealthy (may resolve automatically):"
+    echo "$unhealthy_services"
+    print_status "This may not prevent basic functionality, but monitor these services."
+fi
 
 # Display status
 echo ""
 print_success "🎉 Church Management System is now running!"
+echo ""
+
+# Show running services count
+running_services=$(echo "$all_services_status" | grep -c -E "(running|Up|healthy)" || echo "0")
+total_services=$(echo "$all_services_status" | tail -n +2 | wc -l)
+print_status "Services: $running_services/$total_services running"
+
 echo ""
 echo "Access URLs:"
 if [ "$choice" = "1" ]; then
@@ -270,6 +382,9 @@ echo "  $COMPOSE_DISPLAY_COMMAND -f $COMPOSE_FILE logs -f"
 echo ""
 echo "🛑 To stop services:"
 echo "  $COMPOSE_DISPLAY_COMMAND -f $COMPOSE_FILE down"
+echo ""
+echo "📊 To check service status:"
+echo "  $COMPOSE_DISPLAY_COMMAND -f $COMPOSE_FILE ps"
 echo ""
 
 print_warning "Don't forget to:"
