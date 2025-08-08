@@ -877,34 +877,12 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
-      get_user_departments: {
-        Args: { user_id: string }
-        Returns: {
-          department_id: string
-          role: Database["public"]["Enums"]["app_role"]
-        }[]
-      }
       get_user_treasurer_departments: {
         Args: { _user_id: string }
         Returns: {
           department_id: string
           department_name: string
         }[]
-      }
-      has_department_role: {
-        Args: {
-          user_id: string
-          dept_id: string
-          required_role: Database["public"]["Enums"]["app_role"]
-        }
-        Returns: boolean
-      }
-      has_role: {
-        Args: {
-          _user_id: string
-          _role: Database["public"]["Enums"]["app_role"]
-        }
-        Returns: boolean
       }
       initialize_system_with_admin: {
         Args: { _user_id: string }
@@ -936,19 +914,17 @@ export type Database = {
     Enums: {
       app_role:
         | "administrator"
-        | "data_entry_clerk"
-        | "finance_manager"
-        | "head_of_department"
-        | "secretary"
-        | "treasurer"
-        | "department_member"
-        | "super_administrator"
         | "finance_administrator"
-        | "pastor"
-        | "general_secretary"
+        | "finance_manager"
         | "finance_elder"
-        | "contributor"
+        | "treasurer"
         | "department_treasurer"
+        | "data_entry_clerk"
+        | "general_secretary"
+        | "pastor"
+        | "head_of_department"
+        | "department_member"
+        | "secretary"
       money_request_status:
         | "submitted"
         | "pending_hod_approval"
@@ -1100,19 +1076,17 @@ export const Constants = {
     Enums: {
       app_role: [
         "administrator",
-        "data_entry_clerk",
-        "finance_manager",
-        "head_of_department",
-        "secretary",
-        "treasurer",
-        "department_member",
-        "super_administrator",
         "finance_administrator",
-        "pastor",
-        "general_secretary",
+        "finance_manager",
         "finance_elder",
-        "contributor",
+        "treasurer",
         "department_treasurer",
+        "data_entry_clerk",
+        "general_secretary",
+        "pastor",
+        "head_of_department",
+        "department_member",
+        "secretary",
       ],
       money_request_status: [
         "submitted",
