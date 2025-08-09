@@ -16,9 +16,20 @@ CREATE SCHEMA IF NOT EXISTS vault;
 CREATE SCHEMA IF NOT EXISTS graphql;
 CREATE SCHEMA IF NOT EXISTS graphql_public;
 
--- Create roles for RLS
+-- Create required Supabase roles first
 DO $$ 
 BEGIN
+    -- Create supabase_admin role first (required by Supabase PostgreSQL image)
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'supabase_admin') THEN
+        CREATE ROLE supabase_admin NOINHERIT NOLOGIN SUPERUSER;
+    END IF;
+
+    -- Create postgrest authenticator role
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticator') THEN
+        CREATE ROLE authenticator NOINHERIT NOLOGIN;
+    END IF;
+
+    -- Create standard Supabase roles for RLS
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
         CREATE ROLE anon NOINHERIT NOLOGIN;
     END IF;
@@ -43,6 +54,11 @@ BEGIN
         CREATE ROLE dashboard_user NOINHERIT NOLOGIN;
     END IF;
 END $$;
+
+-- Grant authenticator role the ability to assume other roles
+GRANT anon TO authenticator;
+GRANT authenticated TO authenticator;
+GRANT service_role TO authenticator;
 
 -- Grant permissions to anon role
 GRANT USAGE ON SCHEMA public TO anon;

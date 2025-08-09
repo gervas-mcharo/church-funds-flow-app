@@ -375,6 +375,21 @@ deploy_services() {
     cd "$PROJECT_ROOT"
     $DOCKER_COMPOSE_CMD -f "$compose_file" pull --quiet
     
+    # Check if PostgreSQL volume exists and warn about initialization
+    volume_name="postgres_local_data"
+    if [ "$mode" = "dev" ]; then
+        volume_name="postgres_dev_data"
+    elif [ "$mode" = "production" ]; then
+        volume_name="postgres_production_data"
+    fi
+    
+    if docker volume ls | grep -q "$volume_name"; then
+        print_warning "PostgreSQL volume exists. If you need fresh initialization, run:"
+        echo "   $DOCKER_COMPOSE_CMD -f $compose_file down -v"
+        echo "   docker volume rm $volume_name"
+        echo ""
+    fi
+    
     # Start PostgreSQL first to avoid dependency issues
     print_status "Starting PostgreSQL database..."
     $DOCKER_COMPOSE_CMD -f "$compose_file" up -d postgres
