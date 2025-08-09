@@ -53,13 +53,18 @@ update_env_file() {
     local key="$1"
     local value="$2"
     
+    # Escape special characters for sed
+    local escaped_value=$(printf '%s\n' "$value" | sed 's/[[\.*^$()+?{|]/\\&/g')
+    
     if grep -q "^$key=" "$env_file"; then
-        # Update existing key
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' "s|^$key=.*|$key=$value|" "$env_file"
-        else
-            sed -i "s|^$key=.*|$key=$value|" "$env_file"
-        fi
+        # Update existing key - use awk for more reliable handling
+        awk -v key="$key" -v value="$value" '
+            BEGIN { found = 0 }
+            /^[[:space:]]*#/ { print; next }
+            $0 ~ "^" key "=" { print key "=" value; found = 1; next }
+            { print }
+            END { if (!found) print key "=" value }
+        ' "$env_file" > "$env_file.tmp" && mv "$env_file.tmp" "$env_file"
     else
         # Add new key
         echo "$key=$value" >> "$env_file"
