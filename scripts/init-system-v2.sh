@@ -167,18 +167,11 @@ configure_local_mode() {
         echo "SUPABASE_MODE=local" >> "$env_file"
     fi
     
-    # Configure local URLs and keys
-    local updates=(
-        "s|SUPABASE_LOCAL_URL=.*|SUPABASE_LOCAL_URL=http://localhost/rest|"
-    )
+    # Configure local URLs using the update_env_file function from jwt-manager.sh
+    source "$PROJECT_ROOT/scripts/jwt-manager.sh"
     
-    for update in "${updates[@]}"; do
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' "$update" "$env_file"
-        else
-            sed -i "$update" "$env_file"
-        fi
-    done
+    # Update local URLs
+    update_env_file "SUPABASE_LOCAL_URL" "http://localhost/rest"
     
     print_success "Local mode configured"
     print_status "Use: docker-compose -f docker-compose.local.yml up -d"
