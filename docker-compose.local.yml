@@ -1,0 +1,248 @@
+# Local Supabase Stack - Full Local Development
+# Use this for complete local development with all Supabase services
+
+version: '3.8'
+
+services:
+  # Traefik Reverse Proxy for Local Development
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik-local
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "8080:8080"  # Dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.local.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/logs:/var/log/traefik
+    networks:
+      - traefik
+    environment:
+      - TRAEFIK_API_DASHBOARD=true
+      - TRAEFIK_API_INSECURE=true
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Supabase-compatible PostgreSQL with extensions
+  postgres:
+    image: supabase/postgres:15.1.0.147
+    container_name: postgres-local
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres_local_data:/var/lib/postgresql/data
+      - ./supabase/init:/docker-entrypoint-initdb.d
+    networks:
+      - supabase
+    ports:
+      - "5432:5432"
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+      - -c
+      - log_min_messages=fatal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  # PostgREST API
+  postgrest:
+    image: postgrest/postgrest:v12.0.2
+    container_name: postgrest-local
+    restart: unless-stopped
+    environment:
+      PGRST_DB_URI: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-postgres}
+      PGRST_DB_SCHEMAS: public,storage
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_LOG_LEVEL: info
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - supabase
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api-local.rule=Host(`localhost`) && PathPrefix(`/rest/`)"
+      - "traefik.http.routers.api-local.middlewares=api-stripprefix"
+      - "traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/rest"
+      - "traefik.http.services.api-local.loadbalancer.server.port=3000"
+
+  # GoTrue Authentication
+  gotrue:
+    image: supabase/gotrue:v2.151.0
+    container_name: gotrue-local
+    restart: unless-stopped
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-postgres}?search_path=auth
+      GOTRUE_SITE_URL: http://localhost
+      GOTRUE_URI_ALLOW_LIST: "*"
+      GOTRUE_JWT_SECRET: ${JWT_SECRET}
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_DISABLE_SIGNUP: false
+      GOTRUE_MAILER_AUTOCONFIRM: true
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: true
+      GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED: false
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - supabase
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.auth-local.rule=Host(`localhost`) && PathPrefix(`/auth/`)"
+      - "traefik.http.services.auth-local.loadbalancer.server.port=9999"
+
+  # Supabase Studio (Admin Dashboard)
+  studio:
+    image: supabase/studio:20240326-5e5586d
+    container_name: studio-local
+    restart: unless-stopped
+    environment:
+      STUDIO_PG_META_URL: http://meta:8080
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DEFAULT_ORGANIZATION_NAME: "${ORGANIZATION_NAME:-Church Management Local}"
+      DEFAULT_PROJECT_NAME: "${PROJECT_NAME:-Church App Local}"
+      SUPABASE_URL: http://localhost
+      SUPABASE_REST_URL: http://localhost/rest
+      SUPABASE_ANON_KEY: ${JWT_SECRET}
+      SUPABASE_SERVICE_KEY: ${JWT_SECRET}
+      LOGFLARE_API_KEY: your-logflare-key
+      LOGFLARE_URL: http://localhost:4000
+      NEXT_PUBLIC_ENABLE_LOGS: true
+    depends_on:
+      - meta
+      - postgres
+    networks:
+      - supabase
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.studio-local.rule=Host(`localhost`) && PathPrefix(`/studio/`)"
+      - "traefik.http.routers.studio-local.middlewares=studio-stripprefix"
+      - "traefik.http.middlewares.studio-stripprefix.stripprefix.prefixes=/studio"
+      - "traefik.http.services.studio-local.loadbalancer.server.port=3000"
+
+  # PG Meta (Database metadata API)
+  meta:
+    image: supabase/postgres-meta:v0.80.0
+    container_name: meta-local
+    restart: unless-stopped
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: postgres
+      PG_META_DB_PORT: 5432
+      PG_META_DB_NAME: ${POSTGRES_DB:-postgres}
+      PG_META_DB_USER: ${POSTGRES_USER:-postgres}
+      PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - supabase
+
+  # Storage API
+  storage:
+    image: supabase/storage-api:v1.0.6
+    container_name: storage-local
+    restart: unless-stopped
+    environment:
+      ANON_KEY: ${JWT_SECRET}
+      SERVICE_KEY: ${JWT_SECRET}
+      POSTGREST_URL: http://postgrest:3000
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-postgres}
+      FILE_SIZE_LIMIT: 52428800
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: stub
+      REGION: stub
+      GLOBAL_S3_BUCKET: stub
+    volumes:
+      - storage_local_data:/var/lib/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - supabase
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.storage-local.rule=Host(`localhost`) && PathPrefix(`/storage/`)"
+      - "traefik.http.services.storage-local.loadbalancer.server.port=5000"
+
+  # Edge Functions Runtime
+  functions:
+    image: supabase/edge-runtime:v1.45.2
+    container_name: functions-local
+    restart: unless-stopped
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      SUPABASE_URL: http://localhost
+      SUPABASE_ANON_KEY: ${JWT_SECRET}
+      SUPABASE_SERVICE_ROLE_KEY: ${JWT_SECRET}
+      VERIFY_JWT: false
+    volumes:
+      - ./supabase/functions:/home/deno/functions:ro
+    depends_on:
+      - postgres
+    networks:
+      - supabase
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.functions-local.rule=Host(`localhost`) && PathPrefix(`/functions/`)"
+      - "traefik.http.services.functions-local.loadbalancer.server.port=9000"
+
+  # Frontend Application (Development Mode)
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile.dev
+    container_name: frontend-local
+    restart: unless-stopped
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - VITE_SUPABASE_MODE=local
+      - VITE_SUPABASE_LOCAL_URL=http://localhost
+      - VITE_SUPABASE_LOCAL_ANON_KEY=${JWT_SECRET}
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend-local.rule=Host(`localhost`) && !PathPrefix(`/rest/`) && !PathPrefix(`/auth/`) && !PathPrefix(`/storage/`) && !PathPrefix(`/functions/`) && !PathPrefix(`/studio/`)"
+      - "traefik.http.services.frontend-local.loadbalancer.server.port=3000"
+
+networks:
+  traefik:
+    external: false
+  supabase:
+    external: false
+
+volumes:
+  postgres_local_data:
+  storage_local_data:
