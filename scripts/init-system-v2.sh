@@ -267,6 +267,85 @@ run_mode_setup() {
     esac
 }
 
+wait_for_container_health() {
+    local container_name="$1"
+    local compose_file="$2"
+    local timeout="${3:-300}"  # 5 minutes default
+    local counter=0
+    local start_time=$(date +%s)
+    
+    print_status "Waiting for $container_name to become healthy..."
+    
+    while [ $counter -lt $timeout ]; do
+        # Get container status using docker-compose ps
+        local container_status=$($DOCKER_COMPOSE_CMD -f "$compose_file" ps "$container_name" --format "table {{.Status}}" 2>/dev/null | tail -n +2 | head -n 1)
+        
+        if echo "$container_status" | grep -q "healthy"; then
+            print_success "$container_name is healthy!"
+            return 0
+        fi
+        
+        # Check if container is unhealthy (fail fast)
+        if echo "$container_status" | grep -q "unhealthy"; then
+            print_error "$container_name is unhealthy"
+            print_status "Container status: $container_status"
+            print_status "Recent logs:"
+            $DOCKER_COMPOSE_CMD -f "$compose_file" logs --tail=20 "$container_name"
+            return 1
+        fi
+        
+        # Progress indicator
+        if [ $((counter % 10)) -eq 0 ]; then
+            local elapsed=$(($(date +%s) - start_time))
+            if [ $counter -eq 0 ]; then
+                echo -n "  Progress: ."
+            else
+                echo -n " (${elapsed}s)."
+            fi
+        else
+            echo -n "."
+        fi
+        
+        sleep 2
+        ((counter += 2))
+    done
+    
+    # Timeout reached
+    print_error "$container_name failed to become healthy within $timeout seconds"
+    print_status "Final status:"
+    $DOCKER_COMPOSE_CMD -f "$compose_file" ps "$container_name"
+    print_status "Recent logs:"
+    $DOCKER_COMPOSE_CMD -f "$compose_file" logs --tail=30 "$container_name"
+    return 1
+}
+
+wait_for_critical_services() {
+    local compose_file="$1"
+    
+    print_status "Waiting for critical services to become healthy..."
+    
+    # Wait for PostgreSQL first (most critical dependency)
+    if ! wait_for_container_health "postgres" "$compose_file" 360; then
+        print_error "PostgreSQL failed to start - cannot continue"
+        return 1
+    fi
+    echo  # New line after progress dots
+    
+    # Wait for PostgREST (depends on PostgreSQL)
+    if ! wait_for_container_health "postgrest" "$compose_file" 120; then
+        print_warning "PostgREST failed to start - API may not be available"
+    fi
+    echo
+    
+    # Wait for GoTrue (depends on PostgreSQL) 
+    if ! wait_for_container_health "gotrue" "$compose_file" 120; then
+        print_warning "GoTrue failed to start - authentication may not be available"
+    fi
+    echo
+    
+    print_success "Critical services are ready!"
+}
+
 deploy_services() {
     local mode="$1"
     
@@ -296,17 +375,42 @@ deploy_services() {
     cd "$PROJECT_ROOT"
     $DOCKER_COMPOSE_CMD -f "$compose_file" pull --quiet
     
-    # Start services
-    print_status "Starting services..."
+    # Start PostgreSQL first to avoid dependency issues
+    print_status "Starting PostgreSQL database..."
+    $DOCKER_COMPOSE_CMD -f "$compose_file" up -d postgres
+    
+    # Wait for PostgreSQL to become healthy
+    if ! wait_for_container_health "postgres" "$compose_file" 360; then
+        print_error "PostgreSQL failed to start - deployment cannot continue"
+        exit 1
+    fi
+    echo  # New line after progress dots
+    
+    # Start remaining services
+    print_status "Starting remaining services..."
     $DOCKER_COMPOSE_CMD -f "$compose_file" up -d
     
-    # Wait for services to be ready
-    print_status "Waiting for services to start..."
-    sleep 10
+    # Wait for critical services
+    if ! wait_for_critical_services "$compose_file"; then
+        print_error "Critical services failed to start properly"
+        exit 1
+    fi
     
-    # Check service health
-    print_status "Checking service status..."
+    # Final service status check
+    print_status "Checking final service status..."
     $DOCKER_COMPOSE_CMD -f "$compose_file" ps
+    
+    # Check for any failed services
+    local failed_services=$($DOCKER_COMPOSE_CMD -f "$compose_file" ps --format "table {{.Name}}\t{{.Status}}" | grep -E "(Exit|Restarting)" | awk '{print $1}' || true)
+    if [ -n "$failed_services" ]; then
+        print_error "Some services failed to start:"
+        echo "$failed_services"
+        for service in $failed_services; do
+            print_status "Logs for $service:"
+            $DOCKER_COMPOSE_CMD -f "$compose_file" logs --tail=20 "$service"
+        done
+        exit 1
+    fi
     
     print_success "Services deployed successfully!"
 }
