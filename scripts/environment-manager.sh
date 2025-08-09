@@ -123,7 +123,7 @@ init_environment() {
     else
         print_status "Generating JWT secret..."
         local jwt_secret=$(openssl rand -base64 32 | tr -d '\n')
-        sed -i.bak "s/JWT_SECRET=your-super-secret-jwt-token-with-at-least-32-characters-long/JWT_SECRET=$jwt_secret/" "$PROJECT_ROOT/.env"
+        sed -i.bak "s|JWT_SECRET=your-super-secret-jwt-token-with-at-least-32-characters-long|JWT_SECRET=$jwt_secret|" "$PROJECT_ROOT/.env"
         print_success "JWT secret generated"
     fi
     
@@ -170,7 +170,7 @@ switch_mode() {
     
     # Update SUPABASE_MODE in .env
     if grep -q "SUPABASE_MODE=" "$PROJECT_ROOT/.env"; then
-        sed -i.bak "s/SUPABASE_MODE=.*/SUPABASE_MODE=$target_mode/" "$PROJECT_ROOT/.env"
+        sed -i.bak "s|SUPABASE_MODE=.*|SUPABASE_MODE=$target_mode|" "$PROJECT_ROOT/.env"
     else
         echo "SUPABASE_MODE=$target_mode" >> "$PROJECT_ROOT/.env"
     fi
@@ -187,8 +187,8 @@ switch_mode() {
                 local anon_key="$JWT_SECRET"
                 local service_key="$JWT_SECRET"
                 
-                sed -i.bak "s/SUPABASE_LOCAL_ANON_KEY=.*/SUPABASE_LOCAL_ANON_KEY=$anon_key/" "$PROJECT_ROOT/.env"
-                sed -i.bak "s/SUPABASE_LOCAL_SERVICE_KEY=.*/SUPABASE_LOCAL_SERVICE_KEY=$service_key/" "$PROJECT_ROOT/.env"
+                sed -i.bak "s|SUPABASE_LOCAL_ANON_KEY=.*|SUPABASE_LOCAL_ANON_KEY=$anon_key|" "$PROJECT_ROOT/.env"
+                sed -i.bak "s|SUPABASE_LOCAL_SERVICE_KEY=.*|SUPABASE_LOCAL_SERVICE_KEY=$service_key|" "$PROJECT_ROOT/.env"
                 print_success "Local keys configured"
             fi
             

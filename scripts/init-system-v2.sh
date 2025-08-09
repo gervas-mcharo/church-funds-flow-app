@@ -136,9 +136,9 @@ validate_and_generate_secrets() {
         
         if grep -q "POSTGRES_PASSWORD=" "$env_file"; then
             if [[ "$OSTYPE" == "darwin"* ]]; then
-                sed -i '' "s/POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$new_db_password/" "$env_file"
+                sed -i '' "s|POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$new_db_password|" "$env_file"
             else
-                sed -i "s/POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$new_db_password/" "$env_file"
+                sed -i "s|POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$new_db_password|" "$env_file"
             fi
         else
             echo "POSTGRES_PASSWORD=$new_db_password" >> "$env_file"
@@ -162,7 +162,7 @@ configure_local_mode() {
     
     # Update mode
     if grep -q "SUPABASE_MODE=" "$env_file"; then
-        sed -i.bak "s/SUPABASE_MODE=.*/SUPABASE_MODE=local/" "$env_file"
+        sed -i.bak "s|SUPABASE_MODE=.*|SUPABASE_MODE=local|" "$env_file"
     else
         echo "SUPABASE_MODE=local" >> "$env_file"
     fi
@@ -185,9 +185,9 @@ configure_cloud_mode() {
     # Update mode
     if grep -q "SUPABASE_MODE=" "$env_file"; then
         if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' "s/SUPABASE_MODE=.*/SUPABASE_MODE=cloud/" "$env_file"
+            sed -i '' "s|SUPABASE_MODE=.*|SUPABASE_MODE=cloud|" "$env_file"
         else
-            sed -i "s/SUPABASE_MODE=.*/SUPABASE_MODE=cloud/" "$env_file"
+            sed -i "s|SUPABASE_MODE=.*|SUPABASE_MODE=cloud|" "$env_file"
         fi
     else
         echo "SUPABASE_MODE=cloud" >> "$env_file"
@@ -220,9 +220,9 @@ configure_production_mode() {
     # Update mode
     if grep -q "SUPABASE_MODE=" "$env_file"; then
         if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' "s/SUPABASE_MODE=.*/SUPABASE_MODE=production/" "$env_file"
+            sed -i '' "s|SUPABASE_MODE=.*|SUPABASE_MODE=production|" "$env_file"
         else
-            sed -i "s/SUPABASE_MODE=.*/SUPABASE_MODE=production/" "$env_file"
+            sed -i "s|SUPABASE_MODE=.*|SUPABASE_MODE=production|" "$env_file"
         fi
     else
         echo "SUPABASE_MODE=production" >> "$env_file"
@@ -234,11 +234,11 @@ configure_production_mode() {
         read -p "Enter your domain name (e.g., example.com): " user_domain
         if [ -n "$user_domain" ]; then
             if [[ "$OSTYPE" == "darwin"* ]]; then
-                sed -i '' "s/DOMAIN=.*/DOMAIN=$user_domain/" "$env_file"
-                sed -i '' "s/ACME_EMAIL=.*/ACME_EMAIL=admin@$user_domain/" "$env_file"
+                sed -i '' "s|DOMAIN=.*|DOMAIN=$user_domain|" "$env_file"
+                sed -i '' "s|ACME_EMAIL=.*|ACME_EMAIL=admin@$user_domain|" "$env_file"
             else
-                sed -i "s/DOMAIN=.*/DOMAIN=$user_domain/" "$env_file"
-                sed -i "s/ACME_EMAIL=.*/ACME_EMAIL=admin@$user_domain/" "$env_file"
+                sed -i "s|DOMAIN=.*|DOMAIN=$user_domain|" "$env_file"
+                sed -i "s|ACME_EMAIL=.*|ACME_EMAIL=admin@$user_domain|" "$env_file"
             fi
         fi
     fi

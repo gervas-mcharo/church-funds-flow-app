@@ -76,7 +76,7 @@ if [ "${1:-production}" = "production" ]; then
         export ACME_EMAIL="admin@$DOMAIN"
         # Update .env file
         if grep -q "^ACME_EMAIL=" .env; then
-            sed -i "s/^ACME_EMAIL=.*/ACME_EMAIL=$ACME_EMAIL/" .env
+            sed -i "s|^ACME_EMAIL=.*|ACME_EMAIL=$ACME_EMAIL|" .env
         else
             echo "ACME_EMAIL=$ACME_EMAIL" >> .env
         fi
