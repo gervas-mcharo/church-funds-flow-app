@@ -18,7 +18,6 @@ DEFAULT_EXPIRY=3600
 DEFAULT_ALGORITHM="HS256"
 
 generate_jwt_secret() {
-    print_status "Generating JWT secret..."
     openssl rand -base64 32 | tr -d '\n'
 }
 
