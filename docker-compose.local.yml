@@ -65,11 +65,14 @@ services:
     restart: unless-stopped
     environment:
       PGRST_DB_URI: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-postgres}
-      PGRST_DB_SCHEMAS: public,storage
+      PGRST_DB_SCHEMAS: public,storage,graphql_public
       PGRST_DB_ANON_ROLE: anon
       PGRST_DB_USE_LEGACY_GUCS: "false"
       PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_JWT_SECRET_IS_BASE64: "false"
       PGRST_LOG_LEVEL: info
+      PGRST_DB_MAX_ROWS: 1000
+      PGRST_DB_PLAN_ENABLED: "true"
     depends_on:
       postgres:
         condition: service_healthy
@@ -79,9 +82,15 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api-local.rule=Host(`localhost`) && PathPrefix(`/rest/`)"
-      - "traefik.http.routers.api-local.middlewares=api-stripprefix"
+      - "traefik.http.routers.api-local.middlewares=api-stripprefix,api-cors"
       - "traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/rest"
       - "traefik.http.services.api-local.loadbalancer.server.port=3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   # GoTrue Authentication
   gotrue:
@@ -102,8 +111,17 @@ services:
       GOTRUE_JWT_AUD: authenticated
       GOTRUE_DISABLE_SIGNUP: false
       GOTRUE_MAILER_AUTOCONFIRM: true
+      GOTRUE_MAILER_SECURE_EMAIL_CHANGE_ENABLED: false
       GOTRUE_EXTERNAL_EMAIL_ENABLED: true
       GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED: false
+      GOTRUE_PASSWORD_MIN_LENGTH: 6
+      GOTRUE_SMS_AUTOCONFIRM: true
+      # SMTP Configuration (optional)
+      GOTRUE_SMTP_HOST: ${SMTP_HOST:-}
+      GOTRUE_SMTP_PORT: ${SMTP_PORT:-587}
+      GOTRUE_SMTP_USER: ${SMTP_USER:-}
+      GOTRUE_SMTP_PASS: ${SMTP_PASS:-}
+      GOTRUE_SMTP_ADMIN_EMAIL: ${SMTP_ADMIN_EMAIL:-admin@localhost}
     depends_on:
       postgres:
         condition: service_healthy
@@ -113,7 +131,14 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.auth-local.rule=Host(`localhost`) && PathPrefix(`/auth/`)"
+      - "traefik.http.routers.auth-local.middlewares=auth-cors"
       - "traefik.http.services.auth-local.loadbalancer.server.port=9999"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9999/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
   # Supabase Studio (Admin Dashboard)
   studio:
@@ -126,24 +151,36 @@ services:
       DEFAULT_ORGANIZATION_NAME: "${ORGANIZATION_NAME:-Church Management Local}"
       DEFAULT_PROJECT_NAME: "${PROJECT_NAME:-Church App Local}"
       SUPABASE_URL: http://localhost
-      SUPABASE_REST_URL: http://localhost/rest
-      SUPABASE_ANON_KEY: ${JWT_SECRET}
-      SUPABASE_SERVICE_KEY: ${JWT_SECRET}
-      LOGFLARE_API_KEY: your-logflare-key
+      SUPABASE_REST_URL: http://localhost/rest/v1
+      SUPABASE_ANON_KEY: ${SUPABASE_LOCAL_ANON_KEY:-${JWT_SECRET}}
+      SUPABASE_SERVICE_KEY: ${SUPABASE_LOCAL_SERVICE_KEY:-${JWT_SECRET}}
+      SUPABASE_PUBLIC_URL: http://localhost
+      LOGFLARE_API_KEY: stub
       LOGFLARE_URL: http://localhost:4000
       NEXT_PUBLIC_ENABLE_LOGS: true
+      NEXT_PUBLIC_STUDIO_URL: http://localhost/studio
     depends_on:
-      - meta
-      - postgres
+      meta:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      postgrest:
+        condition: service_healthy
     networks:
       - supabase
       - traefik
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.studio-local.rule=Host(`localhost`) && PathPrefix(`/studio/`)"
+      - "traefik.http.routers.studio-local.rule=Host(`studio.localhost`) || (Host(`localhost`) && PathPrefix(`/studio/`))"
       - "traefik.http.routers.studio-local.middlewares=studio-stripprefix"
       - "traefik.http.middlewares.studio-stripprefix.stripprefix.prefixes=/studio"
       - "traefik.http.services.studio-local.loadbalancer.server.port=3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
   # PG Meta (Database metadata API)
   meta:
@@ -169,8 +206,8 @@ services:
     container_name: storage-local
     restart: unless-stopped
     environment:
-      ANON_KEY: ${JWT_SECRET}
-      SERVICE_KEY: ${JWT_SECRET}
+      ANON_KEY: ${SUPABASE_LOCAL_ANON_KEY:-${JWT_SECRET}}
+      SERVICE_KEY: ${SUPABASE_LOCAL_SERVICE_KEY:-${JWT_SECRET}}
       POSTGREST_URL: http://postgrest:3000
       PGRST_JWT_SECRET: ${JWT_SECRET}
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-postgres}
@@ -178,12 +215,16 @@ services:
       STORAGE_BACKEND: file
       FILE_STORAGE_BACKEND_PATH: /var/lib/storage
       TENANT_ID: stub
-      REGION: stub
+      REGION: local
       GLOBAL_S3_BUCKET: stub
+      ENABLE_IMAGE_TRANSFORMATION: "true"
+      IMGPROXY_URL: http://imgproxy:8080
     volumes:
       - storage_local_data:/var/lib/storage
     depends_on:
       postgres:
+        condition: service_healthy
+      postgrest:
         condition: service_healthy
     networks:
       - supabase
@@ -191,7 +232,14 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.storage-local.rule=Host(`localhost`) && PathPrefix(`/storage/`)"
+      - "traefik.http.routers.storage-local.middlewares=storage-cors"
       - "traefik.http.services.storage-local.loadbalancer.server.port=5000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5000/status || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
   # Edge Functions Runtime
   functions:
@@ -201,20 +249,29 @@ services:
     environment:
       JWT_SECRET: ${JWT_SECRET}
       SUPABASE_URL: http://localhost
-      SUPABASE_ANON_KEY: ${JWT_SECRET}
-      SUPABASE_SERVICE_ROLE_KEY: ${JWT_SECRET}
-      VERIFY_JWT: false
+      SUPABASE_ANON_KEY: ${SUPABASE_LOCAL_ANON_KEY:-${JWT_SECRET}}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_LOCAL_SERVICE_KEY:-${JWT_SECRET}}
+      VERIFY_JWT: "true"
+      IMPORT_MAP_PATH: /home/deno/functions/import_map.json
     volumes:
       - ./supabase/functions:/home/deno/functions:ro
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - supabase
       - traefik
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.functions-local.rule=Host(`localhost`) && PathPrefix(`/functions/`)"
+      - "traefik.http.routers.functions-local.middlewares=functions-cors"
       - "traefik.http.services.functions-local.loadbalancer.server.port=9000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   # Frontend Application (Development Mode)
   frontend:
@@ -228,14 +285,25 @@ services:
       - /app/node_modules
     environment:
       - VITE_SUPABASE_MODE=local
-      - VITE_SUPABASE_LOCAL_URL=http://localhost
-      - VITE_SUPABASE_LOCAL_ANON_KEY=${JWT_SECRET}
+      - VITE_SUPABASE_LOCAL_URL=http://localhost/rest
+      - VITE_SUPABASE_LOCAL_ANON_KEY=${SUPABASE_LOCAL_ANON_KEY:-${JWT_SECRET}}
+    depends_on:
+      postgrest:
+        condition: service_healthy
+      gotrue:
+        condition: service_healthy
     networks:
       - traefik
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend-local.rule=Host(`localhost`) && !PathPrefix(`/rest/`) && !PathPrefix(`/auth/`) && !PathPrefix(`/storage/`) && !PathPrefix(`/functions/`) && !PathPrefix(`/studio/`)"
       - "traefik.http.services.frontend-local.loadbalancer.server.port=3000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
 networks:
   traefik:

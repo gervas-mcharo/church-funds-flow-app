@@ -123,17 +123,10 @@ validate_and_generate_secrets() {
     
     # Generate strong JWT secret if needed
     if [ -z "$JWT_SECRET" ] || [ ${#JWT_SECRET} -lt 32 ] || [ "$JWT_SECRET" = "your-super-secret-jwt-token-with-at-least-32-characters-long" ]; then
-        print_status "Generating strong JWT secret..."
-        local new_jwt_secret=$(openssl rand -base64 32 | tr -d '\n')
-        
-        if grep -q "JWT_SECRET=" "$env_file"; then
-            sed -i.bak "s/JWT_SECRET=.*/JWT_SECRET=$new_jwt_secret/" "$env_file"
-        else
-            echo "JWT_SECRET=$new_jwt_secret" >> "$env_file"
-        fi
-        
+        print_status "Generating JWT tokens using JWT manager..."
+        bash "$SCRIPT_DIR/jwt-manager.sh" generate
         secrets_updated=true
-        print_success "JWT secret generated"
+        print_success "JWT tokens generated"
     fi
     
     # Generate PostgreSQL password if using default
@@ -142,7 +135,11 @@ validate_and_generate_secrets() {
         local new_db_password=$(openssl rand -base64 16 | tr -d '\n')
         
         if grep -q "POSTGRES_PASSWORD=" "$env_file"; then
-            sed -i.bak "s/POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$new_db_password/" "$env_file"
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                sed -i '' "s/POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$new_db_password/" "$env_file"
+            else
+                sed -i "s/POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$new_db_password/" "$env_file"
+            fi
         else
             echo "POSTGRES_PASSWORD=$new_db_password" >> "$env_file"
         fi
@@ -172,13 +169,15 @@ configure_local_mode() {
     
     # Configure local URLs and keys
     local updates=(
-        "s|SUPABASE_LOCAL_URL=.*|SUPABASE_LOCAL_URL=http://localhost|"
-        "s|SUPABASE_LOCAL_ANON_KEY=.*|SUPABASE_LOCAL_ANON_KEY=$JWT_SECRET|"
-        "s|SUPABASE_LOCAL_SERVICE_KEY=.*|SUPABASE_LOCAL_SERVICE_KEY=$JWT_SECRET|"
+        "s|SUPABASE_LOCAL_URL=.*|SUPABASE_LOCAL_URL=http://localhost/rest|"
     )
     
     for update in "${updates[@]}"; do
-        sed -i.bak "$update" "$env_file"
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "$update" "$env_file"
+        else
+            sed -i "$update" "$env_file"
+        fi
     done
     
     print_success "Local mode configured"
@@ -192,7 +191,11 @@ configure_cloud_mode() {
     
     # Update mode
     if grep -q "SUPABASE_MODE=" "$env_file"; then
-        sed -i.bak "s/SUPABASE_MODE=.*/SUPABASE_MODE=cloud/" "$env_file"
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "s/SUPABASE_MODE=.*/SUPABASE_MODE=cloud/" "$env_file"
+        else
+            sed -i "s/SUPABASE_MODE=.*/SUPABASE_MODE=cloud/" "$env_file"
+        fi
     else
         echo "SUPABASE_MODE=cloud" >> "$env_file"
     fi
@@ -223,7 +226,11 @@ configure_production_mode() {
     
     # Update mode
     if grep -q "SUPABASE_MODE=" "$env_file"; then
-        sed -i.bak "s/SUPABASE_MODE=.*/SUPABASE_MODE=production/" "$env_file"
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "s/SUPABASE_MODE=.*/SUPABASE_MODE=production/" "$env_file"
+        else
+            sed -i "s/SUPABASE_MODE=.*/SUPABASE_MODE=production/" "$env_file"
+        fi
     else
         echo "SUPABASE_MODE=production" >> "$env_file"
     fi
@@ -233,8 +240,13 @@ configure_production_mode() {
         echo ""
         read -p "Enter your domain name (e.g., example.com): " user_domain
         if [ -n "$user_domain" ]; then
-            sed -i.bak "s/DOMAIN=.*/DOMAIN=$user_domain/" "$env_file"
-            sed -i.bak "s/ACME_EMAIL=.*/ACME_EMAIL=admin@$user_domain/" "$env_file"
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                sed -i '' "s/DOMAIN=.*/DOMAIN=$user_domain/" "$env_file"
+                sed -i '' "s/ACME_EMAIL=.*/ACME_EMAIL=admin@$user_domain/" "$env_file"
+            else
+                sed -i "s/DOMAIN=.*/DOMAIN=$user_domain/" "$env_file"
+                sed -i "s/ACME_EMAIL=.*/ACME_EMAIL=admin@$user_domain/" "$env_file"
+            fi
         fi
     fi
     
@@ -334,11 +346,13 @@ show_completion_info() {
     echo "  Mode: $SUPABASE_MODE"
     echo "  Frontend: http://localhost"
     
-    case "$SUPABASE_MODE" in
+        case "$SUPABASE_MODE" in
         "local")
             echo "  Studio: http://localhost/studio/"
             echo "  API: http://localhost/rest/"
             echo "  Auth: http://localhost/auth/"
+            echo "  Storage: http://localhost/storage/"
+            echo "  Functions: http://localhost/functions/"
             ;;
         "cloud")
             echo "  Supabase: $SUPABASE_CLOUD_URL"
@@ -372,6 +386,8 @@ show_completion_info() {
     echo "  Switch modes: ./scripts/environment-manager.sh switch [local|cloud|production]"
     echo "  Check status: ./scripts/environment-manager.sh status"
     echo "  Validate config: ./scripts/environment-manager.sh validate"
+    echo "  Health check: ./scripts/service-health-check.sh check"
+    echo "  JWT management: ./scripts/jwt-manager.sh [generate|validate|rotate]"
     
     echo ""
     print_warning "Next Steps:"
