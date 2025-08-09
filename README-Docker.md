@@ -1,153 +1,225 @@
 # Church Management System - Docker Deployment
 
-A complete containerized solution for the Church Financial Management System using Docker Compose with Traefik reverse proxy and self-hosted Supabase.
+A complete containerized solution for the Church Financial Management System with flexible deployment modes: Local Supabase Stack, Cloud Integration, and Production.
 
-## 🏗️ Architecture
+## 🏗️ Architecture Overview
+
+The system supports three deployment modes with automatic environment detection:
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │     Traefik     │    │    Frontend     │    │   Supabase      │
-│ Reverse Proxy   │───▶│  React App      │    │   Stack         │
-│ SSL/LetsEncrypt │    │  (Nginx)        │    │                 │
+│ Reverse Proxy   │───▶│  React App      │    │   Services      │
+│ SSL/Routing     │    │  (Auto-Config)  │    │ (Local/Cloud)   │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                                              │
-         └──────────────────┬─────────────────────────────┘
-                           │
-                    ┌─────────────────┐
-                    │   PostgreSQL    │
-                    │   Database      │
-                    └─────────────────┘
+          │                                              │
+          └──────────────────┬─────────────────────────────┘
+                            │
+                     ┌─────────────────┐
+                     │   PostgreSQL    │
+                     │ (Local/Cloud)   │
+                     └─────────────────┘
 ```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-
 - Docker Engine 20.10+
 - Docker Compose v2.0+
 - Domain name (for production)
-- 2GB+ RAM recommended
+- 4GB+ RAM (for local mode)
 
-### 1. Clone and Setup
+### 1. Initialize System
 
 ```bash
+# Clone and setup
 git clone <repository-url>
 cd church-management-system
-
-# Make scripts executable
 chmod +x scripts/*.sh
 
-# Copy environment file
-cp .env.example .env
+# Interactive initialization
+./scripts/init-system-v2.sh
+
+# Or specify mode directly
+./scripts/init-system-v2.sh local      # Full local Supabase stack
+./scripts/init-system-v2.sh cloud      # Cloud Supabase integration
+./scripts/init-system-v2.sh production # Production deployment
 ```
 
-### 2. Configure Environment
-
-Edit `.env` file with your settings:
+### 2. Deploy Services
 
 ```bash
-# Required Settings
-DOMAIN=your-domain.com
-POSTGRES_PASSWORD=your-secure-password
-JWT_SECRET=your-32-character-jwt-secret-key
-SUPABASE_ANON_KEY=your-supabase-anon-key
-SUPABASE_SERVICE_KEY=your-supabase-service-key
+# Local development (all services local)
+docker-compose -f docker-compose.local.yml up -d
 
-# Email Configuration (optional)
-SMTP_HOST=smtp.gmail.com
-SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-app-password
+# Cloud integration (lightweight local)
+docker-compose -f docker-compose.cloud.yml up -d
+
+# Production deployment
+docker-compose -f docker-compose.yml up -d
 ```
 
-### 3. Deploy
+### 3. Apply Migrations
 
 ```bash
-# Initialize the system
-./scripts/init-system.sh
+# Enhanced migration system (auto-detects mode)
+./scripts/migrate-db-v2.sh
+```
 
-# Choose deployment type:
-# 1) Development (localhost)
-# 2) Production (with domain)
+## 📋 Deployment Modes
+
+### Local Mode - Full Supabase Stack
+**Best for:** Complete offline development
+
+**Services included:**
+- PostgreSQL with Supabase extensions
+- PostgREST (Auto REST API)
+- GoTrue (Authentication)
+- Storage API (File management)
+- Studio (Admin dashboard)
+- Edge Functions (Serverless runtime)
+
+**URLs:**
+- Application: `http://localhost`
+- Studio: `http://localhost/studio/`
+- API: `http://localhost/rest/`
+
+### Cloud Mode - Hybrid Development
+**Best for:** Production-like development
+
+**Services included:**
+- Local frontend with hot-reload
+- Cloud Supabase backend
+- Traefik for local routing
+
+**Setup:**
+1. Create Supabase project at https://supabase.com
+2. Update `.env` with cloud credentials
+3. Deploy with cloud compose file
+
+### Production Mode - Full Production
+**Best for:** Live deployment
+
+**Features:**
+- SSL certificates (Let's Encrypt)
+- Domain-based routing
+- Security headers
+- Rate limiting
+
+## 🔧 Environment Management
+
+### Switch Between Modes
+
+```bash
+# Check current status
+./scripts/environment-manager.sh status
+
+# Switch modes
+./scripts/environment-manager.sh switch local
+./scripts/environment-manager.sh switch cloud
+./scripts/environment-manager.sh switch production
+
+# Validate configuration
+./scripts/environment-manager.sh validate
+```
+
+### JWT and Security Management
+
+```bash
+# Generate secure JWT tokens
+./scripts/jwt-manager.sh generate
+
+# Rotate JWT secrets
+./scripts/jwt-manager.sh rotate
+
+# Validate JWT configuration
+./scripts/jwt-manager.sh validate
+```
+
+### Health Monitoring
+
+```bash
+# Check all service health
+./scripts/service-health-check.sh
+
+# Check specific mode services
+./scripts/service-health-check.sh local
+./scripts/service-health-check.sh cloud
 ```
 
 ## 📁 Project Structure
 
 ```
-project/
-├── docker-compose.yml              # Production configuration
-├── docker-compose.dev.yml          # Development configuration
-├── .env.example                    # Environment template
+church-management-system/
+├── docker-compose.local.yml     # Local Supabase stack
+├── docker-compose.cloud.yml     # Cloud integration
+├── docker-compose.yml           # Production deployment
+├── .env.example                 # Environment template
 │
 ├── frontend/
-│   ├── Dockerfile                  # Production frontend build
-│   ├── Dockerfile.dev              # Development with hot-reload
-│   └── nginx.conf                  # Nginx configuration
+│   ├── Dockerfile              # Production build
+│   ├── Dockerfile.dev          # Development with hot-reload
+│   └── nginx.conf              # Nginx configuration
 │
 ├── traefik/
-│   ├── traefik.yml                 # Production Traefik config
-│   ├── traefik.dev.yml             # Development Traefik config
-│   ├── dynamic.yml                 # Dynamic configuration
-│   └── acme.json                   # SSL certificates (auto-generated)
+│   ├── traefik.local.yml       # Local development routing
+│   ├── traefik.cloud.yml       # Cloud integration routing
+│   └── traefik.yml             # Production routing
 │
 ├── supabase/
-│   └── migrations/                 # Database migrations
-│       ├── 01_initial_schema.sql
-│       ├── 02_rls_policies.sql
-│       └── 03_functions_and_triggers.sql
+│   ├── init/                   # Database initialization
+│   ├── functions/              # Edge functions
+│   └── migrations/             # Schema migrations
 │
 └── scripts/
-    ├── init-system.sh              # System initialization
-    ├── migrate-db.sh               # Database migration
-    └── backup.sh                   # Backup utilities
+    ├── init-system-v2.sh       # Enhanced system initialization
+    ├── environment-manager.sh  # Mode switching and validation
+    ├── jwt-manager.sh          # JWT token management
+    ├── migrate-db-v2.sh        # Enhanced migration system
+    └── service-health-check.sh # Health monitoring
 ```
 
-## 🌐 Service URLs
+## ⚙️ Configuration
 
-### Development (localhost)
-- **Application**: http://localhost
-- **Admin Panel**: http://localhost/admin
-- **Traefik Dashboard**: http://localhost:8080
-- **Database**: localhost:5432
+### Essential Environment Variables
 
-### Production (with domain)
-- **Application**: https://your-domain.com
-- **Admin Panel**: https://admin.your-domain.com
-- **API**: https://api.your-domain.com
-- **Traefik Dashboard**: https://traefik.your-domain.com
+```bash
+# Core Settings
+SUPABASE_MODE=local              # local, cloud, or production
+DOMAIN=your-domain.com           # For production
+POSTGRES_PASSWORD=auto-generated # Secure database password
+JWT_SECRET=auto-generated        # 32-character JWT secret
 
-## 🔧 Configuration
+# Local Mode
+SUPABASE_LOCAL_URL=http://localhost
+SUPABASE_LOCAL_ANON_KEY=auto-generated
+SUPABASE_LOCAL_SERVICE_KEY=auto-generated
 
-### Environment Variables
+# Cloud Mode
+SUPABASE_CLOUD_URL=https://your-project.supabase.co
+SUPABASE_CLOUD_ANON_KEY=your-cloud-anon-key
+SUPABASE_CLOUD_SERVICE_KEY=your-cloud-service-key
 
-| Variable | Description | Required | Default |
-|----------|-------------|----------|---------|
-| `DOMAIN` | Your domain name | Production | `localhost` |
-| `POSTGRES_PASSWORD` | Database password | Yes | - |
-| `JWT_SECRET` | JWT signing secret (32+ chars) | Yes | - |
-| `SUPABASE_ANON_KEY` | Anonymous access key | Yes | - |
-| `SUPABASE_SERVICE_KEY` | Service role key | Yes | - |
-| `SMTP_HOST` | Email server host | No | - |
-| `SMTP_USER` | Email username | No | - |
-| `SMTP_PASS` | Email password | No | - |
-
-### SSL Certificates
-
-Production deployment automatically obtains SSL certificates from Let's Encrypt. Ensure:
-
-1. Domain points to your server
-2. Ports 80 and 443 are open
-3. `ACME_EMAIL` is set in `.env`
+# Email (Optional)
+SMTP_HOST=smtp.gmail.com
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+```
 
 ## 🗄️ Database Management
 
 ### Migrations
 
 ```bash
-# Run migrations manually
-./scripts/migrate-db.sh
+# Run enhanced migrations
+./scripts/migrate-db-v2.sh
+
+# For cloud mode (generates SQL file)
+./scripts/migrate-db-v2.sh
+# Then apply migrations_for_cloud.sql in Supabase Dashboard
 
 # Check migration status
-docker exec postgres psql -U postgres -d postgres -c "SELECT * FROM applied_migrations;"
+docker-compose exec postgres psql -U postgres -c "SELECT * FROM applied_migrations;"
 ```
 
 ### Backup & Restore
@@ -156,192 +228,166 @@ docker exec postgres psql -U postgres -d postgres -c "SELECT * FROM applied_migr
 # Create backup
 ./scripts/backup.sh
 
-# Restore from backup
-gunzip backups/database_backup_YYYYMMDD_HHMMSS.sql.gz
-docker exec -i postgres psql -U postgres -d postgres < backups/database_backup_YYYYMMDD_HHMMSS.sql
+# Restore backup
+./scripts/backup.sh restore backup_file.sql.gz
 ```
 
-## 🔍 Monitoring & Logs
+## 🔍 Monitoring & Troubleshooting
 
-### View Logs
+### Service Status
 
 ```bash
-# All services
-docker-compose logs -f
+# Check all services
+./scripts/service-health-check.sh
 
-# Specific service
-docker-compose logs -f frontend
-docker-compose logs -f postgres
-docker-compose logs -f traefik
+# View logs
+docker-compose -f docker-compose.local.yml logs -f
 
-# Database logs
-docker exec postgres tail -f /var/log/postgresql/postgresql.log
+# Check specific service
+docker-compose -f docker-compose.local.yml logs frontend
 ```
 
-### Health Checks
+### Common Issues
 
+#### Services Not Starting
 ```bash
-# Check service status
-docker-compose ps
+# Check Docker daemon
+systemctl status docker
 
-# Test database connection
-docker exec postgres pg_isready -U postgres
+# Verify environment
+./scripts/environment-manager.sh validate
 
-# Check Traefik routes
-curl http://localhost:8080/api/http/routers
+# Check port conflicts
+netstat -tulpn | grep :80
 ```
 
-## 🔧 Development
-
-### Hot Reload Development
-
+#### Database Connection Issues
 ```bash
-# Start development environment
-docker-compose -f docker-compose.dev.yml up
+# Wait for PostgreSQL initialization (1-2 minutes)
+./scripts/service-health-check.sh
 
-# The frontend will reload automatically when you change files
-# Database changes require running migrations
+# Test connection
+docker-compose exec postgres pg_isready -U postgres
 ```
 
-### Adding New Migrations
+#### JWT Token Issues
+```bash
+# Regenerate JWT tokens
+./scripts/jwt-manager.sh generate
 
-1. Create new migration file: `supabase/migrations/04_your_migration.sql`
-2. Run migration: `./scripts/migrate-db.sh`
-
-### Custom Configuration
-
-- **Frontend**: Modify `frontend/nginx.conf`
-- **Reverse Proxy**: Edit `traefik/traefik.yml`
-- **Database**: Add to `supabase/migrations/`
+# Restart all services
+docker-compose restart
+```
 
 ## 🚀 Production Deployment
 
 ### Server Requirements
-
 - **CPU**: 2+ cores
-- **RAM**: 4GB+ recommended
+- **RAM**: 4GB+ (8GB recommended)
 - **Storage**: 20GB+ SSD
 - **Network**: Static IP with domain
 
-### Deployment Steps
+### Production Setup
 
 1. **DNS Configuration**:
-   ```bash
-   # Point these records to your server IP:
-   A     your-domain.com          → YOUR_SERVER_IP
-   CNAME api.your-domain.com      → your-domain.com
-   CNAME admin.your-domain.com    → your-domain.com
-   CNAME traefik.your-domain.com  → your-domain.com
-   ```
+```bash
+A     your-domain.com          → YOUR_SERVER_IP
+CNAME api.your-domain.com      → your-domain.com
+CNAME admin.your-domain.com    → your-domain.com
+```
 
-2. **Firewall Setup**:
-   ```bash
-   # Allow required ports
-   ufw allow 22    # SSH
-   ufw allow 80    # HTTP
-   ufw allow 443   # HTTPS
-   ufw enable
-   ```
+2. **Firewall**:
+```bash
+ufw allow 22/tcp   # SSH
+ufw allow 80/tcp   # HTTP
+ufw allow 443/tcp  # HTTPS
+ufw enable
+```
 
 3. **Deploy**:
-   ```bash
-   ./scripts/init-system.sh
-   # Choose option 2 for production
-   ```
-
-### Security Considerations
-
-- Change default passwords
-- Use strong JWT secrets
-- Enable firewall
-- Regular security updates
-- Monitor access logs
-- Enable database backups
-
-## 🛠️ Troubleshooting
-
-### Common Issues
-
-#### 1. Database Connection Failed
 ```bash
-# Check if PostgreSQL is running
-docker-compose ps postgres
-
-# Check database logs
-docker-compose logs postgres
-
-# Verify connection
-docker exec postgres pg_isready -U postgres
+./scripts/init-system-v2.sh production
 ```
 
-#### 2. SSL Certificate Issues
+### Security Checklist
+- ✅ Strong auto-generated passwords
+- ✅ Secure JWT secrets with rotation
+- ✅ SSL certificates (Let's Encrypt)
+- ✅ Security headers and rate limiting
+- ✅ Firewall configuration
+- ✅ Regular backups
+
+## 📈 Performance Optimization
+
+### Local Mode
+- PostgreSQL: 1-2 minute initialization
+- RAM usage: 4-8GB for all services
+- Disk usage: 2-4GB for images
+
+### Cloud Mode
+- Minimal local resources
+- Internet connectivity required
+- Supabase tier limitations apply
+
+### Production Mode
+- Enable caching and compression
+- Configure CDN for static assets
+- Database query optimization
+
+## 🔄 Data Migration
+
+### Local to Cloud
 ```bash
-# Check Traefik logs
-docker-compose logs traefik
+# Export local data
+./scripts/backup.sh export
 
-# Verify domain DNS
-nslookup your-domain.com
+# Switch to cloud mode
+./scripts/environment-manager.sh switch cloud
 
-# Check certificate status
-curl -I https://your-domain.com
+# Import to cloud (via Supabase Dashboard)
 ```
 
-#### 3. Frontend Not Loading
+### Cloud to Local
 ```bash
-# Check frontend logs
-docker-compose logs frontend
+# Switch to local mode
+./scripts/environment-manager.sh switch local
 
-# Verify Nginx configuration
-docker exec frontend nginx -t
+# Deploy local stack
+docker-compose -f docker-compose.local.yml up -d
 
-# Check Traefik routing
-curl -H "Host: your-domain.com" http://localhost
+# Import cloud data
+./scripts/backup.sh import backup_file.sql
 ```
 
-#### 4. Migration Failures
+## 🆘 Support & Resources
+
+### Debug Commands
 ```bash
-# Check database schema
-docker exec postgres psql -U postgres -d postgres -c "\dt"
+# Environment validation
+./scripts/environment-manager.sh validate
 
-# Run specific migration
-docker exec -i postgres psql -U postgres -d postgres < supabase/migrations/01_initial_schema.sql
+# Service health check
+./scripts/service-health-check.sh
 
-# Reset migrations (DANGER: Data loss)
-docker exec postgres psql -U postgres -d postgres -c "DROP TABLE IF EXISTS applied_migrations;"
+# View all logs
+docker-compose logs -f
+
+# Reset everything (WARNING: Data loss)
+docker-compose down -v && ./scripts/init-system-v2.sh
 ```
 
-### Performance Optimization
-
-1. **Database**:
-   - Increase shared_buffers
-   - Enable query optimization
-   - Regular VACUUM and ANALYZE
-
-2. **Frontend**:
-   - Enable gzip compression
-   - Set proper cache headers
-   - Optimize static assets
-
-3. **Traefik**:
-   - Enable compression middleware
-   - Configure rate limiting
-   - Use connection pooling
-
-## 📚 Additional Resources
-
+### Documentation Links
 - [Docker Compose Reference](https://docs.docker.com/compose/)
+- [Supabase Documentation](https://supabase.com/docs)
 - [Traefik Documentation](https://doc.traefik.io/traefik/)
-- [PostgreSQL Docker Hub](https://hub.docker.com/_/postgres)
-- [Let's Encrypt](https://letsencrypt.org/)
 
-## 🤝 Support
+### Getting Help
+1. Check service health and logs
+2. Validate environment configuration
+3. Review troubleshooting section
+4. Check GitHub issues and discussions
 
-For issues and questions:
-
-1. Check the troubleshooting section
-2. Review logs for error messages
-3. Verify configuration files
-4. Check Docker and network status
+---
 
 ## 📜 License
 
