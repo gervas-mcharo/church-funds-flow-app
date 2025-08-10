@@ -1,0 +1,282 @@
+# Enhanced Traefik configuration for Supabase local development
+# Host-based routing for better service isolation
+
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+api:
+  dashboard: true
+  insecure: true
+
+entryPoints:
+  web:
+    address: ":80"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: supabase_network_church_mgmt
+    watch: true
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true
+
+# Enable ping for health checks
+ping: {}
+
+# Logging
+log:
+  level: INFO
+  filePath: /var/log/traefik/traefik.log
+
+accessLog:
+  filePath: /var/log/traefik/access.log
+  format: json
+
+# Metrics
+metrics:
+  prometheus:
+    addEntryPointsLabels: true
+    addServicesLabels: true
+    addRoutersLabels: true
+
+# HTTP Configuration with enhanced CORS and security
+http:
+  middlewares:
+    # Enhanced CORS for API endpoints (PostgREST)
+    cors-api:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - PATCH
+          - OPTIONS
+        accessControlAllowHeaders:
+          - authorization
+          - x-client-info
+          - apikey
+          - content-type
+          - cache-control
+          - x-requested-with
+          - range
+        accessControlAllowOriginList:
+          - "http://localhost"
+          - "http://localhost:3000"
+          - "http://127.0.0.1"
+          - "http://127.0.0.1:3000"
+        accessControlAllowCredentials: true
+        accessControlMaxAge: 86400
+        addVaryHeader: true
+
+    # Enhanced CORS for Auth endpoints (GoTrue)
+    cors-auth:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        accessControlAllowHeaders:
+          - authorization
+          - x-client-info
+          - apikey
+          - content-type
+          - cache-control
+          - x-requested-with
+        accessControlAllowOriginList:
+          - "http://localhost"
+          - "http://localhost:3000"
+          - "http://127.0.0.1"
+          - "http://127.0.0.1:3000"
+        accessControlAllowCredentials: true
+        accessControlMaxAge: 86400
+        addVaryHeader: true
+
+    # Enhanced CORS for Storage endpoints
+    cors-storage:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        accessControlAllowHeaders:
+          - authorization
+          - x-client-info
+          - apikey
+          - content-type
+          - cache-control
+          - x-requested-with
+          - range
+        accessControlAllowOriginList:
+          - "http://localhost"
+          - "http://localhost:3000"
+          - "http://127.0.0.1"
+          - "http://127.0.0.1:3000"
+        accessControlAllowCredentials: true
+        accessControlMaxAge: 86400
+        addVaryHeader: true
+
+    # Enhanced CORS for Functions endpoints
+    cors-functions:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        accessControlAllowHeaders:
+          - authorization
+          - x-client-info
+          - apikey
+          - content-type
+          - cache-control
+          - x-requested-with
+        accessControlAllowOriginList:
+          - "http://localhost"
+          - "http://localhost:3000"
+          - "http://127.0.0.1"
+          - "http://127.0.0.1:3000"
+        accessControlAllowCredentials: true
+        accessControlMaxAge: 86400
+        addVaryHeader: true
+
+    # Security headers for all services
+    security-headers:
+      headers:
+        customResponseHeaders:
+          X-Robots-Tag: "noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex"
+          Server: ""
+        referrerPolicy: "strict-origin-when-cross-origin"
+        hostsProxyHeaders:
+          - "X-Forwarded-Host"
+          - "X-Forwarded-Proto"
+        customFrameOptionsValue: "SAMEORIGIN"
+        contentTypeNosniff: true
+        browserXssFilter: true
+
+    # Rate limiting for API protection
+    rate-limit-api:
+      rateLimit:
+        average: 200
+        burst: 400
+        period: 1m
+
+    # Rate limiting for auth endpoints
+    rate-limit-auth:
+      rateLimit:
+        average: 50
+        burst: 100
+        period: 1m
+
+    # Compression for better performance
+    compression:
+      compress: {}
+
+    # Request/Response size limits
+    buffering:
+      maxRequestBodyBytes: 104857600  # 100MB
+      maxResponseBodyBytes: 104857600  # 100MB
+
+  # Host-based routing configuration
+  routers:
+    # PostgREST API routing
+    api-router:
+      rule: "Host(`api.localhost`)"
+      service: "supabase-api"
+      middlewares:
+        - "cors-api"
+        - "security-headers"
+        - "rate-limit-api"
+        - "compression"
+
+    # GoTrue Auth routing
+    auth-router:
+      rule: "Host(`auth.localhost`)"
+      service: "supabase-auth"
+      middlewares:
+        - "cors-auth"
+        - "security-headers"
+        - "rate-limit-auth"
+        - "compression"
+
+    # Storage API routing
+    storage-router:
+      rule: "Host(`storage.localhost`)"
+      service: "supabase-storage"
+      middlewares:
+        - "cors-storage"
+        - "security-headers"
+        - "compression"
+        - "buffering"
+
+    # Studio routing
+    studio-router:
+      rule: "Host(`studio.localhost`)"
+      service: "supabase-studio"
+      middlewares:
+        - "security-headers"
+        - "compression"
+
+    # Edge Functions routing
+    functions-router:
+      rule: "Host(`functions.localhost`)"
+      service: "supabase-functions"
+      middlewares:
+        - "cors-functions"
+        - "security-headers"
+        - "compression"
+
+  # Service definitions (these will be auto-discovered by Docker labels)
+  services:
+    supabase-api:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:54321"
+        healthCheck:
+          path: "/health"
+          interval: "30s"
+          timeout: "5s"
+
+    supabase-auth:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:54324"
+        healthCheck:
+          path: "/health"
+          interval: "30s"
+          timeout: "5s"
+
+    supabase-storage:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:54321"
+        healthCheck:
+          path: "/status"
+          interval: "30s"
+          timeout: "5s"
+
+    supabase-studio:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:54323"
+        healthCheck:
+          path: "/"
+          interval: "30s"
+          timeout: "5s"
+
+    supabase-functions:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:54321"
+        healthCheck:
+          path: "/functions/v1/"
+          interval: "30s"
+          timeout: "5s"
