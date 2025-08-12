@@ -41,7 +41,7 @@ export function NavBar({ items, className }: NavBarProps) {
 
   return (
     <div className={cn("flex items-center", className)}>
-      <div className="flex items-center gap-1 bg-background/5 border border-border backdrop-blur-lg py-1 px-1 rounded-full shadow-sm">
+      <div className="flex items-center gap-0.5 bg-background/5 border border-border backdrop-blur-lg py-0.5 px-0.5 rounded-full shadow-sm">
         {items.map((item) => {
           const Icon = item.icon
           const isActive = activeTab === item.name
@@ -52,7 +52,7 @@ export function NavBar({ items, className }: NavBarProps) {
               to={item.url}
               onClick={() => setActiveTab(item.name)}
               className={cn(
-                "relative cursor-pointer text-sm font-medium px-3 py-2 rounded-full transition-colors",
+                "relative cursor-pointer text-xs font-medium px-2 py-1.5 rounded-full transition-colors",
                 "text-foreground/80 hover:text-primary",
                 isActive && "bg-muted text-primary",
               )}
