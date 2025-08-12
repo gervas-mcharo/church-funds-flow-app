@@ -27,34 +27,34 @@ export function DashboardHeader() {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center px-6">
+    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
       <div className="flex items-center gap-4">
         <AppNavBar />
         <HeaderQuickActions />
+      </div>
+      
+      <div className="flex items-center gap-3 border-l border-gray-200 pl-4">
+        <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
+          <Bell className="h-5 w-5" />
+        </Button>
         
-        <div className="flex items-center gap-3 border-l border-gray-200 pl-4">
-          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
-            <Bell className="h-5 w-5" />
-          </Button>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
-                <User className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>
-                {user?.email || 'User Account'}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleSignOut}>
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
+              <User className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>
+              {user?.email || 'User Account'}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSignOut}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
