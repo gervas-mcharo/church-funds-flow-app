@@ -1,5 +1,4 @@
 
-import { AppNavBar } from "@/components/navigation/AppNavBar";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 
 interface DashboardLayoutProps {
@@ -9,9 +8,8 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen w-full bg-gray-50">
-      <AppNavBar />
       <DashboardHeader />
-      <main className="pt-20 pb-24 sm:pt-24 sm:pb-6 px-6">
+      <main className="pt-20 pb-6 px-6">
         {children}
       </main>
     </div>

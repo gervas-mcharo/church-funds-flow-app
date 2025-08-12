@@ -4,6 +4,7 @@ import { Bell, User, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { HeaderQuickActions } from "@/components/layout/HeaderQuickActions";
+import { AppNavBar } from "@/components/navigation/AppNavBar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,7 +29,7 @@ export function DashboardHeader() {
   return (
     <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
       <div className="flex items-center gap-4">
-        {/* Navigation now handled by AppNavBar component */}
+        <AppNavBar />
       </div>
       
       <div className="flex items-center gap-4">
