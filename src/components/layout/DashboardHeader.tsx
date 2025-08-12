@@ -1,5 +1,4 @@
 
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Bell, User, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,7 +28,7 @@ export function DashboardHeader() {
   return (
     <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
       <div className="flex items-center gap-4">
-        <SidebarTrigger className="text-gray-600 hover:text-gray-900" />
+        {/* Navigation now handled by AppNavBar component */}
       </div>
       
       <div className="flex items-center gap-4">

@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Environment detection with enhanced local development support
+// Environment detection with cloud-first approach
 const getEnvironmentMode = (): 'local' | 'cloud' => {
   // Check for environment variable first
   const mode = import.meta.env.VITE_SUPABASE_MODE;
@@ -9,11 +9,8 @@ const getEnvironmentMode = (): 'local' | 'cloud' => {
     return mode;
   }
   
-  // Fallback: detect based on URL patterns
-  const url = import.meta.env.VITE_SUPABASE_URL || '';
-  return url.includes('localhost') || 
-         url.includes('127.0.0.1') || 
-         url.includes('api.localhost') ? 'local' : 'cloud';
+  // Default to cloud mode since Docker stack was removed
+  return 'cloud';
 };
 
 // Enhanced configuration with automatic service discovery
