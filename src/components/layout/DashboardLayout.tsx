@@ -1,6 +1,5 @@
 
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/layout/AppSidebar";
+import { AppNavBar } from "@/components/navigation/AppNavBar";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 
 interface DashboardLayoutProps {
@@ -9,16 +8,12 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gray-50">
-        <AppSidebar />
-        <div className="flex-1 flex flex-col">
-          <DashboardHeader />
-          <main className="flex-1 p-6">
-            {children}
-          </main>
-        </div>
-      </div>
-    </SidebarProvider>
+    <div className="min-h-screen w-full bg-gray-50">
+      <AppNavBar />
+      <DashboardHeader />
+      <main className="pt-20 pb-24 sm:pt-24 sm:pb-6 px-6">
+        {children}
+      </main>
+    </div>
   );
 }
