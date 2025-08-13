@@ -3,7 +3,7 @@ import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { SecureCreatePledgeDialog } from "@/components/pledges/SecureCreatePledgeDialog";
 import { SecureBulkPledgeImportDialog } from "@/components/pledges/SecureBulkPledgeImportDialog";
-import { PledgeCard } from "@/components/pledges/PledgeCard";
+import { PledgesTable } from "@/components/pledges/PledgesTable";
 import { PledgeFilters } from "@/components/pledges/PledgeFilters";
 import { PledgeDetailsDialog } from "@/components/pledges/PledgeDetailsDialog";
 import { PledgeReports } from "@/components/pledges/PledgeReports";
@@ -178,16 +178,8 @@ const Pledges = () => {
               {/* Filters */}
               <PledgeFilters filters={filters} onFiltersChange={setFilters} />
 
-              {/* Pledges Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {pledges.map((pledge) => (
-                  <PledgeCard
-                    key={pledge.id}
-                    pledge={pledge}
-                    onView={handleViewPledge}
-                  />
-                ))}
-              </div>
+              {/* Pledges Table */}
+              <PledgesTable pledges={pledges} onView={handleViewPledge} />
 
               {pledges.length === 0 && (
                 <div className="text-center py-12">
