@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -822,11 +822,11 @@ export type Database = {
     }
     Functions: {
       can_access_department: {
-        Args: { user_id: string; dept_id: string }
+        Args: { dept_id: string; user_id: string }
         Returns: boolean
       }
       can_access_department_finances: {
-        Args: { _user_id: string; _department_id: string }
+        Args: { _department_id: string; _user_id: string }
         Returns: boolean
       }
       can_access_funds: {
@@ -886,16 +886,16 @@ export type Database = {
       }
       has_department_role: {
         Args: {
-          user_id: string
           dept_id: string
           required_role: Database["public"]["Enums"]["app_role"]
+          user_id: string
         }
         Returns: boolean
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
@@ -904,7 +904,7 @@ export type Database = {
         Returns: undefined
       }
       is_department_treasurer: {
-        Args: { _user_id: string; _department_id: string }
+        Args: { _department_id: string; _user_id: string }
         Returns: boolean
       }
       is_system_initialized: {
@@ -914,10 +914,10 @@ export type Database = {
       log_security_event: {
         Args: {
           _action: string
-          _table_name: string
-          _record_id?: string
-          _old_values?: Json
           _new_values?: Json
+          _old_values?: Json
+          _record_id?: string
+          _table_name: string
         }
         Returns: undefined
       }
