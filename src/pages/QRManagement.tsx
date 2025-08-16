@@ -5,11 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { QrCode, Plus, Download, Lock } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { QrCode, Plus, Download, Lock, Trash2, X } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useContributors } from "@/hooks/useContributors";
 import { useFundTypes } from "@/hooks/useFundTypes";
-import { useQRCodes, useGenerateQRCode } from "@/hooks/useQRCodes";
+import { useQRCodes, useGenerateQRCode, useDeleteQRCode, useBulkDeleteQRCodes } from "@/hooks/useQRCodes";
 import { useBulkQRGeneration } from "@/hooks/useBulkQRCodes";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +22,7 @@ const QRManagement = () => {
   const [selectedFundType, setSelectedFundType] = useState<string>("");
   const [bulkType, setBulkType] = useState<string>("");
   const [printFormat, setPrintFormat] = useState<string>("");
+  const [selectedQRCodes, setSelectedQRCodes] = useState<string[]>([]);
   
   const { toast } = useToast();
   const { data: contributors, isLoading: contributorsLoading } = useContributors();
@@ -28,6 +30,8 @@ const QRManagement = () => {
   const { data: qrCodes, isLoading: qrCodesLoading } = useQRCodes();
   const generateQRCode = useGenerateQRCode();
   const bulkGenerate = useBulkQRGeneration();
+  const deleteQRCode = useDeleteQRCode();
+  const bulkDeleteQRCodes = useBulkDeleteQRCodes();
   
   const {
     canGenerateQRCodes,
@@ -161,6 +165,82 @@ const QRManagement = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const handleDeleteQRCode = async (qrCodeId: string, contributorName: string) => {
+    if (!canDeleteQRCodes()) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to delete QR codes.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      await deleteQRCode.mutateAsync(qrCodeId);
+      toast({
+        title: "QR Code Deleted",
+        description: `QR code for ${contributorName} has been deleted.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete QR code. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!canDeleteQRCodes()) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to delete QR codes.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (selectedQRCodes.length === 0) {
+      toast({
+        title: "No Selection",
+        description: "Please select QR codes to delete.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const result = await bulkDeleteQRCodes.mutateAsync(selectedQRCodes);
+      toast({
+        title: "QR Codes Deleted",
+        description: `Successfully deleted ${result.deletedCount} QR codes.`,
+      });
+      setSelectedQRCodes([]);
+    } catch (error) {
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete selected QR codes. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedQRCodes.length === qrCodes?.length) {
+      setSelectedQRCodes([]);
+    } else {
+      setSelectedQRCodes(qrCodes?.map(qr => qr.id) || []);
+    }
+  };
+
+  const handleSelectQRCode = (qrCodeId: string) => {
+    setSelectedQRCodes(prev => 
+      prev.includes(qrCodeId) 
+        ? prev.filter(id => id !== qrCodeId)
+        : [...prev, qrCodeId]
+    );
   };
 
   const renderIndividualQRCard = () => {
@@ -374,7 +454,31 @@ const QRManagement = () => {
 
           <Card className="bg-white shadow-sm">
             <CardHeader>
-              <CardTitle>Generated QR Codes</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Generated QR Codes</CardTitle>
+                {qrCodes && qrCodes.length > 0 && canDeleteQRCodes() && (
+                  <div className="flex items-center gap-2">
+                    {selectedQRCodes.length > 0 && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={handleBulkDelete}
+                        disabled={bulkDeleteQRCodes.isPending}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Selected ({selectedQRCodes.length})
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleSelectAll}
+                    >
+                      {selectedQRCodes.length === qrCodes?.length ? 'Deselect All' : 'Select All'}
+                    </Button>
+                  </div>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {qrCodesLoading ? (
@@ -382,43 +486,68 @@ const QRManagement = () => {
               ) : qrCodes && qrCodes.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {qrCodes.map((qrCode) => (
-                    <div key={qrCode.id} className="border border-gray-200 rounded-lg p-4 text-center">
+                    <div key={qrCode.id} className="border border-gray-200 rounded-lg p-4 text-center relative">
+                      {canDeleteQRCodes() && (
+                        <div className="absolute top-2 left-2">
+                          <Checkbox
+                            checked={selectedQRCodes.includes(qrCode.id)}
+                            onCheckedChange={() => handleSelectQRCode(qrCode.id)}
+                          />
+                        </div>
+                      )}
                       <div className="w-24 h-24 bg-gray-100 mx-auto mb-3 rounded-lg flex items-center justify-center">
                         <QrCode className="h-12 w-12 text-gray-400" />
                       </div>
                       <h4 className="font-medium text-gray-900">
                         {qrCode.contributors?.name || 'Unknown Contributor'}
                       </h4>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 mb-3">
                         {qrCode.fund_types?.name || 'Unknown Fund Type'}
                       </p>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              className="mt-2"
-                              onClick={() => handleDownloadQR(qrCode.qr_data, qrCode.contributors?.name || 'Unknown')}
-                              disabled={!canDownloadQRCodes()}
-                            >
-                              {canDownloadQRCodes() ? (
-                                "Download"
-                              ) : (
-                                <>
-                                  <Lock className="h-3 w-3 mr-1" />
-                                  Restricted
-                                </>
-                              )}
-                            </Button>
-                          </TooltipTrigger>
-                          {!canDownloadQRCodes() && (
+                      <div className="flex gap-2 justify-center">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={() => handleDownloadQR(qrCode.qr_data, qrCode.contributors?.name || 'Unknown')}
+                                disabled={!canDownloadQRCodes()}
+                              >
+                                {canDownloadQRCodes() ? (
+                                  <Download className="h-3 w-3" />
+                                ) : (
+                                  <Lock className="h-3 w-3" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
                             <TooltipContent>
-                              <p>Download access restricted</p>
+                              <p>{canDownloadQRCodes() ? "Download QR Code" : "Download access restricted"}</p>
                             </TooltipContent>
-                          )}
-                        </Tooltip>
-                      </TooltipProvider>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                size="sm" 
+                                variant="destructive" 
+                                onClick={() => handleDeleteQRCode(qrCode.id, qrCode.contributors?.name || 'Unknown')}
+                                disabled={!canDeleteQRCodes() || deleteQRCode.isPending}
+                              >
+                                {canDeleteQRCodes() ? (
+                                  <Trash2 className="h-3 w-3" />
+                                ) : (
+                                  <Lock className="h-3 w-3" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{canDeleteQRCodes() ? "Delete QR Code" : "Delete access restricted"}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
                     </div>
                   ))}
                 </div>

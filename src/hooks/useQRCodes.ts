@@ -42,3 +42,40 @@ export const useGenerateQRCode = () => {
     }
   });
 };
+
+export const useDeleteQRCode = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (qrCodeId: string) => {
+      const { error } = await supabase
+        .from('qr_codes')
+        .delete()
+        .eq('id', qrCodeId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qr-codes'] });
+    }
+  });
+};
+
+export const useBulkDeleteQRCodes = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (qrCodeIds: string[]) => {
+      const { error } = await supabase
+        .from('qr_codes')
+        .delete()
+        .in('id', qrCodeIds);
+      
+      if (error) throw error;
+      return { deletedCount: qrCodeIds.length };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qr-codes'] });
+    }
+  });
+};
