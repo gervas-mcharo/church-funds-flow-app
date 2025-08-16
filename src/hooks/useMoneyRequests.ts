@@ -105,38 +105,6 @@ export function useUpdateApproval() {
         .eq('id', approvalId);
 
       if (error) throw error;
-
-      // Update money request status if needed
-      const { data: approval } = await supabase
-        .from('approval_chain')
-        .select('money_request_id, step_order')
-        .eq('id', approvalId)
-        .single();
-
-      if (approval && isApproved) {
-        // Check if this is the final approval step
-        const { data: nextStep } = await supabase
-          .from('approval_chain')
-          .select('id')
-          .eq('money_request_id', approval.money_request_id)
-          .eq('step_order', approval.step_order + 1)
-          .maybeSingle();
-
-        const newStatus = nextStep 
-          ? getNextStatus(approval.step_order)
-          : 'approved';
-
-        await supabase
-          .from('money_requests')
-          .update({ status: newStatus })
-          .eq('id', approval.money_request_id);
-      } else if (!isApproved) {
-        // Rejected - update request status
-        await supabase
-          .from('money_requests')
-          .update({ status: 'rejected' })
-          .eq('id', approval?.money_request_id);
-      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['money-requests'] });
@@ -158,12 +126,3 @@ export function useUpdateApproval() {
   });
 }
 
-function getNextStatus(currentStep: number): Database["public"]["Enums"]["money_request_status"] {
-  switch (currentStep) {
-    case 1: return 'pending_hod_approval';           // After treasurer approval
-    case 2: return 'pending_finance_elder_approval'; // After head_of_department approval
-    case 3: return 'pending_general_secretary_approval'; // After finance_elder approval
-    case 4: return 'pending_pastor_approval';        // After general_secretary approval
-    default: return 'approved';
-  }
-}
