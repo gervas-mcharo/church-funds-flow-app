@@ -1,5 +1,5 @@
 -- Complete Supabase Schema Dump
--- Generated on: $(date)
+-- Generated and updated to match current database state
 -- This file contains all database schema elements needed to recreate the backend
 
 -- ============================================================================
@@ -277,13 +277,12 @@ LANGUAGE sql
 STABLE
 SECURITY DEFINER
 AS $function$
-  SELECT 
+SELECT 
     -- Church treasurers can access all department finances
     public.has_role(_user_id, 'treasurer') OR
     -- Department treasurers can access their own department's finances
     public.is_department_treasurer(_user_id, _department_id) OR
     -- Other administrative roles with church-wide access
-    public.has_role(_user_id, 'super_administrator') OR
     public.has_role(_user_id, 'administrator') OR
     public.has_role(_user_id, 'finance_administrator') OR
     public.has_role(_user_id, 'finance_manager') OR
@@ -322,12 +321,11 @@ LANGUAGE sql
 STABLE
 SECURITY DEFINER
 AS $function$
-  SELECT EXISTS (
+SELECT EXISTS (
     SELECT 1
     FROM public.user_roles
     WHERE user_id = auth.uid()
       AND role IN (
-        'super_administrator', 
         'administrator', 
         'finance_administrator', 
         'finance_manager', 
@@ -345,12 +343,11 @@ LANGUAGE sql
 STABLE
 SECURITY DEFINER
 AS $function$
-  SELECT EXISTS (
+SELECT EXISTS (
     SELECT 1
     FROM public.user_roles
     WHERE user_id = auth.uid()
       AND role IN (
-        'super_administrator', 
         'administrator', 
         'finance_administrator', 
         'finance_manager', 
@@ -387,12 +384,11 @@ LANGUAGE sql
 STABLE
 SECURITY DEFINER
 AS $function$
-  SELECT EXISTS (
+SELECT EXISTS (
     SELECT 1
     FROM public.user_roles
     WHERE user_id = auth.uid()
       AND role IN (
-        'super_administrator', 
         'administrator', 
         'finance_administrator', 
         'finance_manager', 
@@ -410,12 +406,11 @@ LANGUAGE sql
 STABLE
 SECURITY DEFINER
 AS $function$
-  SELECT EXISTS (
+SELECT EXISTS (
     SELECT 1
     FROM public.user_roles
     WHERE user_id = auth.uid()
       AND role IN (
-        'super_administrator', 
         'administrator', 
         'finance_administrator', 
         'finance_manager', 
@@ -433,12 +428,11 @@ LANGUAGE sql
 STABLE
 SECURITY DEFINER
 AS $function$
-  SELECT EXISTS (
+SELECT EXISTS (
     SELECT 1
     FROM public.user_roles
     WHERE user_id = auth.uid()
       AND role IN (
-        'super_administrator', 
         'administrator', 
         'finance_administrator'
       )
@@ -451,12 +445,11 @@ LANGUAGE sql
 STABLE
 SECURITY DEFINER
 AS $function$
-  SELECT EXISTS (
+SELECT EXISTS (
     SELECT 1
     FROM public.user_roles
     WHERE user_id = auth.uid()
       AND role IN (
-        'super_administrator', 
         'administrator', 
         'finance_administrator'
       )
@@ -491,12 +484,11 @@ LANGUAGE sql
 STABLE
 SECURITY DEFINER
 AS $function$
-  SELECT EXISTS (
+SELECT EXISTS (
     SELECT 1
     FROM public.user_roles
     WHERE user_id = auth.uid()
       AND role IN (
-        'super_administrator', 
         'administrator', 
         'finance_administrator', 
         'finance_manager', 
@@ -1273,20 +1265,15 @@ USING ((current_user_has_admin_role() OR (user_id = auth.uid())));
 -- TRIGGERS
 -- ============================================================================
 
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION handle_new_user();
+
 CREATE TRIGGER trigger_update_fund_balance_on_contribution
-  AFTER INSERT ON public.contributions
+  AFTER INSERT OR UPDATE OR DELETE ON public.contributions
   FOR EACH ROW
   EXECUTE FUNCTION update_fund_balance_on_contribution();
-
-CREATE TRIGGER update_fund_balance_trigger
-  AFTER INSERT ON public.contributions
-  FOR EACH ROW
-  EXECUTE FUNCTION update_fund_balance_on_contribution();
-
-CREATE TRIGGER create_approval_chain_trigger
-  AFTER INSERT ON public.money_requests
-  FOR EACH ROW
-  EXECUTE FUNCTION handle_new_money_request();
 
 CREATE TRIGGER trigger_money_request_approval_chain
   AFTER INSERT ON public.money_requests
@@ -1298,28 +1285,13 @@ CREATE TRIGGER trigger_update_fund_balance_on_approval
   FOR EACH ROW
   EXECUTE FUNCTION update_fund_balance_on_approval();
 
-CREATE TRIGGER update_fund_balance_on_approval_trigger
-  AFTER UPDATE ON public.money_requests
-  FOR EACH ROW
-  EXECUTE FUNCTION update_fund_balance_on_approval();
-
 CREATE TRIGGER trigger_update_pledge_totals
-  AFTER INSERT ON public.pledge_contributions
+  AFTER INSERT OR UPDATE OR DELETE ON public.pledge_contributions
   FOR EACH ROW
   EXECUTE FUNCTION update_pledge_totals();
-
-CREATE TRIGGER update_pledge_totals_trigger
-  AFTER INSERT ON public.pledge_contributions
-  FOR EACH ROW
-  EXECUTE FUNCTION update_pledge_totals();
-
-CREATE TRIGGER log_pledge_changes_trigger
-  AFTER INSERT ON public.pledges
-  FOR EACH ROW
-  EXECUTE FUNCTION log_pledge_changes();
 
 CREATE TRIGGER trigger_log_pledge_changes
-  AFTER INSERT ON public.pledges
+  AFTER INSERT OR UPDATE OR DELETE ON public.pledges
   FOR EACH ROW
   EXECUTE FUNCTION log_pledge_changes();
 
