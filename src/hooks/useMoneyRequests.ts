@@ -140,7 +140,9 @@ export function useUpdateApproval() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['money-requests'] });
-      queryClient.invalidateQueries({ queryKey: ['approval-chain'] });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0] === 'approval-chain'
+      });
       toast({
         title: "Approval decision recorded",
         description: "The approval decision has been saved successfully."
