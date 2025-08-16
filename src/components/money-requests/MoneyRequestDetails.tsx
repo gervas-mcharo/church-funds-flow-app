@@ -66,23 +66,29 @@ export function MoneyRequestDetails({ requestId, onClose }: MoneyRequestDetailsP
   const canApprove = (stepOrder: number, approverRole: string) => {
     if (!currentUser || !userDepartments) return false;
     
-    // Check if user has access to this department
-    const hasAccessToRequestDepartment = userDepartments.some(
-      userDept => userDept.department.id === request.requesting_department_id
-    );
+    // Check if user has the global role (for higher-level approvals)
+    const hasGlobalRole = currentUser.roles.includes(approverRole as any);
     
-    if (!hasAccessToRequestDepartment) return false;
-
     // Check if user has the required role for this step in this department
     const hasDepartmentRole = userDepartments.some(
       userDept => userDept.department.id === request.requesting_department_id && 
       userDept.role === approverRole
     );
     
-    // Also check if user has the global role (for higher-level approvals)
-    const hasGlobalRole = currentUser.roles.includes(approverRole as any);
-    
-    if (!hasDepartmentRole && !hasGlobalRole) return false;
+    // For department-specific roles (treasurer, head_of_department), require department access
+    const departmentSpecificRoles = ['treasurer', 'head_of_department'];
+    if (departmentSpecificRoles.includes(approverRole)) {
+      // Check if user has access to this department
+      const hasAccessToRequestDepartment = userDepartments.some(
+        userDept => userDept.department.id === request.requesting_department_id
+      );
+      
+      if (!hasAccessToRequestDepartment) return false;
+      if (!hasDepartmentRole && !hasGlobalRole) return false;
+    } else {
+      // For higher-level roles (finance_elder, general_secretary, pastor), global role is sufficient
+      if (!hasDepartmentRole && !hasGlobalRole) return false;
+    }
     
     // Check if this is the current step in the approval chain
     const previousSteps = approvalChain?.filter(step => step.step_order < stepOrder) || [];

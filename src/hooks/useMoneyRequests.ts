@@ -158,10 +158,10 @@ export function useUpdateApproval() {
 
 function getNextStatus(currentStep: number): Database["public"]["Enums"]["money_request_status"] {
   switch (currentStep) {
-    case 1: return 'pending_hod_approval';
-    case 2: return 'pending_finance_elder_approval';
-    case 3: return 'pending_general_secretary_approval';
-    case 4: return 'pending_pastor_approval';
+    case 1: return 'pending_hod_approval';           // After treasurer approval
+    case 2: return 'pending_finance_elder_approval'; // After head_of_department approval
+    case 3: return 'pending_general_secretary_approval'; // After finance_elder approval
+    case 4: return 'pending_pastor_approval';        // After general_secretary approval
     default: return 'approved';
   }
 }
