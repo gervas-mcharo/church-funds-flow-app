@@ -1,9 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import { Lock, Shield, Eye } from "lucide-react";
+
 interface PermissionStatusBadgeProps {
   accessLevel: 'full' | 'manage' | 'view' | 'none';
   userRole?: string;
 }
+
 export const PermissionStatusBadge = ({
   accessLevel,
   userRole
@@ -29,7 +31,7 @@ export const PermissionStatusBadge = ({
           icon: Eye,
           text: 'View Only',
           variant: 'outline' as const,
-          description: 'Can view contributors only'
+          description: 'Cannot access contributors'
         };
       case 'none':
       default:
@@ -41,7 +43,21 @@ export const PermissionStatusBadge = ({
         };
     }
   };
+
   const config = getPermissionConfig();
   const Icon = config.icon;
-  return;
+
+  return (
+    <div className="flex items-center gap-2">
+      <Badge variant={config.variant} className="flex items-center gap-1">
+        <Icon className="h-3 w-3" />
+        {config.text}
+      </Badge>
+      {userRole && (
+        <span className="text-xs text-muted-foreground">
+          ({userRole.replace('_', ' ')})
+        </span>
+      )}
+    </div>
+  );
 };
