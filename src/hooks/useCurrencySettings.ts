@@ -9,53 +9,28 @@ interface CurrencySettings {
   position: 'before' | 'after';
 }
 
-export const CURRENCIES = {
-  USD: { name: 'US Dollar', symbol: '$' },
-  EUR: { name: 'Euro', symbol: '€' },
-  GBP: { name: 'British Pound', symbol: '£' },
-  CAD: { name: 'Canadian Dollar', symbol: 'CA$' },
-  AUD: { name: 'Australian Dollar', symbol: 'AU$' },
-  JPY: { name: 'Japanese Yen', symbol: '¥' },
-  CHF: { name: 'Swiss Franc', symbol: 'CHF' },
-  CNY: { name: 'Chinese Yuan', symbol: '¥' },
-  INR: { name: 'Indian Rupee', symbol: '₹' },
-  BRL: { name: 'Brazilian Real', symbol: 'R$' },
-  ZAR: { name: 'South African Rand', symbol: 'R' },
-  KES: { name: 'Kenyan Shilling', symbol: 'KSh' },
-  NGN: { name: 'Nigerian Naira', symbol: '₦' },
-  GHS: { name: 'Ghanaian Cedi', symbol: '₵' },
-  XOF: { name: 'West African CFA Franc', symbol: 'CFA' },
-  XAF: { name: 'Central African CFA Franc', symbol: 'FCFA' },
-  ETB: { name: 'Ethiopian Birr', symbol: 'Br' },
-  UGX: { name: 'Ugandan Shilling', symbol: 'USh' },
-  TZS: { name: 'Tanzanian Shilling', symbol: 'TSh' },
-  RWF: { name: 'Rwandan Franc', symbol: 'FRw' }
-} as const;
-
-export type CurrencyCode = keyof typeof CURRENCIES;
+interface Currency {
+  currency_code: string;
+  currency_name: string;
+  currency_symbol: string;
+  sort_order: number;
+}
 
 export const useCurrencySettings = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get custom currencies
-  const { data: customCurrencies = {}, isLoading: customLoading } = useQuery({
-    queryKey: ['custom-currencies'],
+  // Get all currencies from database
+  const { data: currencies = [], isLoading: currenciesLoading } = useQuery({
+    queryKey: ['currencies'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('custom_currencies')
-        .select('currency_code, currency_name, currency_symbol');
+        .select('currency_code, currency_name, currency_symbol, sort_order')
+        .order('sort_order', { ascending: true });
 
       if (error) throw error;
-
-      const customCurrencyMap: Record<string, { name: string; symbol: string }> = {};
-      data.forEach(curr => {
-        customCurrencyMap[curr.currency_code] = {
-          name: curr.currency_name,
-          symbol: curr.currency_symbol
-        };
-      });
-      return customCurrencyMap;
+      return data as Currency[];
     }
   });
 
@@ -89,26 +64,36 @@ export const useCurrencySettings = () => {
     }
   });
 
-  // Add custom currency mutation
-  const addCustomCurrency = useMutation({
+  // Add currency mutation
+  const addCurrency = useMutation({
     mutationFn: async (data: { code: string; info: { name: string; symbol: string } }) => {
+      // Get highest sort_order and add 1
+      const { data: maxOrderData } = await supabase
+        .from('custom_currencies')
+        .select('sort_order')
+        .order('sort_order', { ascending: false })
+        .limit(1);
+
+      const nextSortOrder = (maxOrderData?.[0]?.sort_order || 0) + 1;
+
       const { error } = await supabase
         .from('custom_currencies')
         .insert({
           currency_code: data.code,
           currency_name: data.info.name,
-          currency_symbol: data.info.symbol
+          currency_symbol: data.info.symbol,
+          sort_order: nextSortOrder
         });
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['custom-currencies'] });
+      queryClient.invalidateQueries({ queryKey: ['currencies'] });
     }
   });
 
-  // Remove custom currency mutation
-  const removeCustomCurrency = useMutation({
+  // Remove currency mutation
+  const removeCurrency = useMutation({
     mutationFn: async (code: string) => {
       const { error } = await supabase
         .from('custom_currencies')
@@ -118,19 +103,19 @@ export const useCurrencySettings = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['custom-currencies'] });
+      queryClient.invalidateQueries({ queryKey: ['currencies'] });
     }
   });
 
   // Set currency mutation
   const setCurrencyMutation = useMutation({
-    mutationFn: async (newCurrency: CurrencyCode) => {
-      const currencyInfo = availableCurrencies[newCurrency];
+    mutationFn: async (newCurrency: string) => {
+      const currencyInfo = availableCurrencies.find(c => c.currency_code === newCurrency);
       if (!currencyInfo) throw new Error('Invalid currency');
 
       const newSettings: CurrencySettings = {
         currency_code: newCurrency,
-        currency_symbol: currencyInfo.symbol,
+        currency_symbol: currencyInfo.currency_symbol,
         position: 'before'
       };
 
@@ -148,8 +133,8 @@ export const useCurrencySettings = () => {
     }
   });
 
-  const isLoading = settingsLoading || customLoading;
-  const availableCurrencies = { ...CURRENCIES, ...customCurrencies };
+  const isLoading = settingsLoading || currenciesLoading;
+  const availableCurrencies = currencies;
   const currency = settings?.currency_code || 'USD';
   const currencySymbol = settings?.currency_symbol || '$';
 
@@ -183,9 +168,9 @@ export const useCurrencySettings = () => {
     setCurrency: setCurrencyMutation.mutateAsync,
     formatAmount,
     availableCurrencies,
-    customCurrencies,
-    addCustomCurrency: addCustomCurrency.mutateAsync,
-    removeCustomCurrency: removeCustomCurrency.mutateAsync,
+    currencies,
+    addCurrency: addCurrency.mutateAsync,
+    removeCurrency: removeCurrency.mutateAsync,
     isLoading
   };
 };

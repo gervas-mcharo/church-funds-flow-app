@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,7 @@ export function AddCustomCurrencyDialog() {
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
-  const { addCustomCurrency, availableCurrencies, isLoading } = useCurrencySettings();
+  const { addCurrency, availableCurrencies, isLoading } = useCurrencySettings();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,7 +31,7 @@ export function AddCustomCurrencyDialog() {
       return;
     }
 
-    if (availableCurrencies[trimmedCode]) {
+    if (availableCurrencies.some(c => c.currency_code === trimmedCode)) {
       toast({
         title: "Error",
         description: "Currency code already exists",
@@ -50,10 +49,8 @@ export function AddCustomCurrencyDialog() {
       return;
     }
 
-    console.log('Adding custom currency:', { code: trimmedCode, name: trimmedName, symbol: trimmedSymbol });
-
     try {
-      await addCustomCurrency({
+      await addCurrency({
         code: trimmedCode,
         info: {
           name: trimmedName,
@@ -63,7 +60,7 @@ export function AddCustomCurrencyDialog() {
 
       toast({
         title: "Success",
-        description: `Custom currency ${trimmedCode} added successfully`
+        description: `Currency ${trimmedCode} added successfully`
       });
 
       // Reset form and close dialog
@@ -72,10 +69,10 @@ export function AddCustomCurrencyDialog() {
       setSymbol("");
       setOpen(false);
     } catch (error) {
-      console.error('Error adding custom currency:', error);
+      console.error('Error adding currency:', error);
       toast({
         title: "Error",
-        description: "Failed to add custom currency",
+        description: "Failed to add currency",
         variant: "destructive"
       });
     }
@@ -86,12 +83,12 @@ export function AddCustomCurrencyDialog() {
       <DialogTrigger asChild>
         <Button variant="outline" className="flex items-center gap-2" disabled={isLoading}>
           <Plus className="h-4 w-4" />
-          Add Custom Currency
+          Add Currency
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Custom Currency</DialogTitle>
+          <DialogTitle>Add Currency</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

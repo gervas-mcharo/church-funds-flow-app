@@ -165,6 +165,7 @@ export type Database = {
           currency_symbol: string
           id: string
           organization_id: string
+          sort_order: number | null
           updated_at: string
         }
         Insert: {
@@ -174,6 +175,7 @@ export type Database = {
           currency_symbol: string
           id?: string
           organization_id?: string
+          sort_order?: number | null
           updated_at?: string
         }
         Update: {
@@ -183,6 +185,7 @@ export type Database = {
           currency_symbol?: string
           id?: string
           organization_id?: string
+          sort_order?: number | null
           updated_at?: string
         }
         Relationships: []
