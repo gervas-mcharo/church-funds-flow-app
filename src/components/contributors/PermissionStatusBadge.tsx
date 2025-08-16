@@ -1,13 +1,13 @@
-
 import { Badge } from "@/components/ui/badge";
 import { Lock, Shield, Eye } from "lucide-react";
-
 interface PermissionStatusBadgeProps {
   accessLevel: 'full' | 'manage' | 'view' | 'none';
   userRole?: string;
 }
-
-export const PermissionStatusBadge = ({ accessLevel, userRole }: PermissionStatusBadgeProps) => {
+export const PermissionStatusBadge = ({
+  accessLevel,
+  userRole
+}: PermissionStatusBadgeProps) => {
   const getPermissionConfig = () => {
     switch (accessLevel) {
       case 'full':
@@ -41,21 +41,7 @@ export const PermissionStatusBadge = ({ accessLevel, userRole }: PermissionStatu
         };
     }
   };
-
   const config = getPermissionConfig();
   const Icon = config.icon;
-
-  return (
-    <div className="flex items-center gap-2">
-      <Badge variant={config.variant} className="flex items-center gap-1">
-        <Icon className="h-3 w-3" />
-        {config.text}
-      </Badge>
-      {userRole && (
-        <span className="text-xs text-gray-500">
-          ({userRole.replace('_', ' ').toUpperCase()})
-        </span>
-      )}
-    </div>
-  );
+  return;
 };
