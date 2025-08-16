@@ -8,7 +8,7 @@ export const useBulkQRGeneration = () => {
   return useMutation({
     mutationFn: async (options: BulkQROptions) => {
       const results = await generateBulkQRCodes(options);
-      const exportUrl = await exportBulkQRCodes(results, options.format);
+      const exportUrl = await exportBulkQRCodes(results, options.format, options.pageSize);
       
       return {
         results,

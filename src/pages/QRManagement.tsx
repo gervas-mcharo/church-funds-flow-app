@@ -22,6 +22,8 @@ const QRManagement = () => {
   const [selectedFundType, setSelectedFundType] = useState<string>("");
   const [bulkType, setBulkType] = useState<string>("");
   const [printFormat, setPrintFormat] = useState<string>("");
+  const [selectedFundTypeId, setSelectedFundTypeId] = useState<string>("");
+  const [selectedPageSize, setSelectedPageSize] = useState<string>("");
   const [selectedQRCodes, setSelectedQRCodes] = useState<string[]>([]);
   
   const { toast } = useToast();
@@ -102,10 +104,30 @@ const QRManagement = () => {
       return;
     }
 
+    if (bulkType === 'fund-type' && !selectedFundTypeId) {
+      toast({
+        title: "Missing Fund Type",
+        description: "Please select a fund type for fund-specific generation.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (printFormat === 'page' && !selectedPageSize) {
+      toast({
+        title: "Missing Page Size",
+        description: "Please select a page size for page format.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       const result = await bulkGenerate.mutateAsync({
-        type: bulkType as 'all-contributors' | 'fund-type' | 'department',
-        format: printFormat as 'envelope' | 'cards' | 'labels'
+        type: bulkType as 'all-contributors' | 'fund-type',
+        fundTypeId: bulkType === 'fund-type' ? selectedFundTypeId : undefined,
+        format: printFormat as 'page' | 'cards' | 'labels',
+        pageSize: printFormat === 'page' ? selectedPageSize as 'A4' | 'A3' | 'A5' | 'Letter' : undefined
       });
 
       // Trigger download
@@ -124,6 +146,8 @@ const QRManagement = () => {
       // Reset form
       setBulkType("");
       setPrintFormat("");
+      setSelectedFundTypeId("");
+      setSelectedPageSize("");
     } catch (error) {
       toast({
         title: "Generation Failed",
@@ -383,10 +407,34 @@ const QRManagement = () => {
               <SelectContent>
                 <SelectItem value="all-contributors">All Contributors</SelectItem>
                 <SelectItem value="fund-type">By Fund Type</SelectItem>
-                <SelectItem value="department">By Department</SelectItem>
               </SelectContent>
             </Select>
           </div>
+          {bulkType === 'fund-type' && (
+            <div>
+              <Label htmlFor="fund-type-select">Select Fund Type</Label>
+              <Select 
+                value={selectedFundTypeId} 
+                onValueChange={setSelectedFundTypeId}
+                disabled={!hasBulkPermission}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select fund type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {fundTypesLoading ? (
+                    <SelectItem value="loading" disabled>Loading fund types...</SelectItem>
+                  ) : (
+                    fundTypes?.map((fundType) => (
+                      <SelectItem key={fundType.id} value={fundType.id}>
+                        {fundType.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div>
             <Label htmlFor="format">Print Format</Label>
             <Select 
@@ -398,12 +446,32 @@ const QRManagement = () => {
                 <SelectValue placeholder="Select format" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="envelope">Offering Envelopes</SelectItem>
+                <SelectItem value="page">Page Format</SelectItem>
                 <SelectItem value="cards">QR Cards</SelectItem>
                 <SelectItem value="labels">Adhesive Labels</SelectItem>
               </SelectContent>
             </Select>
           </div>
+          {printFormat === 'page' && (
+            <div>
+              <Label htmlFor="page-size">Page Size</Label>
+              <Select 
+                value={selectedPageSize} 
+                onValueChange={setSelectedPageSize}
+                disabled={!hasBulkPermission}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select page size" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="A4">A4 (210 × 297mm)</SelectItem>
+                  <SelectItem value="A3">A3 (297 × 420mm)</SelectItem>
+                  <SelectItem value="A5">A5 (148 × 210mm)</SelectItem>
+                  <SelectItem value="Letter">Letter (216 × 279mm)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -411,7 +479,14 @@ const QRManagement = () => {
                   className="w-full" 
                   variant="outline" 
                   onClick={handleBulkGeneration}
-                  disabled={bulkGenerate.isPending || !bulkType || !printFormat || !hasBulkPermission}
+                  disabled={
+                    bulkGenerate.isPending || 
+                    !bulkType || 
+                    !printFormat || 
+                    !hasBulkPermission ||
+                    (bulkType === 'fund-type' && !selectedFundTypeId) ||
+                    (printFormat === 'page' && !selectedPageSize)
+                  }
                 >
                   {!hasBulkPermission ? (
                     <>

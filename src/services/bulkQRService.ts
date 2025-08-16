@@ -5,14 +5,15 @@ import JSZip from 'jszip';
 import jsPDF from 'jspdf';
 
 export interface BulkQROptions {
-  type: 'all-contributors' | 'fund-type' | 'department';
+  type: 'all-contributors' | 'fund-type';
   fundTypeId?: string;
-  departmentId?: string;
-  format: 'envelope' | 'cards' | 'labels';
+  format: 'page' | 'cards' | 'labels';
+  pageSize?: 'A4' | 'A3' | 'A5' | 'Letter';
 }
 
 export interface BulkQRResult {
   contributorName: string;
+  contributorPhone: string;
   fundTypeName: string;
   qrData: string;
   qrImage: string;
@@ -22,18 +23,16 @@ export const generateBulkQRCodes = async (options: BulkQROptions): Promise<BulkQ
   let contributors: any[] = [];
   let fundTypes: any[] = [];
 
-  // Get contributors based on type
-  if (options.type === 'all-contributors') {
-    const { data, error } = await supabase
-      .from('contributors')
-      .select('*')
-      .order('name');
-    if (error) throw error;
-    contributors = data;
-  }
+  // Get all contributors for both generation types
+  const { data: contributorData, error: contributorError } = await supabase
+    .from('contributors')
+    .select('*')
+    .order('name');
+  if (contributorError) throw contributorError;
+  contributors = contributorData;
 
-  // Get fund types
-  if (options.fundTypeId) {
+  // Get fund types based on generation type
+  if (options.type === 'fund-type' && options.fundTypeId) {
     const { data, error } = await supabase
       .from('fund_types')
       .select('*')
@@ -41,7 +40,7 @@ export const generateBulkQRCodes = async (options: BulkQROptions): Promise<BulkQ
     if (error) throw error;
     fundTypes = data;
   } else {
-    // Default to all active fund types
+    // For 'all-contributors', get all active fund types
     const { data, error } = await supabase
       .from('fund_types')
       .select('*')
@@ -70,6 +69,7 @@ export const generateBulkQRCodes = async (options: BulkQROptions): Promise<BulkQ
 
       results.push({
         contributorName: contributor.name,
+        contributorPhone: contributor.phone || '',
         fundTypeName: fundType.name,
         qrData,
         qrImage
@@ -80,9 +80,9 @@ export const generateBulkQRCodes = async (options: BulkQROptions): Promise<BulkQ
   return results;
 };
 
-export const exportBulkQRCodes = async (results: BulkQRResult[], format: string): Promise<string> => {
-  if (format === 'envelope') {
-    return generateEnvelopePDF(results);
+export const exportBulkQRCodes = async (results: BulkQRResult[], format: string, pageSize?: string): Promise<string> => {
+  if (format === 'page') {
+    return generatePagePDF(results, pageSize || 'A4');
   } else if (format === 'cards') {
     return generateCardsPDF(results);
   } else {
@@ -90,23 +90,59 @@ export const exportBulkQRCodes = async (results: BulkQRResult[], format: string)
   }
 };
 
-const generateEnvelopePDF = async (results: BulkQRResult[]): Promise<string> => {
-  const pdf = new jsPDF();
-  let yPosition = 20;
+const generatePagePDF = async (results: BulkQRResult[], pageSize: string): Promise<string> => {
+  // Page dimensions in mm
+  const pageSizes = {
+    'A4': [210, 297],
+    'A3': [297, 420],
+    'A5': [148, 210],
+    'Letter': [216, 279]
+  };
+  
+  const [pageWidth, pageHeight] = pageSizes[pageSize as keyof typeof pageSizes] || pageSizes.A4;
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: [pageWidth, pageHeight]
+  });
 
+  const qrSize = 30; // 30x30px converted to mm (approximately 10.6mm)
+  const margin = 15;
+  const spacing = 5;
+  const textHeight = 8;
+  const cellWidth = qrSize + spacing;
+  const cellHeight = qrSize + textHeight + spacing;
+  
+  const itemsPerRow = Math.floor((pageWidth - 2 * margin) / cellWidth);
+  const itemsPerColumn = Math.floor((pageHeight - 2 * margin) / cellHeight);
+  const itemsPerPage = itemsPerRow * itemsPerColumn;
+
+  let currentItem = 0;
+  
   for (const result of results) {
-    if (yPosition > 250) {
+    if (currentItem > 0 && currentItem % itemsPerPage === 0) {
       pdf.addPage();
-      yPosition = 20;
     }
-
-    pdf.text(`${result.contributorName} - ${result.fundTypeName}`, 20, yPosition);
     
-    // Add QR code image
-    const qrSize = 30;
-    pdf.addImage(result.qrImage, 'PNG', 150, yPosition - 15, qrSize, qrSize);
+    const pagePosition = currentItem % itemsPerPage;
+    const row = Math.floor(pagePosition / itemsPerRow);
+    const col = pagePosition % itemsPerRow;
     
-    yPosition += 40;
+    const x = margin + col * cellWidth;
+    const y = margin + row * cellHeight;
+    
+    // Add QR code
+    pdf.addImage(result.qrImage, 'PNG', x, y, qrSize, qrSize);
+    
+    // Add contributor name
+    pdf.setFontSize(8);
+    pdf.text(result.contributorName, x, y + qrSize + 4, { maxWidth: qrSize });
+    
+    // Add fund type name
+    pdf.setFontSize(6);
+    pdf.text(result.fundTypeName, x, y + qrSize + 7, { maxWidth: qrSize });
+    
+    currentItem++;
   }
 
   return pdf.output('datauristring');
@@ -138,6 +174,12 @@ const generateCardsPDF = async (results: BulkQRResult[]): Promise<string> => {
     pdf.setFontSize(8);
     pdf.text(result.contributorName, xPosition + 2, yPosition + 10);
     pdf.text(result.fundTypeName, xPosition + 2, yPosition + 16);
+    
+    // Add phone number if available
+    if (result.contributorPhone) {
+      pdf.setFontSize(6);
+      pdf.text(result.contributorPhone, xPosition + 2, yPosition + 22);
+    }
     
     // Add QR code
     const qrSize = 25;
