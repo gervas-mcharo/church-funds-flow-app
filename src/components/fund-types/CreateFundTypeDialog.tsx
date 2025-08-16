@@ -67,8 +67,8 @@ export const CreateFundTypeDialog = ({ open, onOpenChange, variant = "default" }
 
     // Default full-width button for dashboard
     return (
-      <Button variant="outline" className="w-full justify-start gap-3 h-12">
-        <Plus className="h-4 w-4" />
+      <Button>
+        <Plus className="h-4 w-4 mr-2" />
         Create Fund
       </Button>
     );
