@@ -4,7 +4,6 @@ import { Bell, User, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { HeaderQuickActions } from "@/components/layout/HeaderQuickActions";
-import { AppNavBar } from "@/components/navigation/AppNavBar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,13 +26,10 @@ export function DashboardHeader() {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
-      <div className="flex items-center gap-4">
-        <AppNavBar />
-        <HeaderQuickActions />
-      </div>
+    <div className="flex items-center justify-between w-full">
+      <HeaderQuickActions />
       
-      <div className="flex items-center gap-3 border-l border-gray-200 pl-4">
+      <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
           <Bell className="h-5 w-5" />
         </Button>
@@ -56,6 +52,6 @@ export function DashboardHeader() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </header>
+    </div>
   );
 }
