@@ -211,21 +211,26 @@ const UserManagement = () => {
     );
   }
 
-  return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-600 mt-1">Manage user accounts and role assignments</p>
-          {!canManageUsers() && (
-            <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-md flex items-center gap-2">
-              <Lock className="h-4 w-4 text-amber-600" />
-              <span className="text-sm text-amber-700">
-                You have read-only access. Only Administrators can manage user roles.
-              </span>
-            </div>
-          )}
+  const headerContent = (
+    <>
+      {!canManageUsers() && (
+        <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-md flex items-center gap-2">
+          <Lock className="h-4 w-4 text-amber-600" />
+          <span className="text-sm text-amber-700">
+            You have read-only access. Only Administrators can manage user roles.
+          </span>
         </div>
+      )}
+    </>
+  );
+
+  return (
+    <DashboardLayout 
+      title="User Management" 
+      description="Manage user accounts and role assignments"
+      headerContent={headerContent}
+    >
+      <div className="space-y-6">
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {canManageUsers() ? (

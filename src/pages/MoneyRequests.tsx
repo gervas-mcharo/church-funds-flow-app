@@ -8,12 +8,11 @@ import { MoneyRequestsList } from "@/components/money-requests/MoneyRequestsList
 
 const MoneyRequests = () => {
   return (
-    <DashboardLayout>
+    <DashboardLayout 
+      title="Money Requests" 
+      description="Manage financial requests and approvals"
+    >
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Money Requests</h1>
-          <p className="text-gray-600 mt-1">Manage financial requests and approvals</p>
-        </div>
 
         <Tabs defaultValue="list" className="w-full">
           <TabsList className="grid w-full grid-cols-2">

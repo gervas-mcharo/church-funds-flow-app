@@ -175,71 +175,70 @@ const Departments = () => {
     );
   }
 
-  return (
-    <DashboardLayout>
-      <DepartmentAccessGuard requirePermission="view">
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <div className="flex items-center gap-4 mb-2">
-                <h1 className="text-3xl font-bold text-gray-900">Departments</h1>
-                <PermissionStatusBadge 
-                  accessLevel={getDepartmentAccessLevel()} 
-                  userRole={userRole || undefined}
+  const headerContent = (
+    <div className="flex items-center gap-4">
+      <PermissionStatusBadge 
+        accessLevel={getDepartmentAccessLevel()} 
+        userRole={userRole || undefined}
+      />
+      {canCreateDepartments() && (
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Department
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Department</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="name">Department Name</Label>
+                <Input
+                  id="name"
+                  value={newDepartment.name}
+                  onChange={(e) => setNewDepartment(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Enter department name"
                 />
               </div>
-              <p className="text-gray-600">Manage organizational departments and personnel</p>
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={newDepartment.description}
+                  onChange={(e) => setNewDepartment(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Enter department description"
+                  rows={3}
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleCreateDepartment}
+                  disabled={!newDepartment.name.trim() || createDepartmentMutation.isPending}
+                >
+                  {createDepartmentMutation.isPending ? "Creating..." : "Create Department"}
+                </Button>
+              </div>
             </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
 
-            {canCreateDepartments() && (
-              <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Department
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Create New Department</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="name">Department Name</Label>
-                      <Input
-                        id="name"
-                        value={newDepartment.name}
-                        onChange={(e) => setNewDepartment(prev => ({ ...prev, name: e.target.value }))}
-                        placeholder="Enter department name"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea
-                        id="description"
-                        value={newDepartment.description}
-                        onChange={(e) => setNewDepartment(prev => ({ ...prev, description: e.target.value }))}
-                        placeholder="Enter department description"
-                        rows={3}
-                      />
-                    </div>
-                    <div className="flex justify-end space-x-2">
-                      <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                        Cancel
-                      </Button>
-                      <Button 
-                        onClick={handleCreateDepartment}
-                        disabled={!newDepartment.name.trim() || createDepartmentMutation.isPending}
-                      >
-                        {createDepartmentMutation.isPending ? "Creating..." : "Create Department"}
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
-          </div>
-
+  return (
+    <DashboardLayout 
+      title="Departments" 
+      description="Manage organizational departments and personnel"
+      headerContent={headerContent}
+    >
+      <DepartmentAccessGuard requirePermission="view">
+        <div className="space-y-6">
           {/* Single Column Layout */}
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">All Departments</h2>

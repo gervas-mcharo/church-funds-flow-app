@@ -58,25 +58,26 @@ const Pledges = () => {
     );
   }
 
+  const headerContent = (
+    <div>
+      <div className="mb-3">
+        <PledgePermissionBadge />
+      </div>
+      <div className="flex gap-3">
+        <SecureBulkPledgeImportDialog />
+        <SecureCreatePledgeDialog />
+      </div>
+    </div>
+  );
+
   return (
-    <DashboardLayout>
+    <DashboardLayout 
+      title="Pledge Management" 
+      description="Track and manage contributor pledges"
+      headerContent={headerContent}
+    >
       <PledgeAccessGuard>
         <div className="space-y-6">
-          {/* Header with Security Badge */}
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Pledge Management</h1>
-              <p className="text-gray-600 mt-1">Track and manage contributor pledges</p>
-              <div className="mt-2">
-                <PledgePermissionBadge />
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <SecureBulkPledgeImportDialog />
-              <SecureCreatePledgeDialog />
-            </div>
-          </div>
-
           {/* Security Notice for Limited Access */}
           {getPledgeAccessLevel() === 'view' && (
             <Alert>

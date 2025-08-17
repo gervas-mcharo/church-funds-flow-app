@@ -107,26 +107,27 @@ const Contributors = () => {
     );
   }
 
+  const headerContent = (
+    <div className="flex items-center gap-4">
+      <PermissionStatusBadge 
+        accessLevel={getContributorAccessLevel()} 
+        userRole={userRole || undefined}
+      />
+      <Button onClick={() => setShowCreateDialog(true)}>
+        <Plus className="h-4 w-4 mr-2" />
+        Add Contributor
+      </Button>
+    </div>
+  );
+
   return (
     <ContributorAccessGuard>
-      <DashboardLayout>
+      <DashboardLayout 
+        title="Contributors" 
+        description="Manage list of contributors"
+        headerContent={headerContent}
+      >
         <div className="container mx-auto py-10">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <div className="flex items-center gap-4 mb-2">
-                <h1 className="text-3xl font-bold text-gray-900">Contributors</h1>
-                <PermissionStatusBadge 
-                  accessLevel={getContributorAccessLevel()} 
-                  userRole={userRole || undefined}
-                />
-              </div>
-              <p className="text-gray-600">Manage list of contributors</p>
-            </div>
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Contributor
-            </Button>
-          </div>
 
           <Card>
             <CardHeader>

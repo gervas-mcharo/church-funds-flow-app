@@ -72,41 +72,42 @@ const FundTypes = () => {
     </DashboardLayout>;
   }
 
+  const headerContent = (
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+          accessLevel === 'full' ? 'bg-green-100 text-green-800' :
+          accessLevel === 'manage' ? 'bg-blue-100 text-blue-800' :
+          'bg-gray-100 text-gray-800'
+        }`}>
+          {accessLevel === 'full' && '✓ Full Access'}
+          {accessLevel === 'manage' && '👁 Manage Access'}
+          {accessLevel === 'view' && <><Eye className="h-3 w-3 inline mr-1" />View Only</>}
+        </div>
+        <span className="text-sm text-gray-500">
+          Role: {userRole?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+        </span>
+      </div>
+      
+      {canCreateFunds() ? (
+        <CreateFundTypeDialog />
+      ) : (
+        <div className="flex items-center gap-2 text-gray-500">
+          <Lock className="h-4 w-4" />
+          <span className="text-sm">Create access restricted</span>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <FundAccessGuard>
-      <DashboardLayout>
+      <DashboardLayout 
+        title="Fund Management" 
+        description="Manage different types of funds and offerings"
+        headerContent={headerContent}
+      >
         <div className="space-y-6">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Fund Management</h1>
-              <p className="text-gray-600 mt-1">Manage different types of funds and offerings</p>
-            
-              {/* Permission Status Indicator */}
-              <div className="mt-3 flex items-center gap-2">
-                <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  accessLevel === 'full' ? 'bg-green-100 text-green-800' :
-                  accessLevel === 'manage' ? 'bg-blue-100 text-blue-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
-                  {accessLevel === 'full' && '✓ Full Access'}
-                  {accessLevel === 'manage' && '👁 Manage Access'}
-                  {accessLevel === 'view' && <><Eye className="h-3 w-3 inline mr-1" />View Only</>}
-                </div>
-                <span className="text-sm text-gray-500">
-                  Role: {userRole?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                </span>
-              </div>
-            </div>
-            
-            {canCreateFunds() ? (
-              <CreateFundTypeDialog />
-            ) : (
-              <div className="flex items-center gap-2 text-gray-500">
-                <Lock className="h-4 w-4" />
-                <span className="text-sm">Create access restricted</span>
-              </div>
-            )}
-          </div>
 
           <Card className="bg-white shadow-sm">
             <CardHeader>

@@ -3,12 +3,12 @@ import { FundOverviewCards } from "@/components/dashboard/FundOverviewCards";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { ContributionChart } from "@/components/dashboard/ContributionChart";
 const Index = () => {
-  return <DashboardLayout>
+  return (
+    <DashboardLayout 
+      title="Dashboard" 
+      description="Manage contributions, track expenses, and oversee church finances"
+    >
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">Manage contributions, track expenses, and oversee church finances</p>
-        </div>
         
         <FundOverviewCards />
         
@@ -18,6 +18,8 @@ const Index = () => {
         
         <RecentActivity />
       </div>
-    </DashboardLayout>;
+    </DashboardLayout>
+  );
 };
+
 export default Index;
