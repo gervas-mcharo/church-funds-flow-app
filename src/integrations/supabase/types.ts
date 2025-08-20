@@ -882,6 +882,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      advance_approval_chain: {
+        Args: {
+          approval_status: string
+          approver_id: string
+          comments?: string
+          request_id: string
+        }
+        Returns: undefined
+      }
       can_access_department: {
         Args: { dept_id: string; user_id: string }
         Returns: boolean
@@ -896,6 +905,10 @@ export type Database = {
       }
       can_access_qr_management: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      can_approve_request: {
+        Args: { request_id: string; user_id: string }
         Returns: boolean
       }
       can_bulk_import_pledges: {
@@ -930,9 +943,25 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      create_approval_chain: {
+        Args: { request_id: string }
+        Returns: undefined
+      }
       current_user_has_admin_role: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      get_user_pending_approvals: {
+        Args: { user_id: string }
+        Returns: {
+          amount: number
+          approval_level: Database["public"]["Enums"]["approval_level"]
+          created_at: string
+          department_name: string
+          purpose: string
+          request_id: string
+          requester_name: string
+        }[]
       }
       get_user_treasurer_departments: {
         Args: { _user_id: string }

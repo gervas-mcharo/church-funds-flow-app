@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export function useDepartments() {
-  return useQuery({
+  const query = useQuery({
     queryKey: ['departments'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -16,4 +16,10 @@ export function useDepartments() {
       return data;
     }
   });
+
+  return {
+    departments: query.data,
+    isLoading: query.isLoading,
+    error: query.error,
+  };
 }
