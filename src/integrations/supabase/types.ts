@@ -395,6 +395,27 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_money_requests_department"
+            columns: ["requesting_department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_money_requests_fund_type"
+            columns: ["fund_type_id"]
+            isOneToOne: false
+            referencedRelation: "fund_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_money_requests_requester"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "money_requests_fund_type_id_fkey"
             columns: ["fund_type_id"]
             isOneToOne: false

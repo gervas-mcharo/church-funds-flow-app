@@ -35,20 +35,31 @@ export function useMoneyRequests() {
     queryFn: async () => {
       if (!user) return [];
 
-      const { data, error } = await supabase
-        .from("money_requests")
-        .select(`
-          *,
-          departments!inner(name),
-          fund_types!inner(name),
-          profiles!inner(first_name, last_name, email)
-        `)
-        .order("created_at", { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from("money_requests")
+          .select(`
+            *,
+            departments!fk_money_requests_department(name),
+            fund_types!fk_money_requests_fund_type(name),
+            profiles!fk_money_requests_requester(first_name, last_name, email)
+          `)
+          .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data as MoneyRequestWithDetails[];
+        if (error) {
+          console.error("Supabase query error:", error);
+          throw error;
+        }
+        
+        return data || [];
+      } catch (error) {
+        console.error("Error fetching money requests:", error);
+        throw error;
+      }
     },
     enabled: !!user,
+    retry: 1,
+    staleTime: 30000,
   });
 
   const createRequest = useMutation({
