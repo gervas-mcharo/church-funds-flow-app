@@ -17,35 +17,50 @@ export type Database = {
       approval_chain: {
         Row: {
           approval_date: string | null
+          approval_duration_minutes: number | null
           approver_id: string | null
           approver_role: Database["public"]["Enums"]["app_role"]
+          assigned_at: string | null
           comments: string | null
           created_at: string
+          delegation_to: string | null
+          due_date: string | null
           id: string
           is_approved: boolean | null
           money_request_id: string
+          notification_sent: boolean | null
           step_order: number
         }
         Insert: {
           approval_date?: string | null
+          approval_duration_minutes?: number | null
           approver_id?: string | null
           approver_role: Database["public"]["Enums"]["app_role"]
+          assigned_at?: string | null
           comments?: string | null
           created_at?: string
+          delegation_to?: string | null
+          due_date?: string | null
           id?: string
           is_approved?: boolean | null
           money_request_id: string
+          notification_sent?: boolean | null
           step_order: number
         }
         Update: {
           approval_date?: string | null
+          approval_duration_minutes?: number | null
           approver_id?: string | null
           approver_role?: Database["public"]["Enums"]["app_role"]
+          assigned_at?: string | null
           comments?: string | null
           created_at?: string
+          delegation_to?: string | null
+          due_date?: string | null
           id?: string
           is_approved?: boolean | null
           money_request_id?: string
+          notification_sent?: boolean | null
           step_order?: number
         }
         Relationships: [
@@ -64,6 +79,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      approval_templates: {
+        Row: {
+          approval_steps: Json
+          created_at: string | null
+          created_by: string | null
+          department_id: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          max_amount: number | null
+          min_amount: number | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          approval_steps: Json
+          created_at?: string | null
+          created_by?: string | null
+          department_id?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          max_amount?: number | null
+          min_amount?: number | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          approval_steps?: Json
+          created_at?: string | null
+          created_by?: string | null
+          department_id?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          max_amount?: number | null
+          min_amount?: number | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       contributions: {
         Row: {
@@ -360,47 +420,122 @@ export type Database = {
         }
         Relationships: []
       }
+      money_request_comments: {
+        Row: {
+          comment: string
+          created_at: string | null
+          id: string
+          is_internal: boolean | null
+          money_request_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string | null
+          id?: string
+          is_internal?: boolean | null
+          money_request_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string | null
+          id?: string
+          is_internal?: boolean | null
+          money_request_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      money_request_status_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string | null
+          id: string
+          money_request_id: string
+          new_status: string
+          old_status: string | null
+          reason: string | null
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string | null
+          id?: string
+          money_request_id: string
+          new_status: string
+          old_status?: string | null
+          reason?: string | null
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string | null
+          id?: string
+          money_request_id?: string
+          new_status?: string
+          old_status?: string | null
+          reason?: string | null
+        }
+        Relationships: []
+      }
       money_requests: {
         Row: {
           amount: number
           associated_project: string | null
+          attachment_count: number | null
           created_at: string
+          estimated_completion_date: string | null
+          fund_code: string | null
           fund_type_id: string
           id: string
+          priority: string | null
           purpose: string
           request_date: string
           requester_id: string
           requesting_department_id: string
           status: Database["public"]["Enums"]["money_request_status"]
           suggested_vendor: string | null
+          total_amount_with_tax: number | null
           updated_at: string
         }
         Insert: {
           amount: number
           associated_project?: string | null
+          attachment_count?: number | null
           created_at?: string
+          estimated_completion_date?: string | null
+          fund_code?: string | null
           fund_type_id: string
           id?: string
+          priority?: string | null
           purpose: string
           request_date?: string
           requester_id: string
           requesting_department_id: string
           status?: Database["public"]["Enums"]["money_request_status"]
           suggested_vendor?: string | null
+          total_amount_with_tax?: number | null
           updated_at?: string
         }
         Update: {
           amount?: number
           associated_project?: string | null
+          attachment_count?: number | null
           created_at?: string
+          estimated_completion_date?: string | null
+          fund_code?: string | null
           fund_type_id?: string
           id?: string
+          priority?: string | null
           purpose?: string
           request_date?: string
           requester_id?: string
           requesting_department_id?: string
           status?: Database["public"]["Enums"]["money_request_status"]
           suggested_vendor?: string | null
+          total_amount_with_tax?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -426,6 +561,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_queue: {
+        Row: {
+          attempts: number | null
+          created_at: string | null
+          data: Json | null
+          error_message: string | null
+          id: string
+          max_attempts: number | null
+          message: string
+          money_request_id: string | null
+          priority: string | null
+          recipient_id: string
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string | null
+          subject: string
+          type: string
+        }
+        Insert: {
+          attempts?: number | null
+          created_at?: string | null
+          data?: Json | null
+          error_message?: string | null
+          id?: string
+          max_attempts?: number | null
+          message: string
+          money_request_id?: string | null
+          priority?: string | null
+          recipient_id: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject: string
+          type: string
+        }
+        Update: {
+          attempts?: number | null
+          created_at?: string | null
+          data?: Json | null
+          error_message?: string | null
+          id?: string
+          max_attempts?: number | null
+          message?: string
+          money_request_id?: string | null
+          priority?: string | null
+          recipient_id?: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject?: string
+          type?: string
+        }
+        Relationships: []
       }
       organization_settings: {
         Row: {
@@ -787,6 +976,45 @@ export type Database = {
           table_name?: string
           user_agent?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_notification_preferences: {
+        Row: {
+          approval_requests: boolean | null
+          created_at: string | null
+          daily_digest: boolean | null
+          deadline_reminders: boolean | null
+          email_enabled: boolean | null
+          in_app_enabled: boolean | null
+          sms_enabled: boolean | null
+          status_updates: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          approval_requests?: boolean | null
+          created_at?: string | null
+          daily_digest?: boolean | null
+          deadline_reminders?: boolean | null
+          email_enabled?: boolean | null
+          in_app_enabled?: boolean | null
+          sms_enabled?: boolean | null
+          status_updates?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          approval_requests?: boolean | null
+          created_at?: string | null
+          daily_digest?: boolean | null
+          deadline_reminders?: boolean | null
+          email_enabled?: boolean | null
+          in_app_enabled?: boolean | null
+          sms_enabled?: boolean | null
+          status_updates?: boolean | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
