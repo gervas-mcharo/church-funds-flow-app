@@ -31,6 +31,7 @@ import { useMoneyRequests } from "@/hooks/useMoneyRequests";
 import { useMoneyRequestPermissions } from "@/hooks/useMoneyRequestPermissions";
 import { useDepartments } from "@/hooks/useDepartments";
 import { useFundTypes } from "@/hooks/useFundTypes";
+import { useDepartmentAccess } from "@/hooks/useDepartmentAccess";
 
 const formSchema = z.object({
   requesting_department_id: z.string().min(1, "Department is required"),
@@ -58,6 +59,7 @@ export function CreateMoneyRequestDialog({
   const { canCreateRequestForDepartment, canCreateRequestsForAnyDepartment } = useMoneyRequestPermissions();
   const { departments } = useDepartments();
   const { fundTypes } = useFundTypes();
+  const { userDepartments } = useDepartmentAccess();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -91,9 +93,10 @@ export function CreateMoneyRequestDialog({
     }
   };
 
-  const availableDepartments = departments?.filter(dept => 
-    canCreateRequestsForAnyDepartment || canCreateRequestForDepartment(dept.id)
-  ) || [];
+  const availableDepartments = departments?.filter(dept => {
+    if (canCreateRequestsForAnyDepartment) return true;
+    return canCreateRequestForDepartment(dept.id);
+  }) || [];
 
   const activeFundTypes = fundTypes?.filter(fund => fund.is_active) || [];
 

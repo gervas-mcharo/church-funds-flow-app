@@ -1,5 +1,6 @@
 import { useUserRole } from "./useUserRole";
 import { useDepartmentFinancialPermissions } from "./useDepartmentFinancialPermissions";
+import { useDepartmentAccess } from "./useDepartmentAccess";
 
 export function useMoneyRequestPermissions() {
   const { userRole, isLoading: roleLoading } = useUserRole();
@@ -9,6 +10,7 @@ export function useMoneyRequestPermissions() {
     isChurchTreasurer,
     isDepartmentTreasurer 
   } = useDepartmentFinancialPermissions();
+  const { canAccessDepartment, isLoading: departmentLoading } = useDepartmentAccess();
 
   // Check if user can create requests for any department
   const canCreateRequestsForAnyDepartment = () => {
@@ -32,9 +34,9 @@ export function useMoneyRequestPermissions() {
     // High-level roles can create for any department
     if (canCreateRequestsForAnyDepartment()) return true;
     
-    // Department members can only create for their own department
-    if (departmentId) {
-      return canAccessDepartmentFinances(departmentId);
+    // ANY department member can create requests for their own department
+    if (departmentId && canAccessDepartment(departmentId)) {
+      return true;
     }
     
     return false;
@@ -54,7 +56,7 @@ export function useMoneyRequestPermissions() {
     if (canCreateRequestsForAnyDepartment()) return true;
     
     // Department members can view their department's requests
-    return canAccessDepartmentFinances(request.requesting_department_id);
+    return canAccessDepartment(request.requesting_department_id);
   };
 
   // Check if user can edit a specific request
@@ -133,6 +135,6 @@ export function useMoneyRequestPermissions() {
     canDeleteRequest: canDeleteRequest(),
     canApproveRequests: canApproveRequests(),
     canViewAllRequests: canViewAllRequests(),
-    isLoading: roleLoading,
+    isLoading: roleLoading || departmentLoading,
   };
 }
