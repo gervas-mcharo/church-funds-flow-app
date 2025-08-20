@@ -906,9 +906,9 @@ export type Database = {
       advance_approval_chain: {
         Args: {
           approval_status: string
-          approver_id: string
-          comments?: string
-          request_id: string
+          p_approver_id: string
+          p_comments?: string
+          p_request_id: string
         }
         Returns: undefined
       }
