@@ -13,7 +13,6 @@ import { EditFundTypeDialog } from "@/components/fund-types/EditFundTypeDialog";
 import { CreateFundTypeDialog } from "@/components/fund-types/CreateFundTypeDialog";
 import { useToast } from "@/hooks/use-toast";
 import { FundAccessGuard } from "@/components/fund-types/FundAccessGuard";
-
 const FundTypes = () => {
   const {
     data: fundTypes,
@@ -32,10 +31,11 @@ const FundTypes = () => {
     userRole,
     isLoading: roleLoading
   } = useUserRole();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [editingFundType, setEditingFundType] = useState<any>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-
   const handleEdit = (fundType: any) => {
     if (!canManageFunds()) {
       toast({
@@ -48,7 +48,6 @@ const FundTypes = () => {
     setEditingFundType(fundType);
     setEditDialogOpen(true);
   };
-
   const handleDelete = (id: string) => {
     if (!canDeleteFunds()) {
       toast({
@@ -60,10 +59,8 @@ const FundTypes = () => {
     }
     deleteFundType.mutate(id);
   };
-
   const accessLevel = getFundAccessLevel();
   const showAccessDenied = !canViewFunds();
-
   if (roleLoading) {
     return <DashboardLayout>
       <div className="flex items-center justify-center h-64">
@@ -71,42 +68,16 @@ const FundTypes = () => {
       </div>
     </DashboardLayout>;
   }
-
-  const headerContent = (
-    <div>
-      <div className="flex items-center gap-2 mb-3">
-        <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-          accessLevel === 'full' ? 'bg-green-100 text-green-800' :
-          accessLevel === 'manage' ? 'bg-blue-100 text-blue-800' :
-          'bg-gray-100 text-gray-800'
-        }`}>
-          {accessLevel === 'full' && '✓ Full Access'}
-          {accessLevel === 'manage' && '👁 Manage Access'}
-          {accessLevel === 'view' && <><Eye className="h-3 w-3 inline mr-1" />View Only</>}
-        </div>
-        <span className="text-sm text-gray-500">
-          Role: {userRole?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-        </span>
-      </div>
+  const headerContent = <div>
       
-      {canCreateFunds() ? (
-        <CreateFundTypeDialog />
-      ) : (
-        <div className="flex items-center gap-2 text-gray-500">
+      
+      {canCreateFunds() ? <CreateFundTypeDialog /> : <div className="flex items-center gap-2 text-gray-500">
           <Lock className="h-4 w-4" />
           <span className="text-sm">Create access restricted</span>
-        </div>
-      )}
-    </div>
-  );
-
-  return (
-    <FundAccessGuard>
-      <DashboardLayout 
-        title="Fund Management" 
-        description="Manage different types of funds and offerings"
-        headerContent={headerContent}
-      >
+        </div>}
+    </div>;
+  return <FundAccessGuard>
+      <DashboardLayout title="Fund Management" description="Manage different types of funds and offerings" headerContent={headerContent}>
         <div className="space-y-6">
 
           <Card className="bg-white shadow-sm">
@@ -140,25 +111,17 @@ const FundTypes = () => {
                           </span>
                         </TableCell>
                         <TableCell>
-                          {accessLevel === 'view' ? (
-                            <div className="flex items-center gap-2 text-gray-500">
+                          {accessLevel === 'view' ? <div className="flex items-center gap-2 text-gray-500">
                               <Eye className="h-4 w-4" />
                               <span className="text-sm">View Only</span>
-                            </div>
-                          ) : (
-                            <div className="flex gap-2">
-                              {canManageFunds() ? (
-                                <Button size="sm" variant="outline" onClick={() => handleEdit(fundType)}>
+                            </div> : <div className="flex gap-2">
+                              {canManageFunds() ? <Button size="sm" variant="outline" onClick={() => handleEdit(fundType)}>
                                   <Edit className="h-4 w-4" />
-                                </Button>
-                              ) : (
-                                <Button size="sm" variant="outline" disabled title="Edit access restricted">
+                                </Button> : <Button size="sm" variant="outline" disabled title="Edit access restricted">
                                   <Lock className="h-4 w-4" />
-                                </Button>
-                              )}
+                                </Button>}
                               
-                              {canDeleteFunds() ? (
-                                <AlertDialog>
+                              {canDeleteFunds() ? <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                     <Button size="sm" variant="outline">
                                       <Trash2 className="h-4 w-4" />
@@ -178,14 +141,10 @@ const FundTypes = () => {
                                       </AlertDialogAction>
                                     </AlertDialogFooter>
                                   </AlertDialogContent>
-                                </AlertDialog>
-                              ) : (
-                                <Button size="sm" variant="outline" disabled title="Delete access restricted">
+                                </AlertDialog> : <Button size="sm" variant="outline" disabled title="Delete access restricted">
                                   <Lock className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          )}
+                                </Button>}
+                            </div>}
                         </TableCell>
                       </TableRow>)}
                   </TableBody>
@@ -201,8 +160,6 @@ const FundTypes = () => {
         }} />}
         </div>
       </DashboardLayout>
-    </FundAccessGuard>
-  );
+    </FundAccessGuard>;
 };
-
 export default FundTypes;
