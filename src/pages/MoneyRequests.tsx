@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useMoneyRequests } from "@/hooks/useMoneyRequests";
 import { useMoneyRequestPermissions } from "@/hooks/useMoneyRequestPermissions";
 import { usePendingApprovals } from "@/hooks/usePendingApprovals";
@@ -68,33 +69,32 @@ export default function MoneyRequests() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
+      <DashboardLayout 
+        title="Money Requests"
+        description="Manage departmental funding requests and approvals"
+      >
         <div className="space-y-4">
           <div className="h-8 bg-muted animate-pulse rounded"></div>
           <div className="h-32 bg-muted animate-pulse rounded"></div>
           <div className="h-32 bg-muted animate-pulse rounded"></div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
+  const headerContent = canCreateRequestsForAnyDepartment ? (
+    <Button onClick={() => setCreateDialogOpen(true)}>
+      <Plus className="h-4 w-4 mr-2" />
+      New Request
+    </Button>
+  ) : null;
+
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Money Requests</h1>
-          <p className="text-muted-foreground">
-            Manage departmental funding requests and approvals
-          </p>
-        </div>
-        
-        {canCreateRequestsForAnyDepartment && (
-          <Button onClick={() => setCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Request
-          </Button>
-        )}
-      </div>
+    <DashboardLayout 
+      title="Money Requests"
+      description="Manage departmental funding requests and approvals"
+      headerContent={headerContent}
+    >
 
       <Tabs defaultValue="my-requests" className="space-y-4">
         <TabsList>
@@ -242,6 +242,6 @@ export default function MoneyRequests() {
         open={!!selectedRequestId}
         onOpenChange={(open) => !open && setSelectedRequestId(null)}
       />
-    </div>
+    </DashboardLayout>
   );
 }
