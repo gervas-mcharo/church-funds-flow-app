@@ -1104,6 +1104,18 @@ export type Database = {
         Args: { request_id: string }
         Returns: undefined
       }
+      create_approval_notification: {
+        Args: {
+          approver_role: Database["public"]["Enums"]["app_role"]
+          notification_type?: string
+          request_id: string
+        }
+        Returns: undefined
+      }
+      create_dynamic_approval_chain: {
+        Args: { amount: number; department_id: string; request_id: string }
+        Returns: undefined
+      }
       current_user_has_admin_role: {
         Args: Record<PropertyKey, never>
         Returns: boolean

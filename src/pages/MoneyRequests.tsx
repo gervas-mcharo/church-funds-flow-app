@@ -3,8 +3,8 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Plus, List } from "lucide-react";
-import { MoneyRequestForm } from "@/components/money-requests/MoneyRequestForm";
-import { MoneyRequestsList } from "@/components/money-requests/MoneyRequestsList";
+import { EnhancedMoneyRequestForm } from "@/components/money-requests/EnhancedMoneyRequestForm";
+import { EnhancedMoneyRequestsList } from "@/components/money-requests/EnhancedMoneyRequestsList";
 
 const MoneyRequests = () => {
   return (
@@ -27,11 +27,11 @@ const MoneyRequests = () => {
           </TabsList>
 
           <TabsContent value="list" className="space-y-6">
-            <MoneyRequestsList />
+            <EnhancedMoneyRequestsList />
           </TabsContent>
 
           <TabsContent value="create" className="space-y-6">
-            <MoneyRequestForm />
+            <EnhancedMoneyRequestForm />
           </TabsContent>
         </Tabs>
       </div>
