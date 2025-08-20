@@ -1113,7 +1113,7 @@ export type Database = {
         Returns: undefined
       }
       create_dynamic_approval_chain: {
-        Args: { amount: number; department_id: string; request_id: string }
+        Args: { amount: number; dept_id: string; request_id: string }
         Returns: undefined
       }
       current_user_has_admin_role: {
