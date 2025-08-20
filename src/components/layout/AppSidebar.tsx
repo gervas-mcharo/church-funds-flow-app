@@ -10,6 +10,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { 
   BarChart3, 
@@ -27,6 +28,7 @@ import {
 import { usePledgePermissions } from "@/hooks/usePledgePermissions";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useDepartmentFinancialPermissions } from "@/hooks/useDepartmentFinancialPermissions";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MenuItem {
   title: string;
@@ -65,15 +67,26 @@ const departmentTreasurerItems: MenuItem[] = [
 export function AppSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
+  const isMobile = useIsMobile();
+  const { setOpenMobile } = useSidebar();
   const { canAccessPledges } = usePledgePermissions();
   const { canAccessQRManagement, canViewContributors, canViewFunds, userRole } = useUserRole();
   const { isChurchTreasurer, treasurerDepartments } = useDepartmentFinancialPermissions();
 
   const isActive = (path: string) => currentPath === path;
+  
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive 
-      ? "bg-blue-100 text-blue-700 font-medium border-r-2 border-blue-700" 
-      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900";
+    `transition-all duration-200 relative overflow-hidden group ${
+      isActive 
+        ? "bg-gradient-to-r from-primary/20 to-primary/10 text-primary font-medium shadow-md" 
+        : "hover:bg-gradient-to-r hover:from-muted/50 hover:to-muted/30 text-muted-foreground hover:text-foreground hover:shadow-sm"
+    }`;
+
+  const handleNavigation = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   // Use department treasurer menu if user is only a department treasurer
   const isDepartmentTreasurerOnly = userRole === 'department_treasurer';
@@ -138,11 +151,15 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild>
                     <NavLink 
                       to={item.url} 
-                      end 
-                      className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${getNavCls({ isActive })}`}
+                      end
+                      onClick={handleNavigation}
+                      className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg ${getNavCls({ isActive })}`}
                     >
-                      <item.icon className="h-5 w-5 flex-shrink-0" />
-                      <span>{item.title}</span>
+                      <item.icon className="h-5 w-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110" />
+                      <span className="transition-all duration-200">{item.title}</span>
+                      {isActive(item.url) && (
+                        <div className="absolute inset-y-0 right-0 w-1 bg-primary rounded-l-full animate-scale-in" />
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
