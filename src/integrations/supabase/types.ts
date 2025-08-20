@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      approval_chain: {
+        Row: {
+          approval_level: Database["public"]["Enums"]["approval_level"]
+          created_at: string
+          department_id: string
+          id: string
+          is_required: boolean
+          order_sequence: number
+        }
+        Insert: {
+          approval_level: Database["public"]["Enums"]["approval_level"]
+          created_at?: string
+          department_id: string
+          id?: string
+          is_required?: boolean
+          order_sequence: number
+        }
+        Update: {
+          approval_level?: Database["public"]["Enums"]["approval_level"]
+          created_at?: string
+          department_id?: string
+          id?: string
+          is_required?: boolean
+          order_sequence?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_chain_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contributions: {
         Row: {
           amount: number
@@ -309,6 +344,110 @@ export type Database = {
         }
         Relationships: []
       }
+      money_requests: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          created_at: string
+          description: string | null
+          fund_type_id: string
+          id: string
+          purpose: string
+          rejected_at: string | null
+          rejection_reason: string | null
+          requester_id: string
+          requesting_department_id: string
+          status: Database["public"]["Enums"]["request_status"]
+          suggested_vendor: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          created_at?: string
+          description?: string | null
+          fund_type_id: string
+          id?: string
+          purpose: string
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          requester_id: string
+          requesting_department_id: string
+          status?: Database["public"]["Enums"]["request_status"]
+          suggested_vendor?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          created_at?: string
+          description?: string | null
+          fund_type_id?: string
+          id?: string
+          purpose?: string
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          requester_id?: string
+          requesting_department_id?: string
+          status?: Database["public"]["Enums"]["request_status"]
+          suggested_vendor?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "money_requests_fund_type_id_fkey"
+            columns: ["fund_type_id"]
+            isOneToOne: false
+            referencedRelation: "fund_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "money_requests_requesting_department_id_fkey"
+            columns: ["requesting_department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_queue: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          notification_type: string
+          request_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          notification_type: string
+          request_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          notification_type?: string
+          request_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_queue_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "money_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_settings: {
         Row: {
           created_at: string
@@ -585,6 +724,91 @@ export type Database = {
           },
         ]
       }
+      request_approvals: {
+        Row: {
+          approval_level: Database["public"]["Enums"]["approval_level"]
+          approved_at: string | null
+          approver_id: string | null
+          comments: string | null
+          created_at: string
+          id: string
+          order_sequence: number
+          request_id: string
+          status: string
+        }
+        Insert: {
+          approval_level: Database["public"]["Enums"]["approval_level"]
+          approved_at?: string | null
+          approver_id?: string | null
+          comments?: string | null
+          created_at?: string
+          id?: string
+          order_sequence: number
+          request_id: string
+          status?: string
+        }
+        Update: {
+          approval_level?: Database["public"]["Enums"]["approval_level"]
+          approved_at?: string | null
+          approver_id?: string | null
+          comments?: string | null
+          created_at?: string
+          id?: string
+          order_sequence?: number
+          request_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_approvals_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "money_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      request_attachments: {
+        Row: {
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          request_id: string
+          uploaded_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          request_id: string
+          uploaded_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          request_id?: string
+          uploaded_at?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_attachments_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "money_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_audit_log: {
         Row: {
           action: string
@@ -773,6 +997,12 @@ export type Database = {
         | "head_of_department"
         | "department_member"
         | "secretary"
+      approval_level:
+        | "department_treasurer"
+        | "head_of_department"
+        | "finance_elder"
+        | "general_secretary"
+        | "pastor"
       pledge_frequency:
         | "one_time"
         | "weekly"
@@ -786,6 +1016,17 @@ export type Database = {
         | "fulfilled"
         | "overdue"
         | "cancelled"
+      request_status:
+        | "draft"
+        | "submitted"
+        | "pending_treasurer"
+        | "pending_hod"
+        | "pending_finance_elder"
+        | "pending_general_secretary"
+        | "pending_pastor"
+        | "approved"
+        | "rejected"
+        | "paid"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -927,6 +1168,13 @@ export const Constants = {
         "department_member",
         "secretary",
       ],
+      approval_level: [
+        "department_treasurer",
+        "head_of_department",
+        "finance_elder",
+        "general_secretary",
+        "pastor",
+      ],
       pledge_frequency: [
         "one_time",
         "weekly",
@@ -941,6 +1189,18 @@ export const Constants = {
         "fulfilled",
         "overdue",
         "cancelled",
+      ],
+      request_status: [
+        "draft",
+        "submitted",
+        "pending_treasurer",
+        "pending_hod",
+        "pending_finance_elder",
+        "pending_general_secretary",
+        "pending_pastor",
+        "approved",
+        "rejected",
+        "paid",
       ],
     },
   },
