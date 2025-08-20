@@ -20,20 +20,6 @@ export const useRecentActivity = () => {
         .order('created_at', { ascending: false })
         .limit(5);
 
-      // Get recent money requests
-      const { data: requests } = await supabase
-        .from('money_requests')
-        .select(`
-          id,
-          amount,
-          purpose,
-          status,
-          created_at,
-          fund_types (name)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(3);
-
       const activities = [];
 
       // Add contributions
@@ -45,18 +31,6 @@ export const useRecentActivity = () => {
           amount: Number(contribution.amount),
           time: formatTimeAgo(contribution.created_at),
           status: 'completed' as const
-        });
-      });
-
-      // Add money requests
-      requests?.forEach(request => {
-        activities.push({
-          id: request.id,
-          type: 'request' as const,
-          description: `${request.purpose} - ${request.fund_types?.name || 'General Fund'}`,
-          amount: Number(request.amount),
-          time: formatTimeAgo(request.created_at),
-          status: request.status as 'pending' | 'approved' | 'completed'
         });
       });
 

@@ -15,7 +15,7 @@ import FundTypes from "./pages/FundTypes";
 import Departments from "./pages/Departments";
 import Reports from "./pages/Reports";
 import UserManagement from "./pages/UserManagement";
-import MoneyRequests from "./pages/MoneyRequests";
+
 import Settings from "./pages/Settings";
 import Pledges from "./pages/Pledges";
 import NotFound from "./pages/NotFound";
@@ -60,11 +60,6 @@ const App = () => (
             <Route path="/pledges" element={
               <ProtectedRoute>
                 <Pledges />
-              </ProtectedRoute>
-            } />
-            <Route path="/money-requests" element={
-              <ProtectedRoute>
-                <MoneyRequests />
               </ProtectedRoute>
             } />
             <Route path="/reports" element={

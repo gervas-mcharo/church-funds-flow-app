@@ -33,7 +33,6 @@ const menuItems: MenuItem[] = [
   { name: "Funds", url: "/fund-types", icon: Database, requiresFundAccess: true },
   { name: "Departments", url: "/departments", icon: Folder },
   { name: "Pledges", url: "/pledges", icon: HandHeart, requiresPledgeAccess: true },
-  { name: "Money Requests", url: "/money-requests", icon: FileText },
   { name: "Reports", url: "/reports", icon: BarChart3 },
   { name: "User Management", url: "/user-management", icon: User },
   { name: "Settings", url: "/settings", icon: Settings },
@@ -45,7 +44,7 @@ const departmentTreasurerItems: MenuItem[] = [
   { name: "My Departments", url: "/departments", icon: Folder },
   { name: "Department Funds", url: "/fund-types", icon: Database },
   { name: "Department Pledges", url: "/pledges", icon: HandHeart },
-  { name: "Money Requests", url: "/money-requests", icon: FileText },
+  
   { name: "Reports", url: "/reports", icon: BarChart3 },
   { name: "Settings", url: "/settings", icon: Settings },
 ];

@@ -30,21 +30,10 @@ export const useFundBalanceTrends = () => {
             .gte('contribution_date', monthStart.toISOString())
             .lte('contribution_date', monthEnd.toISOString());
 
-          // Get approved requests for this month
-          const { data: requests } = await supabase
-            .from('money_requests')
-            .select(`
-              amount,
-              fund_types (name)
-            `)
-            .eq('status', 'approved')
-            .gte('created_at', monthStart.toISOString())
-            .lte('created_at', monthEnd.toISOString());
-
           const monthlyData = {
             month: format(month, 'MMM yyyy'),
             totalContributions: contributions?.reduce((sum, c) => sum + Number(c.amount), 0) || 0,
-            totalRequests: requests?.reduce((sum, r) => sum + Number(r.amount), 0) || 0,
+            totalRequests: 0, // No more money requests
             netChange: 0
           };
 

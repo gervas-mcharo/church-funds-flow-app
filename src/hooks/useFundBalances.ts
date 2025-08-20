@@ -22,23 +22,13 @@ export const useFundBalances = () => {
 
       if (contribError) throw contribError;
 
-      // Get total approved money requests by fund type
-      const { data: requests, error: requestError } = await supabase
-        .from('money_requests')
-        .select('fund_type_id, amount')
-        .eq('status', 'approved');
-
-      if (requestError) throw requestError;
-
       // Calculate totals for each fund type
       const fundBalances = fundTypes.map(fund => {
         const totalContributions = contributions
           .filter(c => c.fund_type_id === fund.id)
           .reduce((sum, c) => sum + Number(c.amount), 0);
 
-        const totalRequests = requests
-          .filter(r => r.fund_type_id === fund.id)
-          .reduce((sum, r) => sum + Number(r.amount), 0);
+        const totalRequests = 0; // No more money requests
 
         return {
           ...fund,
