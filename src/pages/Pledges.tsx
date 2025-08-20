@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { SecureCreatePledgeDialog } from "@/components/pledges/SecureCreatePledgeDialog";
@@ -17,7 +16,6 @@ import { Target, TrendingUp, DollarSign, Users, FileText, BarChart3, Shield } fr
 import { usePledges, usePledgeStats, Pledge } from "@/hooks/usePledges";
 import { useCurrencySettings } from "@/hooks/useCurrencySettings";
 import { usePledgePermissions } from "@/hooks/usePledgePermissions";
-
 const Pledges = () => {
   const [filters, setFilters] = useState({
     search: "",
@@ -28,8 +26,9 @@ const Pledges = () => {
   const [selectedPledge, setSelectedPledge] = useState<Pledge | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'pledges' | 'reports'>('pledges');
-
-  const { getPledgeAccessLevel } = usePledgePermissions();
+  const {
+    getPledgeAccessLevel
+  } = usePledgePermissions();
 
   // Convert "all" values to empty strings for the API
   const apiFilters = {
@@ -38,55 +37,44 @@ const Pledges = () => {
     contributor_id: filters.contributor_id === "all" ? "" : filters.contributor_id,
     fund_type_id: filters.fund_type_id === "all" ? "" : filters.fund_type_id
   };
-
-  const { data: pledges = [], isLoading } = usePledges(apiFilters);
-  const { data: stats } = usePledgeStats();
-  const { formatAmount } = useCurrencySettings();
-
+  const {
+    data: pledges = [],
+    isLoading
+  } = usePledges(apiFilters);
+  const {
+    data: stats
+  } = usePledgeStats();
+  const {
+    formatAmount
+  } = useCurrencySettings();
   const handleViewPledge = (pledge: Pledge) => {
     setSelectedPledge(pledge);
     setDetailsOpen(true);
   };
-
   if (isLoading) {
-    return (
-      <DashboardLayout>
+    return <DashboardLayout>
         <div className="flex items-center justify-center h-64">
           <div className="text-lg">Loading pledges...</div>
         </div>
-      </DashboardLayout>
-    );
+      </DashboardLayout>;
   }
-
-  const headerContent = (
-    <div>
-      <div className="mb-3">
-        <PledgePermissionBadge />
-      </div>
+  const headerContent = <div>
+      
       <div className="flex gap-3">
         <SecureBulkPledgeImportDialog />
         <SecureCreatePledgeDialog />
       </div>
-    </div>
-  );
-
-  return (
-    <DashboardLayout 
-      title="Pledge Management" 
-      description="Track and manage contributor pledges"
-      headerContent={headerContent}
-    >
+    </div>;
+  return <DashboardLayout title="Pledge Management" description="Track and manage contributor pledges" headerContent={headerContent}>
       <PledgeAccessGuard>
         <div className="space-y-6">
           {/* Security Notice for Limited Access */}
-          {getPledgeAccessLevel() === 'view' && (
-            <Alert>
+          {getPledgeAccessLevel() === 'view' && <Alert>
               <Shield className="h-4 w-4" />
               <AlertDescription>
                 You have view-only access to pledges. Contact your administrator for additional permissions.
               </AlertDescription>
-            </Alert>
-          )}
+            </Alert>}
 
           <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
@@ -102,8 +90,7 @@ const Pledges = () => {
 
             <TabsContent value="pledges" className="space-y-6">
               {/* Stats Overview */}
-              {stats && (
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {stats && <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">Active Pledges</CardTitle>
@@ -155,26 +142,21 @@ const Pledges = () => {
                       </p>
                     </CardContent>
                   </Card>
-                </div>
-              )}
+                </div>}
 
               {/* Status Distribution */}
-              {stats && (
-                <Card>
+              {stats && <Card>
                   <CardHeader>
                     <CardTitle>Pledge Status Distribution</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-4">
-                      {Object.entries(stats.statusCounts).map(([status, count]) => (
-                        <Badge key={status} variant="outline" className="text-sm">
+                      {Object.entries(stats.statusCounts).map(([status, count]) => <Badge key={status} variant="outline" className="text-sm">
                           {status.replace('_', ' ')}: {count}
-                        </Badge>
-                      ))}
+                        </Badge>)}
                     </div>
                   </CardContent>
-                </Card>
-              )}
+                </Card>}
 
               {/* Filters */}
               <PledgeFilters filters={filters} onFiltersChange={setFilters} />
@@ -182,21 +164,17 @@ const Pledges = () => {
               {/* Pledges Table */}
               <PledgesTable pledges={pledges} onView={handleViewPledge} />
 
-              {pledges.length === 0 && (
-                <div className="text-center py-12">
+              {pledges.length === 0 && <div className="text-center py-12">
                   <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No pledges found</h3>
                   <p className="text-gray-600 mb-4">
-                    {filters.search || filters.status !== "all" || filters.contributor_id !== "all" || filters.fund_type_id !== "all"
-                      ? "Try adjusting your filters to see more results."
-                      : "Get started by creating your first pledge."}
+                    {filters.search || filters.status !== "all" || filters.contributor_id !== "all" || filters.fund_type_id !== "all" ? "Try adjusting your filters to see more results." : "Get started by creating your first pledge."}
                   </p>
                   <div className="flex gap-3 justify-center">
                     <SecureBulkPledgeImportDialog />
                     <SecureCreatePledgeDialog />
                   </div>
-                </div>
-              )}
+                </div>}
             </TabsContent>
 
             <TabsContent value="reports" className="space-y-6">
@@ -205,15 +183,9 @@ const Pledges = () => {
           </Tabs>
 
           {/* Pledge Details Dialog */}
-          <PledgeDetailsDialog
-            pledge={selectedPledge}
-            open={detailsOpen}
-            onOpenChange={setDetailsOpen}
-          />
+          <PledgeDetailsDialog pledge={selectedPledge} open={detailsOpen} onOpenChange={setDetailsOpen} />
         </div>
       </PledgeAccessGuard>
-    </DashboardLayout>
-  );
+    </DashboardLayout>;
 };
-
 export default Pledges;

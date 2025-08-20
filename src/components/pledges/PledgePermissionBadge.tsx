@@ -1,13 +1,12 @@
-
 import { Badge } from "@/components/ui/badge";
 import { Shield, Edit, Plus, Trash2, Eye } from "lucide-react";
 import { usePledgePermissions } from "@/hooks/usePledgePermissions";
-
 export function PledgePermissionBadge() {
-  const { getPledgeAccessLevel, userRole } = usePledgePermissions();
-  
+  const {
+    getPledgeAccessLevel,
+    userRole
+  } = usePledgePermissions();
   const accessLevel = getPledgeAccessLevel();
-  
   const getPermissionConfig = () => {
     switch (accessLevel) {
       case 'full':
@@ -47,19 +46,7 @@ export function PledgePermissionBadge() {
         };
     }
   };
-
   const config = getPermissionConfig();
   const Icon = config.icon;
-
-  return (
-    <div className="flex items-center gap-2">
-      <Badge variant={config.variant} className="flex items-center gap-1">
-        <Icon className="h-3 w-3" />
-        {config.text}
-      </Badge>
-      <span className="text-xs text-gray-500">
-        {userRole && `(${userRole.replace('_', ' ')})`}
-      </span>
-    </div>
-  );
+  return;
 }
