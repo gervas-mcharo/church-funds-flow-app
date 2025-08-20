@@ -10,11 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Calendar, DollarSign, Building, User, Send, Edit3, Trash2 } from "lucide-react";
+import { FileText, Calendar, DollarSign, Building, User, Send, Edit3, Trash2, Paperclip } from "lucide-react";
 import { useMoneyRequests } from "@/hooks/useMoneyRequests";
 import { useMoneyRequestPermissions } from "@/hooks/useMoneyRequestPermissions";
 import { useRequestApprovals } from "@/hooks/useRequestApprovals";
+import { useRequestAttachments } from "@/hooks/useRequestAttachments";
 import { ApprovalTimeline } from "./ApprovalTimeline";
+import { AttachmentManager } from "./AttachmentManager";
 import { format } from "date-fns";
 
 interface RequestDetailsDialogProps {
@@ -33,6 +35,7 @@ export function RequestDetailsDialog({
   const { requests, submitRequest, deleteRequest } = useMoneyRequests();
   const { canEditRequest, canDeleteRequest } = useMoneyRequestPermissions();
   const { approvals } = useRequestApprovals(requestId || undefined);
+  const { attachments } = useRequestAttachments(requestId || undefined);
 
   const request = requests?.find(r => r.id === requestId);
 
@@ -169,6 +172,24 @@ export function RequestDetailsDialog({
                   </p>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Attachments */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Paperclip className="h-5 w-5" />
+                Documents & Attachments
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AttachmentManager
+                requestId={request.id}
+                attachments={attachments}
+                canUpload={canEdit && request.status === "draft"}
+                canDelete={canEdit}
+              />
             </CardContent>
           </Card>
 
