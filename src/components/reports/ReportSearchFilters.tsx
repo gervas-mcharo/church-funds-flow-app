@@ -83,12 +83,12 @@ export function ReportSearchFilters({ onFiltersChange, fundTypes = [], contribut
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t">
             <div className="space-y-2">
               <label className="text-sm font-medium">Contributor</label>
-              <Select value={contributorFilter} onValueChange={setContributorFilter}>
+              <Select value={contributorFilter || "all"} onValueChange={(value) => setContributorFilter(value === "all" ? "" : value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All contributors" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All contributors</SelectItem>
+                  <SelectItem value="all">All contributors</SelectItem>
                   {contributors.map((contributor) => (
                     <SelectItem key={contributor.id} value={contributor.id}>
                       {contributor.name}
@@ -100,12 +100,12 @@ export function ReportSearchFilters({ onFiltersChange, fundTypes = [], contribut
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Fund Type</label>
-              <Select value={fundTypeFilter} onValueChange={setFundTypeFilter}>
+              <Select value={fundTypeFilter || "all"} onValueChange={(value) => setFundTypeFilter(value === "all" ? "" : value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All fund types" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All fund types</SelectItem>
+                  <SelectItem value="all">All fund types</SelectItem>
                   {fundTypes.map((fundType) => (
                     <SelectItem key={fundType.id} value={fundType.id}>
                       {fundType.name}

@@ -340,17 +340,17 @@ export function EnhancedMoneyRequestsList() {
             <div>
               <Label>Status</Label>
               <Select
-                value={filters.status?.[0] || ""}
+                value={filters.status?.[0] || "all"}
                 onValueChange={(value) => setFilters(prev => ({ 
                   ...prev, 
-                  status: value ? [value] : undefined 
+                  status: value === "all" ? undefined : [value] 
                 }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All statuses</SelectItem>
+                  <SelectItem value="all">All statuses</SelectItem>
                   {statusOptions.map((status) => (
                     <SelectItem key={status} value={status}>
                       {status.replace(/_/g, ' ').toUpperCase()}
@@ -363,17 +363,17 @@ export function EnhancedMoneyRequestsList() {
             <div>
               <Label>Department</Label>
               <Select
-                value={filters.department_id || ""}
+                value={filters.department_id || "all"}
                 onValueChange={(value) => setFilters(prev => ({ 
                   ...prev, 
-                  department_id: value || undefined 
+                  department_id: value === "all" ? undefined : value 
                 }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All departments" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All departments</SelectItem>
+                  <SelectItem value="all">All departments</SelectItem>
                   {departments?.map((dept) => (
                     <SelectItem key={dept.id} value={dept.id}>
                       {dept.name}
@@ -386,17 +386,17 @@ export function EnhancedMoneyRequestsList() {
             <div>
               <Label>Priority</Label>
               <Select
-                value={filters.priority?.[0] || ""}
+                value={filters.priority?.[0] || "all"}
                 onValueChange={(value) => setFilters(prev => ({ 
                   ...prev, 
-                  priority: value ? [value] : undefined 
+                  priority: value === "all" ? undefined : [value] 
                 }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All priorities" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All priorities</SelectItem>
+                  <SelectItem value="all">All priorities</SelectItem>
                   {priorityOptions.map((priority) => (
                     <SelectItem key={priority} value={priority}>
                       {priority.toUpperCase()}
