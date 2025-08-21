@@ -73,13 +73,17 @@ export function useRequestApprovals(requestId?: string) {
   };
 
   const getApproverName = (approval: RequestApproval) => {
-    if (!approval.profiles) return "Not yet assigned";
-    
-    const { first_name, last_name, email } = approval.profiles;
-    if (first_name && last_name) {
-      return `${first_name} ${last_name}`;
+    // If we have a profile linked through approver_id, use that
+    if (approval.profiles) {
+      const { first_name, last_name, email } = approval.profiles;
+      if (first_name && last_name) {
+        return `${first_name} ${last_name}`;
+      }
+      return email || "Unknown";
     }
-    return email || "Unknown";
+    
+    // Fallback for unassigned approvers
+    return "Awaiting assignment";
   };
 
   const getCurrentApprovalStep = () => {
