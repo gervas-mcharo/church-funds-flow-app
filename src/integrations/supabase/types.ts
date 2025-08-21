@@ -928,6 +928,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      can_any_head_approve_request: {
+        Args: { request_id: string; user_id: string }
+        Returns: boolean
+      }
       can_approve_request: {
         Args: { request_id: string; user_id: string }
         Returns: boolean

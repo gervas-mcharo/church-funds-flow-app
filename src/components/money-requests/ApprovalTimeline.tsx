@@ -1,6 +1,8 @@
-import { CheckCircle, XCircle, Clock, User } from "lucide-react";
+import { CheckCircle, XCircle, Clock, User, AlertCircle } from "lucide-react";
 import { useRequestApprovals } from "@/hooks/useRequestApprovals";
+import { useApproverDetails } from "@/hooks/useApproverDetails";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
 interface ApprovalTimelineProps {
   requestId: string;
@@ -99,10 +101,7 @@ export function ApprovalTimeline({ requestId }: ApprovalTimelineProps) {
                 </span>
               </div>
               
-              <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                <User className="h-3 w-3" />
-                <span>{getApproverName(approval)}</span>
-              </div>
+              <ApproverInfo approval={approval} />
               
               {approval.approved_at && (
                 <p className="text-xs text-muted-foreground mt-1">
@@ -122,4 +121,47 @@ export function ApprovalTimeline({ requestId }: ApprovalTimelineProps) {
       })}
     </div>
   );
+}
+
+function ApproverInfo({ approval }: { approval: any }) {
+  const { data: approverDetails } = useApproverDetails(approval.approver_id);
+  
+  const getApproverDisplay = () => {
+    if (!approval.approver_id) {
+      return (
+        <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+          <AlertCircle className="h-3 w-3 text-amber-500" />
+          <span>No approver assigned</span>
+          <Badge variant="outline" className="text-xs ml-2">
+            Needs Assignment
+          </Badge>
+        </div>
+      );
+    }
+    
+    if (!approverDetails) {
+      return (
+        <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+          <User className="h-3 w-3" />
+          <span>Loading approver...</span>
+        </div>
+      );
+    }
+    
+    const displayName = approverDetails.first_name && approverDetails.last_name 
+      ? `${approverDetails.first_name} ${approverDetails.last_name}`
+      : approverDetails.email;
+    
+    return (
+      <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+        <User className="h-3 w-3" />
+        <span>{displayName}</span>
+        {approverDetails.email && displayName !== approverDetails.email && (
+          <span className="text-xs">({approverDetails.email})</span>
+        )}
+      </div>
+    );
+  };
+  
+  return getApproverDisplay();
 }
