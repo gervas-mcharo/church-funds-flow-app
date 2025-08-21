@@ -8,6 +8,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useMoneyRequests } from "@/hooks/useMoneyRequests";
 import { useMoneyRequestPermissions } from "@/hooks/useMoneyRequestPermissions";
 import { usePendingApprovals } from "@/hooks/usePendingApprovals";
+import { useDepartmentAccess } from "@/hooks/useDepartmentAccess";
 import { CreateMoneyRequestDialog } from "@/components/money-requests/CreateMoneyRequestDialog";
 import { RequestDetailsDialog } from "@/components/money-requests/RequestDetailsDialog";
 import { ApprovalQueue } from "@/components/money-requests/ApprovalQueue";
@@ -18,8 +19,13 @@ export default function MoneyRequests() {
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   
   const { requests, isLoading } = useMoneyRequests();
-  const { canCreateRequestsForAnyDepartment, canApproveRequests, canViewAllRequests } = useMoneyRequestPermissions();
+  const { canCreateRequestsForAnyDepartment, canCreateRequestForDepartment, canApproveRequests, canViewAllRequests } = useMoneyRequestPermissions();
   const { pendingCount } = usePendingApprovals();
+  const { userDepartments } = useDepartmentAccess();
+  
+  // Check if user can create requests for any of their departments
+  const canCreateRequestForAnyDepartment = canCreateRequestsForAnyDepartment || 
+    userDepartments.some(dept => canCreateRequestForDepartment(dept.id));
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -82,7 +88,7 @@ export default function MoneyRequests() {
     );
   }
 
-  const headerContent = canCreateRequestsForAnyDepartment ? (
+  const headerContent = canCreateRequestForAnyDepartment ? (
     <Button onClick={() => setCreateDialogOpen(true)}>
       <Plus className="h-4 w-4 mr-2" />
       New Request
@@ -123,7 +129,7 @@ export default function MoneyRequests() {
                 <p className="text-muted-foreground mb-4">
                   Create your first money request to get started
                 </p>
-                {canCreateRequestsForAnyDepartment && (
+                {canCreateRequestForAnyDepartment && (
                   <Button onClick={() => setCreateDialogOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Create Request

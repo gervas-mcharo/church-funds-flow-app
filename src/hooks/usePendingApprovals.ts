@@ -43,10 +43,10 @@ export function usePendingApprovals() {
       if (!user) throw new Error("User not authenticated");
 
       const { error } = await supabase.rpc("advance_approval_chain", {
-        request_id: requestId,
-        approver_id: user.id,
+        p_request_id: requestId,
+        p_approver_id: user.id,
         approval_status: "approved",
-        comments: comments || null,
+        p_comments: comments || null,
       });
 
       if (error) throw error;
@@ -74,10 +74,10 @@ export function usePendingApprovals() {
       if (!user) throw new Error("User not authenticated");
 
       const { error } = await supabase.rpc("advance_approval_chain", {
-        request_id: requestId,
-        approver_id: user.id,
+        p_request_id: requestId,
+        p_approver_id: user.id,
         approval_status: "rejected",
-        comments,
+        p_comments: comments,
       });
 
       if (error) throw error;
