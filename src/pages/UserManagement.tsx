@@ -11,7 +11,10 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
 import { CreateUserForm } from "@/components/user-management/CreateUserForm";
+import { EditUserDialog } from "@/components/user-management/EditUserDialog";
+import { DeleteUserDialog } from "@/components/user-management/DeleteUserDialog";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useUpdateProfile, useDeleteUser } from "@/hooks/useProfiles";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -22,6 +25,10 @@ const UserManagement = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { userRole, isLoading: roleLoading, canManageUsers } = useUserRole();
+
+  // Profile management mutations
+  const updateProfileMutation = useUpdateProfile();
+  const deleteUserMutation = useDeleteUser();
 
   // Get all users with their roles (if any)
   const { data: usersWithRoles, isLoading: loadingUsers } = useQuery({
@@ -299,6 +306,7 @@ const UserManagement = () => {
                   <TableRow>
                     <TableHead>User</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Phone</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -313,6 +321,7 @@ const UserManagement = () => {
                           {user.first_name} {user.last_name}
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
+                        <TableCell>{user.phone || "—"}</TableCell>
                         <TableCell>
                           {canManageUsers() && editingRoleId === userRole?.id ? (
                             <div className="flex items-center gap-2">
@@ -375,43 +384,67 @@ const UserManagement = () => {
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {canManageUsers() ? (
-                              userRole ? (
-                                <>
-                                  {editingRoleId !== userRole.id && (
+                              <>
+                                {/* Profile Management */}
+                                <EditUserDialog
+                                  user={user}
+                                  onUpdate={async (userId, data) => {
+                                    await updateProfileMutation.mutateAsync({ userId, data });
+                                  }}
+                                  isLoading={updateProfileMutation.isPending}
+                                />
+                                
+                                {/* Role Management */}
+                                {userRole ? (
+                                  <>
+                                    {editingRoleId !== userRole.id && (
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline"
+                                        onClick={() => {
+                                          setEditingRoleId(userRole.id);
+                                          setNewRole(userRole.role);
+                                        }}
+                                        title="Edit Role"
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                    )}
                                     <Button 
                                       size="sm" 
-                                      variant="outline"
-                                      onClick={() => {
-                                        setEditingRoleId(userRole.id);
-                                        setNewRole(userRole.role);
-                                      }}
+                                      variant="destructive"
+                                      onClick={() => removeRoleMutation.mutate(userRole.id)}
+                                      disabled={removeRoleMutation.isPending}
+                                      title="Remove Role"
                                     >
-                                      <Edit className="h-4 w-4" />
+                                      <Trash2 className="h-4 w-4" />
                                     </Button>
-                                  )}
-                                  <Button 
-                                    size="sm" 
-                                    variant="destructive"
-                                    onClick={() => removeRoleMutation.mutate(userRole.id)}
-                                    disabled={removeRoleMutation.isPending}
+                                  </>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setAssigningRoleToUserId(user.id);
+                                      setNewRole("");
+                                    }}
+                                    disabled={assigningRoleToUserId === user.id}
+                                    title="Assign Role"
                                   >
-                                    <Trash2 className="h-4 w-4" />
+                                    <UserPlus className="h-4 w-4 mr-1" />
+                                    Assign Role
                                   </Button>
-                                </>
-                              ) : (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setAssigningRoleToUserId(user.id);
-                                    setNewRole("");
+                                )}
+                                
+                                {/* User Deletion */}
+                                <DeleteUserDialog
+                                  user={user}
+                                  onDelete={async (userId) => {
+                                    await deleteUserMutation.mutateAsync(userId);
                                   }}
-                                  disabled={assigningRoleToUserId === user.id}
-                                >
-                                  <UserPlus className="h-4 w-4 mr-1" />
-                                  Assign Role
-                                </Button>
-                              )
+                                  isLoading={deleteUserMutation.isPending}
+                                />
+                              </>
                             ) : (
                               <div className="flex items-center gap-1 text-gray-400">
                                 <Lock className="h-3 w-3" />
