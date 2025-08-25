@@ -27,6 +27,8 @@ export function useRequestApprovals(requestId?: string) {
     queryFn: async () => {
       if (!user || !requestId) return [];
 
+      console.log('Fetching approvals for request:', requestId, 'by user:', user.id);
+
       const { data, error } = await supabase
         .from("request_approvals")
         .select(`
@@ -36,7 +38,12 @@ export function useRequestApprovals(requestId?: string) {
         .eq("request_id", requestId)
         .order("order_sequence", { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching approvals:', error);
+        throw error;
+      }
+      
+      console.log('Fetched approvals:', data);
       return data as RequestApproval[];
     },
     enabled: !!user && !!requestId,

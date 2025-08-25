@@ -12,6 +12,7 @@ export function ApprovalTimeline({ requestId }: ApprovalTimelineProps) {
   const { 
     approvals, 
     isLoading, 
+    error,
     getApprovalStatusIcon,
     getApprovalLevelLabel,
     getApproverName,
@@ -28,11 +29,22 @@ export function ApprovalTimeline({ requestId }: ApprovalTimelineProps) {
     );
   }
 
+  if (error) {
+    console.error('Approval timeline error:', error);
+    return (
+      <div className="text-center text-muted-foreground py-8">
+        <AlertCircle className="h-12 w-12 mx-auto mb-4 text-amber-500" />
+        <p>Unable to load approval timeline</p>
+        <p className="text-xs mt-2">You may not have permission to view this information</p>
+      </div>
+    );
+  }
+
   if (!approvals || approvals.length === 0) {
     return (
       <div className="text-center text-muted-foreground py-8">
         <Clock className="h-12 w-12 mx-auto mb-4" />
-        <p>No approval steps configured</p>
+        <p>No approval steps configured for this request</p>
       </div>
     );
   }

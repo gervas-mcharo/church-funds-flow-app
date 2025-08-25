@@ -781,6 +781,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_request_approvals_approver_profile"
+            columns: ["approver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "request_approvals_request_id_fkey"
             columns: ["request_id"]
             isOneToOne: false
