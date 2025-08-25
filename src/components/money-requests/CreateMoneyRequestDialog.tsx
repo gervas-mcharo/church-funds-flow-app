@@ -32,6 +32,7 @@ import { useMoneyRequestPermissions } from "@/hooks/useMoneyRequestPermissions";
 import { useDepartments } from "@/hooks/useDepartments";
 import { useFundTypes } from "@/hooks/useFundTypes";
 import { useDepartmentAccess } from "@/hooks/useDepartmentAccess";
+import { useCurrencySettings } from "@/hooks/useCurrencySettings";
 
 const formSchema = z.object({
   requesting_department_id: z.string().min(1, "Department is required"),
@@ -60,6 +61,7 @@ export function CreateMoneyRequestDialog({
   const { departments } = useDepartments();
   const { fundTypes } = useFundTypes();
   const { userDepartments } = useDepartmentAccess();
+  const { formatAmount, currencySymbol } = useCurrencySettings();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -153,7 +155,7 @@ export function CreateMoneyRequestDialog({
                       <SelectContent>
                         {activeFundTypes.map((fund) => (
                           <SelectItem key={fund.id} value={fund.id}>
-                            {fund.name} (${fund.current_balance?.toLocaleString() || '0'})
+                            {fund.name} ({formatAmount(fund.current_balance || 0)})
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -170,7 +172,7 @@ export function CreateMoneyRequestDialog({
                 name="amount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Amount ($)</FormLabel>
+                    <FormLabel>Amount ({currencySymbol})</FormLabel>
                     <FormControl>
                       <Input
                         type="number"

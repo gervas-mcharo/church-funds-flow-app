@@ -15,6 +15,7 @@ import { useMoneyRequests } from "@/hooks/useMoneyRequests";
 import { useMoneyRequestPermissions } from "@/hooks/useMoneyRequestPermissions";
 import { useRequestApprovals } from "@/hooks/useRequestApprovals";
 import { useRequestAttachments } from "@/hooks/useRequestAttachments";
+import { useCurrencySettings } from "@/hooks/useCurrencySettings";
 import { ApprovalTimeline } from "./ApprovalTimeline";
 import { AttachmentManager } from "./AttachmentManager";
 import { format } from "date-fns";
@@ -36,6 +37,7 @@ export function RequestDetailsDialog({
   const { canEditRequest, canDeleteRequest } = useMoneyRequestPermissions();
   const { approvals } = useRequestApprovals(requestId || undefined);
   const { attachments } = useRequestAttachments(requestId || undefined);
+  const { formatAmount } = useCurrencySettings();
 
   const request = requests?.find(r => r.id === requestId);
 
@@ -123,7 +125,7 @@ export function RequestDetailsDialog({
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-semibold">${request.amount.toLocaleString()}</span>
+                  <span className="font-semibold">{formatAmount(request.amount)}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Building className="h-4 w-4 text-muted-foreground" />

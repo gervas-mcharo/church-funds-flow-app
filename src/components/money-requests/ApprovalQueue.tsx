@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle, CheckCircle, XCircle, Clock, MessageSquare } from "lucide-react";
 import { usePendingApprovals } from "@/hooks/usePendingApprovals";
+import { useCurrencySettings } from "@/hooks/useCurrencySettings";
 import { format } from "date-fns";
 import {
   Dialog,
@@ -22,6 +23,7 @@ export function ApprovalQueue() {
   const [actionType, setActionType] = useState<"approve" | "reject">("approve");
 
   const { pendingApprovals, approveRequest, rejectRequest, isLoading } = usePendingApprovals();
+  const { formatAmount } = useCurrencySettings();
 
   const handleApprovalAction = async (requestId: string, action: "approve" | "reject") => {
     try {
@@ -106,7 +108,7 @@ export function ApprovalQueue() {
               <div>
                 <CardTitle className="text-lg">{approval.purpose}</CardTitle>
                 <CardDescription>
-                  {approval.department_name} • ${approval.amount.toLocaleString()}
+                  {approval.department_name} • {formatAmount(approval.amount)}
                 </CardDescription>
               </div>
               <Badge variant="outline">

@@ -12,6 +12,7 @@ import { Download, TrendingUp, TrendingDown, Clock, CheckCircle, XCircle, FileTe
 import { useMoneyRequestReports } from "@/hooks/useMoneyRequestReports";
 import { useDepartments } from "@/hooks/useDepartments";
 import { useFundTypes } from "@/hooks/useFundTypes";
+import { useCurrencySettings } from "@/hooks/useCurrencySettings";
 import { format } from "date-fns";
 
 export function MoneyRequestReports() {
@@ -25,6 +26,7 @@ export function MoneyRequestReports() {
 
   const { departments } = useDepartments();
   const { fundTypes } = useFundTypes();
+  const { formatAmount } = useCurrencySettings();
   const { reportData, summary, departmentSummary, isLoading } = useMoneyRequestReports(filters);
 
   const handleFilterChange = (key: string, value: string) => {
@@ -248,7 +250,7 @@ export function MoneyRequestReports() {
             <CardContent>
               <div className="text-2xl font-bold">{summary.total_requests}</div>
               <p className="text-xs text-muted-foreground">
-                ${summary.total_amount_requested.toLocaleString()} total requested
+                {formatAmount(summary.total_amount_requested)} total requested
               </p>
             </CardContent>
           </Card>
@@ -261,7 +263,7 @@ export function MoneyRequestReports() {
             <CardContent>
               <div className="text-2xl font-bold text-green-600">{summary.approved_requests}</div>
               <p className="text-xs text-muted-foreground">
-                ${summary.total_amount_approved.toLocaleString()} approved
+                {formatAmount(summary.total_amount_approved)} approved
               </p>
             </CardContent>
           </Card>
@@ -349,8 +351,8 @@ export function MoneyRequestReports() {
                   ]}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
-                    <YAxis tickFormatter={(value) => `$${value.toLocaleString()}`} />
-                    <Tooltip formatter={(value: number) => [`$${value.toLocaleString()}`, 'Amount']} />
+                    <YAxis tickFormatter={(value) => formatAmount(value)} />
+                    <Tooltip formatter={(value: number) => [formatAmount(value), 'Amount']} />
                     <Bar dataKey="amount" fill="#3b82f6" />
                   </BarChart>
                 </ResponsiveContainer>
@@ -377,12 +379,12 @@ export function MoneyRequestReports() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
                         <p className="text-muted-foreground">Total Requested</p>
-                        <p className="font-semibold">${dept.total_amount_requested.toLocaleString()}</p>
+                        <p className="font-semibold">{formatAmount(dept.total_amount_requested)}</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Approved</p>
                         <p className="font-semibold text-green-600">
-                          {dept.approved_requests} (${dept.total_amount_approved.toLocaleString()})
+                          {dept.approved_requests} ({formatAmount(dept.total_amount_approved)})
                         </p>
                       </div>
                       <div>
@@ -434,7 +436,7 @@ export function MoneyRequestReports() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold">${request.amount.toLocaleString()}</p>
+                        <p className="font-semibold">{formatAmount(request.amount)}</p>
                         <Badge variant={getStatusBadgeVariant(request.status)}>
                           {formatStatus(request.status)}
                         </Badge>

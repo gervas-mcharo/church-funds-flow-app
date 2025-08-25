@@ -9,6 +9,7 @@ import { useMoneyRequests } from "@/hooks/useMoneyRequests";
 import { useMoneyRequestPermissions } from "@/hooks/useMoneyRequestPermissions";
 import { usePendingApprovals } from "@/hooks/usePendingApprovals";
 import { useDepartmentAccess } from "@/hooks/useDepartmentAccess";
+import { useCurrencySettings } from "@/hooks/useCurrencySettings";
 import { CreateMoneyRequestDialog } from "@/components/money-requests/CreateMoneyRequestDialog";
 import { RequestDetailsDialog } from "@/components/money-requests/RequestDetailsDialog";
 import { ApprovalQueue } from "@/components/money-requests/ApprovalQueue";
@@ -22,6 +23,7 @@ export default function MoneyRequests() {
   const { canCreateRequestsForAnyDepartment, canCreateRequestForDepartment, canApproveRequests, canViewAllRequests } = useMoneyRequestPermissions();
   const { pendingCount } = usePendingApprovals();
   const { userDepartments } = useDepartmentAccess();
+  const { formatAmount } = useCurrencySettings();
   
   // Check if user can create requests for any of their departments
   const canCreateRequestForAnyDepartment = canCreateRequestsForAnyDepartment || 
@@ -150,7 +152,7 @@ export default function MoneyRequests() {
                       <div>
                         <CardTitle className="text-lg">{request.purpose}</CardTitle>
                         <CardDescription>
-                          {request.departments.name} • ${request.amount.toLocaleString()}
+                          {request.departments.name} • {formatAmount(request.amount)}
                         </CardDescription>
                       </div>
                       <div className="flex items-center gap-2">
@@ -194,7 +196,7 @@ export default function MoneyRequests() {
                       <div>
                         <CardTitle className="text-lg">{request.purpose}</CardTitle>
                         <CardDescription>
-                          {request.departments.name} • ${request.amount.toLocaleString()}
+                          {request.departments.name} • {formatAmount(request.amount)}
                         </CardDescription>
                       </div>
                       <div className="flex items-center gap-2">
