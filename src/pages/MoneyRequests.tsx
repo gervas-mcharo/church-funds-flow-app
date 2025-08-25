@@ -108,7 +108,7 @@ export default function MoneyRequests() {
           {canViewAllRequests && (
             <TabsTrigger value="all-requests">All Requests</TabsTrigger>
           )}
-          {canApproveRequests && (
+          {(canApproveRequests || pendingCount > 0) && (
             <TabsTrigger value="approvals" className="relative">
               Pending Approvals
               {pendingCount > 0 && (
@@ -231,7 +231,7 @@ export default function MoneyRequests() {
           </TabsContent>
         )}
 
-        {canApproveRequests && (
+        {(canApproveRequests || pendingCount > 0) && (
           <TabsContent value="approvals">
             <ApprovalQueue />
           </TabsContent>

@@ -8,7 +8,8 @@ export function useMoneyRequestPermissions() {
     canAccessDepartmentFinances,
     canManageDepartmentFunds,
     isChurchTreasurer,
-    isDepartmentTreasurer 
+    isDepartmentTreasurer,
+    treasurerDepartments 
   } = useDepartmentFinancialPermissions();
   const { canAccessDepartment, isLoading: departmentLoading } = useDepartmentAccess();
 
@@ -101,7 +102,8 @@ export function useMoneyRequestPermissions() {
   const canApproveRequests = () => {
     if (!userRole) return false;
     
-    return [
+    // High-level roles that can approve any requests
+    const highLevelRoles = [
       'administrator',
       'finance_administrator',
       'finance_elder',
@@ -109,7 +111,14 @@ export function useMoneyRequestPermissions() {
       'pastor',
       'treasurer',
       'head_of_department'
-    ].includes(userRole) || isDepartmentTreasurer();
+    ].includes(userRole);
+    
+    // Department treasurers can approve for their departments
+    const hasTreasurerRole = userRole === 'department_treasurer' || 
+                            (treasurerDepartments && treasurerDepartments.length > 0) ||
+                            isDepartmentTreasurer();
+    
+    return highLevelRoles || hasTreasurerRole;
   };
 
   // Check if user can view all requests (finance view)
