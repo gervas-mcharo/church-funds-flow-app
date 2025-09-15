@@ -55,25 +55,30 @@ const Reports = () => {
         
         <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)} className="w-full">
           <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="reports" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Contribution Reports
+            <TabsTrigger value="reports" className="flex items-center gap-1 px-2">
+              <FileText className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">Contribution Reports</span>
+              <span className="sm:hidden text-xs">Reports</span>
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Advanced Analytics
+            <TabsTrigger value="analytics" className="flex items-center gap-1 px-2">
+              <BarChart3 className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">Advanced Analytics</span>
+              <span className="sm:hidden text-xs">Analytics</span>
             </TabsTrigger>
-            <TabsTrigger value="balances" className="flex items-center gap-2">
-              <Wallet className="h-4 w-4" />
-              Fund Balances
+            <TabsTrigger value="balances" className="flex items-center gap-1 px-2">
+              <Wallet className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">Fund Balances</span>
+              <span className="sm:hidden text-xs">Balances</span>
             </TabsTrigger>
-            <TabsTrigger value="trends" className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Balance Trends
+            <TabsTrigger value="trends" className="flex items-center gap-1 px-2">
+              <TrendingUp className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">Balance Trends</span>
+              <span className="sm:hidden text-xs">Trends</span>
             </TabsTrigger>
-            <TabsTrigger value="money-requests" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Money Requests
+            <TabsTrigger value="money-requests" className="flex items-center gap-1 px-2">
+              <FileText className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">Money Requests</span>
+              <span className="sm:hidden text-xs">Requests</span>
             </TabsTrigger>
           </TabsList>
 
