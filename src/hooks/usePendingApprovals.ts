@@ -55,6 +55,7 @@ export function usePendingApprovals() {
       queryClient.invalidateQueries({ queryKey: ["pending-approvals"] });
       queryClient.invalidateQueries({ queryKey: ["money-requests"] });
       queryClient.invalidateQueries({ queryKey: ["request-approvals"] });
+      queryClient.invalidateQueries({ queryKey: ["fund-balances"] });
       toast.success("Request approved successfully");
     },
     onError: (error) => {
@@ -86,6 +87,7 @@ export function usePendingApprovals() {
       queryClient.invalidateQueries({ queryKey: ["pending-approvals"] });
       queryClient.invalidateQueries({ queryKey: ["money-requests"] });
       queryClient.invalidateQueries({ queryKey: ["request-approvals"] });
+      queryClient.invalidateQueries({ queryKey: ["fund-balances"] });
       toast.success("Request rejected");
     },
     onError: (error) => {
