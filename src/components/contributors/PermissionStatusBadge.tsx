@@ -43,5 +43,11 @@ export const PermissionStatusBadge = ({
   };
   const config = getPermissionConfig();
   const Icon = config.icon;
-  return;
+  
+  return (
+    <Badge variant={config.variant} className="flex items-center">
+      <Icon className="mr-1 h-3 w-3" />
+      {config.text}
+    </Badge>
+  );
 };
