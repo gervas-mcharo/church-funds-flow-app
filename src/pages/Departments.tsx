@@ -17,7 +17,7 @@ import { DepartmentPersonnelCard } from "@/components/departments/DepartmentPers
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { DeleteDepartmentDialog } from "@/components/departments/DeleteDepartmentDialog";
 import { DepartmentAccessGuard } from "@/components/departments/DepartmentAccessGuard";
-import { PermissionStatusBadge } from "@/components/contributors/PermissionStatusBadge";
+
 import { useDepartmentPermissions } from "@/hooks/useDepartmentPermissions";
 
 interface Department {
@@ -177,10 +177,6 @@ const Departments = () => {
 
   const headerContent = (
     <div className="flex items-center gap-4">
-      <PermissionStatusBadge 
-        accessLevel={getDepartmentAccessLevel()} 
-        userRole={userRole || undefined}
-      />
       {canCreateDepartments() && (
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>

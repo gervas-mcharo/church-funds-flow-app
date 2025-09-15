@@ -30,7 +30,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge";
 import { DeleteContributorDialog } from "@/components/contributors/DeleteContributorDialog";
-import { PermissionStatusBadge } from "@/components/contributors/PermissionStatusBadge";
+
 import { useUserRole } from "@/hooks/useUserRole";
 import { useContributors, useCreateContributor, useUpdateContributor } from "@/hooks/useContributors";
 import { ContributorAccessGuard } from "@/components/contributors/ContributorAccessGuard";
@@ -109,10 +109,6 @@ const Contributors = () => {
 
   const headerContent = (
     <div className="flex items-center gap-4">
-      <PermissionStatusBadge 
-        accessLevel={getContributorAccessLevel()} 
-        userRole={userRole || undefined}
-      />
       <Button onClick={() => setShowCreateDialog(true)}>
         <Plus className="h-4 w-4 mr-2" />
         Add Contributor
