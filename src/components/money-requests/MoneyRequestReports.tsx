@@ -30,7 +30,7 @@ export function MoneyRequestReports() {
   const { reportData, summary, departmentSummary, isLoading } = useMoneyRequestReports(filters);
 
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters(prev => ({ ...prev, [key]: value === "all" ? "" : value }));
   };
 
   const clearFilters = () => {
@@ -181,7 +181,7 @@ export function MoneyRequestReports() {
                   <SelectValue placeholder="All Departments" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Departments</SelectItem>
+                  <SelectItem value="all">All Departments</SelectItem>
                   {departments?.map((dept) => (
                     <SelectItem key={dept.id} value={dept.id}>
                       {dept.name}
@@ -197,7 +197,7 @@ export function MoneyRequestReports() {
                   <SelectValue placeholder="All Statuses" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Statuses</SelectItem>
+                  <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
                   <SelectItem value="submitted">Submitted</SelectItem>
                   <SelectItem value="pending_treasurer">Pending Treasurer</SelectItem>
@@ -217,7 +217,7 @@ export function MoneyRequestReports() {
                   <SelectValue placeholder="All Funds" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Funds</SelectItem>
+                  <SelectItem value="all">All Funds</SelectItem>
                   {fundTypes?.map((fund) => (
                     <SelectItem key={fund.id} value={fund.id}>
                       {fund.name}
