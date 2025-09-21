@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ReportFilters } from "@/pages/Reports";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { useCurrencySettings } from "@/hooks/useCurrencySettings";
 
 interface ReportTableProps {
   data: any[];
@@ -10,12 +11,7 @@ interface ReportTableProps {
 }
 
 export function ReportTable({ data, filters }: ReportTableProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
+  const { formatAmount } = useCurrencySettings();
 
   if (filters.reportType === 'summary') {
     // Group data by fund type for summary
@@ -55,7 +51,7 @@ export function ReportTable({ data, filters }: ReportTableProps) {
                   <Badge variant="secondary">{item.contributionCount}</Badge>
                 </TableCell>
                 <TableCell className="text-right font-medium">
-                  {formatCurrency(item.totalAmount)}
+                  {formatAmount(item.totalAmount)}
                 </TableCell>
                 <TableCell className="text-right">
                   {((item.totalAmount / grandTotal) * 100).toFixed(1)}%
@@ -67,7 +63,7 @@ export function ReportTable({ data, filters }: ReportTableProps) {
               <TableCell>
                 <Badge>{data.length}</Badge>
               </TableCell>
-              <TableCell className="text-right">{formatCurrency(grandTotal)}</TableCell>
+              <TableCell className="text-right">{formatAmount(grandTotal)}</TableCell>
               <TableCell className="text-right">100%</TableCell>
             </TableRow>
           </TableBody>
@@ -100,7 +96,7 @@ export function ReportTable({ data, filters }: ReportTableProps) {
               <Badge variant="outline">{contribution.fund_types?.name || 'Unknown'}</Badge>
             </TableCell>
             <TableCell className="text-right font-medium">
-              {formatCurrency(parseFloat(contribution.amount))}
+              {formatAmount(parseFloat(contribution.amount))}
             </TableCell>
             <TableCell className="text-gray-600 max-w-xs truncate">
               {contribution.notes || '-'}

@@ -2,39 +2,36 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, BarChart, Bar, ComposedChart, Area, AreaChart, ResponsiveContainer } from "recharts";
+import { useCurrencySettings } from "@/hooks/useCurrencySettings";
+import { chartColors } from "@/constants/chartColors";
 
 interface AdvancedChartsProps {
   analytics: any;
 }
 
 export function AdvancedCharts({ analytics }: AdvancedChartsProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
+  const { formatAmount } = useCurrencySettings();
 
   const chartConfig = {
     amount: {
       label: "Amount",
-      color: "#0088FE",
+      color: chartColors.primary[0],
     },
     count: {
       label: "Count",
-      color: "#00C49F",
+      color: chartColors.primary[1],
     },
     currentYear: {
       label: "Current Year",
-      color: "#0088FE",
+      color: chartColors.primary[0],
     },
     previousYear: {
       label: "Previous Year",
-      color: "#82CA9D",
+      color: chartColors.primary[2],
     },
     growthRate: {
       label: "Growth Rate",
-      color: "#FF8042",
+      color: chartColors.primary[3],
     }
   };
 
@@ -54,20 +51,20 @@ export function AdvancedCharts({ analytics }: AdvancedChartsProps) {
               <ChartTooltip 
                 content={<ChartTooltipContent />}
                 formatter={(value, name) => [
-                  name === 'amount' ? formatCurrency(Number(value)) : 
+                  name === 'amount' ? formatAmount(Number(value)) : 
                   name === 'growthRate' ? `${Number(value).toFixed(1)}%` : value,
                   name === 'amount' ? 'Amount' : 
                   name === 'growthRate' ? 'Growth Rate' : 'Count'
                 ]}
               />
-              <Bar yAxisId="left" dataKey="amount" fill="#0088FE" opacity={0.6} />
+              <Bar yAxisId="left" dataKey="amount" fill={chartColors.primary[0]} opacity={0.6} />
               <Line 
                 yAxisId="right" 
                 type="monotone" 
                 dataKey="growthRate" 
-                stroke="#FF8042" 
+                stroke={chartColors.primary[3]} 
                 strokeWidth={3}
-                dot={{ fill: '#FF8042', strokeWidth: 2, r: 4 }}
+                dot={{ fill: chartColors.primary[3], strokeWidth: 2, r: 4 }}
               />
             </ComposedChart>
           </ChartContainer>
@@ -86,10 +83,10 @@ export function AdvancedCharts({ analytics }: AdvancedChartsProps) {
               <YAxis />
               <ChartTooltip 
                 content={<ChartTooltipContent />}
-                formatter={(value) => [formatCurrency(Number(value)), ""]}
+                formatter={(value) => [formatAmount(Number(value)), ""]}
               />
-              <Bar dataKey="currentYear" fill="#0088FE" name="Current Year" />
-              <Bar dataKey="previousYear" fill="#82CA9D" name="Previous Year" />
+              <Bar dataKey="currentYear" fill={chartColors.primary[0]} name="Current Year" />
+              <Bar dataKey="previousYear" fill={chartColors.primary[2]} name="Previous Year" />
             </BarChart>
           </ChartContainer>
         </CardContent>
@@ -112,8 +109,8 @@ export function AdvancedCharts({ analytics }: AdvancedChartsProps) {
               <Area 
                 type="monotone" 
                 dataKey="count" 
-                stroke="#00C49F" 
-                fill="#00C49F" 
+                stroke={chartColors.primary[1]} 
+                fill={chartColors.primary[1]} 
                 fillOpacity={0.3}
               />
             </AreaChart>
@@ -136,9 +133,9 @@ export function AdvancedCharts({ analytics }: AdvancedChartsProps) {
               <YAxis type="category" dataKey="fundType" width={100} />
               <ChartTooltip 
                 content={<ChartTooltipContent />}
-                formatter={(value) => [formatCurrency(Number(value)), "Total Amount"]}
+                formatter={(value) => [formatAmount(Number(value)), "Total Amount"]}
               />
-              <Bar dataKey="totalAmount" fill="#0088FE" />
+              <Bar dataKey="totalAmount" fill={chartColors.primary[0]} />
             </BarChart>
           </ChartContainer>
         </CardContent>

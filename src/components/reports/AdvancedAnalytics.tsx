@@ -2,6 +2,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, Minus, Users, DollarSign } from "lucide-react";
+import { useCurrencySettings } from "@/hooks/useCurrencySettings";
+import { getTrendColor } from "@/constants/chartColors";
 
 interface AnalyticsData {
   trendAnalysis: {
@@ -54,18 +56,14 @@ interface AdvancedAnalyticsProps {
 }
 
 export function AdvancedAnalytics({ analytics }: AdvancedAnalyticsProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
+  const { formatAmount } = useCurrencySettings();
 
   const getTrendIcon = (trend: 'up' | 'down' | 'stable') => {
+    const color = getTrendColor(trend);
     switch (trend) {
-      case 'up': return <TrendingUp className="h-4 w-4 text-green-600" />;
-      case 'down': return <TrendingDown className="h-4 w-4 text-red-600" />;
-      default: return <Minus className="h-4 w-4 text-gray-600" />;
+      case 'up': return <TrendingUp className="h-4 w-4" style={{ color }} />;
+      case 'down': return <TrendingDown className="h-4 w-4" style={{ color }} />;
+      default: return <Minus className="h-4 w-4" style={{ color }} />;
     }
   };
 
@@ -91,9 +89,9 @@ export function AdvancedAnalytics({ analytics }: AdvancedAnalyticsProps) {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">{formatCurrency(contributor.totalAmount)}</p>
+                    <p className="font-semibold">{formatAmount(contributor.totalAmount)}</p>
                     <p className="text-sm text-gray-600">
-                      Avg: {formatCurrency(contributor.averageContribution)}
+                      Avg: {formatAmount(contributor.averageContribution)}
                     </p>
                   </div>
                 </div>
@@ -123,9 +121,9 @@ export function AdvancedAnalytics({ analytics }: AdvancedAnalyticsProps) {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">{formatCurrency(fund.totalAmount)}</p>
+                    <p className="font-semibold">{formatAmount(fund.totalAmount)}</p>
                     <p className="text-sm text-gray-600">
-                      Avg: {formatCurrency(fund.averageAmount)}
+                      Avg: {formatAmount(fund.averageAmount)}
                     </p>
                   </div>
                 </div>
@@ -150,7 +148,7 @@ export function AdvancedAnalytics({ analytics }: AdvancedAnalyticsProps) {
                     {month.growthRate >= 0 ? '+' : ''}{month.growthRate.toFixed(1)}%
                   </Badge>
                 </div>
-                <p className="text-2xl font-bold">{formatCurrency(month.amount)}</p>
+                <p className="text-2xl font-bold">{formatAmount(month.amount)}</p>
                 <p className="text-sm text-gray-600">{month.count} contributions</p>
               </div>
             ))}
@@ -171,11 +169,11 @@ export function AdvancedAnalytics({ analytics }: AdvancedAnalyticsProps) {
                 <div className="space-y-2">
                   <div>
                     <p className="text-sm text-gray-600">This Year</p>
-                    <p className="font-semibold">{formatCurrency(comparison.currentYear)}</p>
+                    <p className="font-semibold">{formatAmount(comparison.currentYear)}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Last Year</p>
-                    <p className="font-semibold">{formatCurrency(comparison.previousYear)}</p>
+                    <p className="font-semibold">{formatAmount(comparison.previousYear)}</p>
                   </div>
                   <Badge variant={comparison.growthPercentage >= 0 ? "default" : "destructive"}>
                     {comparison.growthPercentage >= 0 ? '+' : ''}{comparison.growthPercentage.toFixed(1)}%

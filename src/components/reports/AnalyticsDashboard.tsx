@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdvancedAnalytics } from "./AdvancedAnalytics";
 import { AdvancedCharts } from "./AdvancedCharts";
 import { useAdvancedAnalytics } from "@/hooks/useAdvancedAnalytics";
+import { useCurrencySettings } from "@/hooks/useCurrencySettings";
 import { ReportFilters } from "@/pages/Reports";
 import { TrendingUp, Users, DollarSign, Target } from "lucide-react";
 import { useState } from "react";
@@ -18,6 +19,7 @@ type AnalyticsView = "overview" | "detailed" | "predictive";
 export function AnalyticsDashboard({ filters, data }: AnalyticsDashboardProps) {
   const [activeView, setActiveView] = useState<AnalyticsView>("overview");
   const { data: analytics, isLoading, error } = useAdvancedAnalytics(filters);
+  const { formatAmount } = useCurrencySettings();
 
   if (isLoading) {
     return (
@@ -48,12 +50,6 @@ export function AnalyticsDashboard({ filters, data }: AnalyticsDashboardProps) {
 
   if (!analytics) return null;
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
 
   return (
     <div className="space-y-6">
@@ -74,7 +70,7 @@ export function AnalyticsDashboard({ filters, data }: AnalyticsDashboardProps) {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {formatCurrency(analytics.predictiveInsights.projectedMonthlyTotal)}
+                  {formatAmount(analytics.predictiveInsights.projectedMonthlyTotal)}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {(analytics.predictiveInsights.confidenceLevel * 100).toFixed(0)}% confidence
@@ -146,7 +142,7 @@ export function AnalyticsDashboard({ filters, data }: AnalyticsDashboardProps) {
                 <div>
                   <h4 className="font-semibold">Monthly Projection</h4>
                   <p className="text-2xl font-bold text-green-600">
-                    {formatCurrency(analytics.predictiveInsights.projectedMonthlyTotal)}
+                    {formatAmount(analytics.predictiveInsights.projectedMonthlyTotal)}
                   </p>
                   <p className="text-sm text-gray-600">
                     Based on recent trends
@@ -156,7 +152,7 @@ export function AnalyticsDashboard({ filters, data }: AnalyticsDashboardProps) {
                 <div>
                   <h4 className="font-semibold">Yearly Projection</h4>
                   <p className="text-2xl font-bold text-blue-600">
-                    {formatCurrency(analytics.predictiveInsights.projectedYearlyTotal)}
+                    {formatAmount(analytics.predictiveInsights.projectedYearlyTotal)}
                   </p>
                   <p className="text-sm text-gray-600">
                     Confidence: {(analytics.predictiveInsights.confidenceLevel * 100).toFixed(0)}%

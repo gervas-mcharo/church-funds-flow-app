@@ -3,10 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useContributionTrends } from "@/hooks/useContributionTrends";
 import { useCurrencySettings } from "@/hooks/useCurrencySettings";
+import { useFundTypes } from "@/hooks/useFundTypes";
+import { getChartColor } from "@/constants/chartColors";
 
 export function ContributionChart() {
   const { data: chartData = [], isLoading } = useContributionTrends();
   const { formatAmount } = useCurrencySettings();
+  const { data: fundTypes = [] } = useFundTypes();
 
   if (isLoading) {
     return (
@@ -51,9 +54,17 @@ export function ContributionChart() {
             <XAxis dataKey="month" stroke="#6b7280" />
             <YAxis stroke="#6b7280" />
             <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="tithes" fill="#10b981" name="Tithes & Offerings" />
-            <Bar dataKey="building" fill="#3b82f6" name="Building Fund" />
-            <Bar dataKey="missions" fill="#8b5cf6" name="Missions" />
+            {fundTypes.map((fundType, index) => {
+              const key = fundType.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+              return (
+                <Bar 
+                  key={fundType.id}
+                  dataKey={key} 
+                  fill={getChartColor(index)} 
+                  name={fundType.name} 
+                />
+              );
+            })}
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

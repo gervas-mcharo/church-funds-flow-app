@@ -12,6 +12,7 @@ import { usePledges, usePledgeStats } from "@/hooks/usePledges";
 import { useContributors } from "@/hooks/useContributors";
 import { useFundTypes } from "@/hooks/useFundTypes";
 import { useCurrencySettings } from "@/hooks/useCurrencySettings";
+import { statusColors } from "@/constants/statusColors";
 
 export function PledgeReports() {
   const [reportType, setReportType] = useState<'fulfillment' | 'aging' | 'fund-summary'>('fulfillment');
@@ -53,14 +54,6 @@ export function PledgeReports() {
     };
   });
   
-  const statusColors = {
-    active: "bg-blue-500",
-    upcoming: "bg-gray-500",
-    partially_fulfilled: "bg-yellow-500",
-    fulfilled: "bg-green-500",
-    overdue: "bg-red-500",
-    cancelled: "bg-gray-400"
-  };
   
   return (
     <div className="space-y-6">

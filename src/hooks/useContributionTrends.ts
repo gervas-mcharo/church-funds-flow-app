@@ -7,6 +7,12 @@ export const useContributionTrends = () => {
   return useQuery({
     queryKey: ['contribution-trends'],
     queryFn: async () => {
+      // Get fund types for dynamic rendering
+      const { data: fundTypes = [] } = await supabase
+        .from('fund_types')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
       const months = [];
       const currentDate = new Date();
       
@@ -34,7 +40,7 @@ export const useContributionTrends = () => {
             month: format(month, 'MMM')
           };
 
-          // Group contributions by fund type
+          // Group contributions by fund type dynamically
           const fundTotals: Record<string, number> = {};
           contributions?.forEach(contribution => {
             const fundName = contribution.fund_types?.name || 'Other';
@@ -42,10 +48,11 @@ export const useContributionTrends = () => {
             fundTotals[key] = (fundTotals[key] || 0) + Number(contribution.amount);
           });
 
-          // Map common fund types to consistent keys
-          monthData.tithes = fundTotals.tithes || fundTotals.tithesofferings || 0;
-          monthData.building = fundTotals.buildingfund || fundTotals.building || 0;
-          monthData.missions = fundTotals.missions || 0;
+          // Add all fund types dynamically
+          fundTypes.forEach(fundType => {
+            const key = fundType.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+            monthData[key] = fundTotals[key] || 0;
+          });
 
           return monthData;
         })

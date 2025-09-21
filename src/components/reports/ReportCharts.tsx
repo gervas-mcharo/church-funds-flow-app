@@ -3,21 +3,17 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { BarChart, Bar, XAxis, YAxis, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from "recharts";
 import { ReportFilters } from "@/pages/Reports";
 import { format, parseISO } from "date-fns";
+import { useCurrencySettings } from "@/hooks/useCurrencySettings";
+import { getChartColor } from "@/constants/chartColors";
 interface ReportChartsProps {
   data: any[];
   filters: ReportFilters;
 }
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 export function ReportCharts({
   data,
   filters
 }: ReportChartsProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
+  const { formatAmount } = useCurrencySettings();
 
   // Fund type distribution data
   const fundTypeData = data.reduce((acc, contribution) => {
@@ -71,9 +67,9 @@ export function ReportCharts({
               name,
               percent
             }) => `${name} ${(percent * 100).toFixed(0)}%`} outerRadius={80} fill="#8884d8" dataKey="value">
-                {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={getChartColor(index)} />)}
               </Pie>
-              <ChartTooltip content={<ChartTooltipContent />} formatter={value => [formatCurrency(Number(value)), "Amount"]} />
+              <ChartTooltip content={<ChartTooltipContent />} formatter={value => [formatAmount(Number(value)), "Amount"]} />
             </PieChart>
           </ChartContainer>
         </CardContent>
@@ -89,9 +85,9 @@ export function ReportCharts({
             <LineChart data={trendData}>
               <XAxis dataKey="month" />
               <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} formatter={(value, name) => [name === 'amount' ? formatCurrency(Number(value)) : value, name === 'amount' ? 'Amount' : 'Count']} />
-              <Line type="monotone" dataKey="amount" stroke="#0088FE" strokeWidth={2} dot={{
-              fill: '#0088FE'
+              <ChartTooltip content={<ChartTooltipContent />} formatter={(value, name) => [name === 'amount' ? formatAmount(Number(value)) : value, name === 'amount' ? 'Amount' : 'Count']} />
+              <Line type="monotone" dataKey="amount" stroke={getChartColor(0)} strokeWidth={2} dot={{
+              fill: getChartColor(0)
             }} />
             </LineChart>
           </ChartContainer>
@@ -108,8 +104,8 @@ export function ReportCharts({
             <BarChart data={pieData}>
               <XAxis dataKey="name" />
               <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} formatter={value => [formatCurrency(Number(value)), "Amount"]} />
-              <Bar dataKey="value" fill="#0088FE" radius={[4, 4, 0, 0]} />
+              <ChartTooltip content={<ChartTooltipContent />} formatter={value => [formatAmount(Number(value)), "Amount"]} />
+              <Bar dataKey="value" fill={getChartColor(0)} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ChartContainer>
         </CardContent>
