@@ -19,9 +19,8 @@ import { useUpdateProfile, useDeleteUser } from "@/hooks/useProfiles";
 type AppRole = Database["public"]["Enums"]["app_role"];
 
 const UserManagement = () => {
-  const [editingRoleId, setEditingRoleId] = useState<string>("");
-  const [newRole, setNewRole] = useState<AppRole | "">("");
   const [assigningRoleToUserId, setAssigningRoleToUserId] = useState<string>("");
+  const [assignRole, setAssignRole] = useState<AppRole | "">("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { userRole, isLoading: roleLoading, canManageUsers } = useUserRole();
@@ -99,14 +98,11 @@ const UserManagement = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Role updated successfully" });
       queryClient.invalidateQueries({ queryKey: ['user-roles'] });
       queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
-      setEditingRoleId("");
-      setNewRole("");
     },
     onError: (error) => {
-      toast({ title: "Error updating role", description: error.message, variant: "destructive" });
+      throw error;
     }
   });
 
@@ -127,29 +123,14 @@ const UserManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['user-roles'] });
       queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
       setAssigningRoleToUserId("");
-      setNewRole("");
+      setAssignRole("");
     },
     onError: (error) => {
       toast({ title: "Error assigning role", description: error.message, variant: "destructive" });
     }
   });
 
-  const handleUpdateRole = () => {
-    if (!canManageUsers()) {
-      toast({ 
-        title: "Access Denied", 
-        description: "You don't have permission to update roles", 
-        variant: "destructive" 
-      });
-      return;
-    }
-    
-    if (editingRoleId && newRole) {
-      updateRoleMutation.mutate({ roleId: editingRoleId, newRole: newRole as AppRole });
-    }
-  };
-
-  const handleAssignRole = () => {
+  const handleAssignRoleInline = () => {
     if (!canManageUsers()) {
       toast({ 
         title: "Access Denied", 
@@ -159,9 +140,21 @@ const UserManagement = () => {
       return;
     }
     
-    if (assigningRoleToUserId && newRole) {
-      assignRoleMutation.mutate({ userId: assigningRoleToUserId, role: newRole as AppRole });
+    if (assigningRoleToUserId && assignRole) {
+      assignRoleMutation.mutate({ userId: assigningRoleToUserId, role: assignRole as AppRole });
     }
+  };
+
+  const handleUpdateProfile = async (userId: string, data: any) => {
+    await updateProfileMutation.mutateAsync({ userId, data });
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    await deleteUserMutation.mutateAsync(userId);
+  };
+
+  const handleRemoveRole = async (roleId: string) => {
+    await removeRoleMutation.mutateAsync(roleId);
   };
 
   const roleLabels: Record<AppRole, string> = {
@@ -197,12 +190,17 @@ const UserManagement = () => {
     }
   };
 
-  const getRolesByCategory = () => {
+  const getRolesByCategory = (): {
+    leadership: AppRole[];
+    financial: AppRole[];
+    departmental: AppRole[];
+    operational: AppRole[];
+  } => {
     return {
-      leadership: ['administrator', 'pastor', 'general_secretary'],
-      financial: ['finance_administrator', 'finance_manager', 'finance_elder', 'treasurer', 'department_treasurer'], // Added department_treasurer
-      departmental: ['head_of_department', 'secretary', 'department_member'],
-      operational: ['data_entry_clerk']
+      leadership: ['administrator', 'pastor', 'general_secretary'] as AppRole[],
+      financial: ['finance_administrator', 'finance_manager', 'finance_elder', 'treasurer', 'department_treasurer'] as AppRole[],
+      departmental: ['head_of_department', 'secretary', 'department_member'] as AppRole[],
+      operational: ['data_entry_clerk'] as AppRole[]
     };
   };
 
@@ -323,55 +321,7 @@ const UserManagement = () => {
                         <TableCell>{user.email}</TableCell>
                         <TableCell>{user.phone || "—"}</TableCell>
                         <TableCell>
-                          {canManageUsers() && editingRoleId === userRole?.id ? (
-                            <div className="flex items-center gap-2">
-                              <Select value={newRole} onValueChange={(value) => setNewRole(value as AppRole)}>
-                                <SelectTrigger className="w-48">
-                                  <SelectValue placeholder="Select new role..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {Object.entries(roleLabels).map(([value, label]) => (
-                                    <SelectItem key={value} value={value}>
-                                      {label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <Button size="sm" onClick={handleUpdateRole} disabled={updateRoleMutation.isPending}>
-                                Save
-                              </Button>
-                              <Button size="sm" variant="outline" onClick={() => {
-                                setEditingRoleId("");
-                                setNewRole("");
-                              }}>
-                                Cancel
-                              </Button>
-                            </div>
-                          ) : canManageUsers() && assigningRoleToUserId === user.id ? (
-                            <div className="flex items-center gap-2">
-                              <Select value={newRole} onValueChange={(value) => setNewRole(value as AppRole)}>
-                                <SelectTrigger className="w-48">
-                                  <SelectValue placeholder="Select role..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {Object.entries(roleLabels).map(([value, label]) => (
-                                    <SelectItem key={value} value={value}>
-                                      {label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <Button size="sm" onClick={handleAssignRole} disabled={assignRoleMutation.isPending}>
-                                Assign
-                              </Button>
-                              <Button size="sm" variant="outline" onClick={() => {
-                                setAssigningRoleToUserId("");
-                                setNewRole("");
-                              }}>
-                                Cancel
-                              </Button>
-                            </div>
-                          ) : userRole ? (
+                          {userRole ? (
                             <Badge className={getRoleBadgeColor(userRole.role)}>
                               {roleLabels[userRole.role]}
                             </Badge>
@@ -381,67 +331,29 @@ const UserManagement = () => {
                             </Badge>
                           )}
                         </TableCell>
-                        <TableCell>
+                         <TableCell>
                           <div className="flex items-center gap-2">
                             {canManageUsers() ? (
                               <>
-                                {/* Profile Management */}
                                 <EditUserDialog
                                   user={user}
-                                  onUpdate={async (userId, data) => {
-                                    await updateProfileMutation.mutateAsync({ userId, data });
+                                  userRole={userRole}
+                                  roleLabels={roleLabels}
+                                  roleCategories={roleCategories}
+                                  onUpdateProfile={handleUpdateProfile}
+                                  onUpdateRole={async (roleId: string, role: AppRole) => {
+                                    await updateRoleMutation.mutateAsync({ roleId, newRole: role });
                                   }}
-                                  isLoading={updateProfileMutation.isPending}
+                                  onAssignRole={async (userId: string, role: AppRole) => {
+                                    await assignRoleMutation.mutateAsync({ userId, role });
+                                  }}
+                                  onRemoveRole={handleRemoveRole}
+                                  isLoading={updateProfileMutation.isPending || updateRoleMutation.isPending || assignRoleMutation.isPending || removeRoleMutation.isPending}
                                 />
                                 
-                                {/* Role Management */}
-                                {userRole ? (
-                                  <>
-                                    {editingRoleId !== userRole.id && (
-                                      <Button 
-                                        size="sm" 
-                                        variant="outline"
-                                        onClick={() => {
-                                          setEditingRoleId(userRole.id);
-                                          setNewRole(userRole.role);
-                                        }}
-                                        title="Edit Role"
-                                      >
-                                        <Edit className="h-4 w-4" />
-                                      </Button>
-                                    )}
-                                    <Button 
-                                      size="sm" 
-                                      variant="destructive"
-                                      onClick={() => removeRoleMutation.mutate(userRole.id)}
-                                      disabled={removeRoleMutation.isPending}
-                                      title="Remove Role"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </>
-                                ) : (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      setAssigningRoleToUserId(user.id);
-                                      setNewRole("");
-                                    }}
-                                    disabled={assigningRoleToUserId === user.id}
-                                    title="Assign Role"
-                                  >
-                                    <UserPlus className="h-4 w-4 mr-1" />
-                                    Assign Role
-                                  </Button>
-                                )}
-                                
-                                {/* User Deletion */}
                                 <DeleteUserDialog
                                   user={user}
-                                  onDelete={async (userId) => {
-                                    await deleteUserMutation.mutateAsync(userId);
-                                  }}
+                                  onDelete={handleDeleteUser}
                                   isLoading={deleteUserMutation.isPending}
                                 />
                               </>
