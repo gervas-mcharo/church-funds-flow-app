@@ -6,18 +6,21 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useFundTypes } from "@/hooks/useFundTypes";
-import { useFundTransactions } from "@/hooks/useFundTransactions";
+import { useFundTransactions, FundTransaction } from "@/hooks/useFundTransactions";
 import { useCurrencySettings } from "@/hooks/useCurrencySettings";
 import { format } from "date-fns";
 import { CalendarIcon, Download, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { TransactionDetailDialog } from "./TransactionDetailDialog";
 
 export const FundTransactionLedger = () => {
   const [selectedFund, setSelectedFund] = useState<string>("");
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [transactionType, setTransactionType] = useState<string>("all");
+  const [selectedTransaction, setSelectedTransaction] = useState<FundTransaction | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const { data: fundTypes = [] } = useFundTypes();
   const { data: transactions = [], isLoading } = useFundTransactions(
@@ -77,6 +80,11 @@ export const FundTransactionLedger = () => {
       case 'manual_adjustment': return 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400';
       default: return 'bg-muted';
     }
+  };
+
+  const handleTransactionClick = (transaction: FundTransaction) => {
+    setSelectedTransaction(transaction);
+    setDialogOpen(true);
   };
 
   return (
@@ -264,6 +272,12 @@ export const FundTransactionLedger = () => {
           )}
         </CardContent>
       </Card>
+
+      <TransactionDetailDialog
+        transaction={selectedTransaction}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
     </div>
   );
 };
