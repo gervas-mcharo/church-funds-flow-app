@@ -314,6 +314,65 @@ export type Database = {
         }
         Relationships: []
       }
+      fund_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          created_at: string
+          created_by: string | null
+          debit_credit: string
+          description: string
+          fund_type_id: string
+          id: string
+          notes: string | null
+          reference_id: string | null
+          reference_type: string
+          transaction_date: string
+          transaction_type: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          created_at?: string
+          created_by?: string | null
+          debit_credit: string
+          description: string
+          fund_type_id: string
+          id?: string
+          notes?: string | null
+          reference_id?: string | null
+          reference_type: string
+          transaction_date?: string
+          transaction_type: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          balance_before?: number
+          created_at?: string
+          created_by?: string | null
+          debit_credit?: string
+          description?: string
+          fund_type_id?: string
+          id?: string
+          notes?: string | null
+          reference_id?: string | null
+          reference_type?: string
+          transaction_date?: string
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fund_transactions_fund_type_id_fkey"
+            columns: ["fund_type_id"]
+            isOneToOne: false
+            referencedRelation: "fund_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fund_types: {
         Row: {
           created_at: string
@@ -1000,6 +1059,22 @@ export type Database = {
           _old_values?: Json
           _record_id?: string
           _table_name: string
+        }
+        Returns: undefined
+      }
+      migrate_opening_balances: { Args: never; Returns: undefined }
+      record_fund_transaction: {
+        Args: {
+          p_amount: number
+          p_created_by?: string
+          p_debit_credit: string
+          p_description: string
+          p_fund_type_id: string
+          p_notes?: string
+          p_reference_id: string
+          p_reference_type: string
+          p_transaction_date?: string
+          p_transaction_type: string
         }
         Returns: undefined
       }
