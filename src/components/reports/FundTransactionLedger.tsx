@@ -8,11 +8,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useFundTypes } from "@/hooks/useFundTypes";
 import { useFundTransactions, FundTransaction } from "@/hooks/useFundTransactions";
 import { useCurrencySettings } from "@/hooks/useCurrencySettings";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProfiles } from "@/hooks/useProfiles";
 import { format } from "date-fns";
-import { CalendarIcon, Download, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import { CalendarIcon, Download, ArrowUpCircle, ArrowDownCircle, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { TransactionDetailDialog } from "./TransactionDetailDialog";
+import { generateLedgerPDF } from "@/utils/pdfExport";
+import { toast } from "sonner";
 
 export const FundTransactionLedger = () => {
   const [selectedFund, setSelectedFund] = useState<string>("");
@@ -22,6 +26,7 @@ export const FundTransactionLedger = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<FundTransaction | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  const { user } = useAuth();
   const { data: fundTypes = [] } = useFundTypes();
   const { data: transactions = [], isLoading } = useFundTransactions(
     selectedFund,
@@ -30,6 +35,9 @@ export const FundTransactionLedger = () => {
     transactionType
   );
   const { currencySymbol } = useCurrencySettings();
+  const { data: profiles = [] } = useProfiles();
+  
+  const currentUserProfile = profiles.find(p => p.id === user?.id);
 
   const currency = currencySymbol;
 
@@ -85,6 +93,37 @@ export const FundTransactionLedger = () => {
   const handleTransactionClick = (transaction: FundTransaction) => {
     setSelectedTransaction(transaction);
     setDialogOpen(true);
+  };
+
+  const handleExportPDF = () => {
+    if (!selectedFund || transactions.length === 0) {
+      toast.error("Please select a fund with transactions to export");
+      return;
+    }
+
+    try {
+      const userName = currentUserProfile?.first_name && currentUserProfile?.last_name 
+        ? `${currentUserProfile.first_name} ${currentUserProfile.last_name}`
+        : currentUserProfile?.email || "User";
+
+      generateLedgerPDF({
+        fundName: selectedFundData?.name || "Fund",
+        transactions,
+        startDate,
+        endDate,
+        openingBalance,
+        closingBalance,
+        totalCredits,
+        totalDebits,
+        currencySymbol: currency,
+        generatedBy: userName
+      });
+
+      toast.success("PDF exported successfully");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF");
+    }
   };
 
   return (
@@ -154,6 +193,15 @@ export const FundTransactionLedger = () => {
             >
               <Download className="h-4 w-4 mr-2" />
               Export CSV
+            </Button>
+            
+            <Button 
+              onClick={handleExportPDF} 
+              disabled={!selectedFund || transactions.length === 0}
+              variant="outline"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Export PDF
             </Button>
           </div>
         </CardContent>
