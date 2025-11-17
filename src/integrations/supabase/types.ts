@@ -842,7 +842,7 @@ export type Database = {
           action: string
           created_at: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           new_values: Json | null
           old_values: Json | null
           record_id: string | null
@@ -854,7 +854,7 @@ export type Database = {
           action: string
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_values?: Json | null
           old_values?: Json | null
           record_id?: string | null
@@ -866,7 +866,7 @@ export type Database = {
           action?: string
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           new_values?: Json | null
           old_values?: Json | null
           record_id?: string | null
@@ -927,14 +927,8 @@ export type Database = {
         Args: { _department_id: string; _user_id: string }
         Returns: boolean
       }
-      can_access_funds: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      can_access_qr_management: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      can_access_funds: { Args: never; Returns: boolean }
+      can_access_qr_management: { Args: never; Returns: boolean }
       can_any_head_approve_request: {
         Args: { request_id: string; user_id: string }
         Returns: boolean
@@ -943,46 +937,19 @@ export type Database = {
         Args: { request_id: string; user_id: string }
         Returns: boolean
       }
-      can_bulk_import_pledges: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      can_create_funds: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      can_create_pledges: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      can_create_qr_codes: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      can_delete_pledges: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      can_delete_qr_codes: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      can_manage_funds: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      can_manage_pledges: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      can_bulk_import_pledges: { Args: never; Returns: boolean }
+      can_create_funds: { Args: never; Returns: boolean }
+      can_create_pledges: { Args: never; Returns: boolean }
+      can_create_qr_codes: { Args: never; Returns: boolean }
+      can_delete_pledges: { Args: never; Returns: boolean }
+      can_delete_qr_codes: { Args: never; Returns: boolean }
+      can_manage_funds: { Args: never; Returns: boolean }
+      can_manage_pledges: { Args: never; Returns: boolean }
       create_approval_chain: {
         Args: { request_id: string }
         Returns: undefined
       }
-      current_user_has_admin_role: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      current_user_has_admin_role: { Args: never; Returns: boolean }
       get_user_pending_approvals: {
         Args: { user_id: string }
         Returns: {
@@ -1025,10 +992,7 @@ export type Database = {
         Args: { _department_id: string; _user_id: string }
         Returns: boolean
       }
-      is_system_initialized: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      is_system_initialized: { Args: never; Returns: boolean }
       log_security_event: {
         Args: {
           _action: string
@@ -1039,10 +1003,7 @@ export type Database = {
         }
         Returns: undefined
       }
-      update_pledge_status: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      update_pledge_status: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role:
